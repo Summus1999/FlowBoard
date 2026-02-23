@@ -827,6 +827,9 @@ function initSettings() {
     
     // 初始化开机启动设置
     initAutoLaunchSettings();
+    
+    // Initialize weather location preference settings
+    initWeatherLocationSettings();
 }
 
 // ========================================
@@ -1545,6 +1548,16 @@ console.log('FlowBoard 已加载完成 🚀');
 
 let weatherData = null;
 let currentLocation = null;
+const WEATHER_CACHE_KEY = 'weather_cache_v2';
+const WEATHER_PREFERENCE_KEY = 'weather_location_preference_v1';
+const WEATHER_CACHE_DURATION = 30 * 60 * 1000;
+const GPS_ACCURACY_THRESHOLD_METERS = 5000;
+const DEFAULT_WEATHER_LOCATION = {
+    lat: 39.9042,
+    lon: 116.4074,
+    city: '北京',
+    source: 'default'
+};
 
 // WMO 天气代码映射
 const weatherCodeMap = {
@@ -1571,93 +1584,387 @@ const weatherCodeMap = {
     99: { desc: '强雷雨', icon: 'fa-bolt', color: '#FFD700' }
 };
 
+function getWeatherPreference() {
+    try {
+        const raw = localStorage.getItem(WEATHER_PREFERENCE_KEY);
+        if (!raw) return { mode: 'auto' };
+        const parsed = JSON.parse(raw);
+        if (!parsed || (parsed.mode !== 'auto' && parsed.mode !== 'manual')) {
+            return { mode: 'auto' };
+        }
+        return parsed;
+    } catch (_error) {
+        return { mode: 'auto' };
+    }
+}
+
+function setWeatherPreference(preference) {
+    localStorage.setItem(WEATHER_PREFERENCE_KEY, JSON.stringify(preference));
+}
+
+function getLocationSourceLabel(source) {
+    const sourceLabels = {
+        manual: '手动城市',
+        gps: 'GPS',
+        'gps-low-accuracy': 'GPS(低精度)',
+        ip: 'IP',
+        default: '默认城市'
+    };
+    return sourceLabels[source] || '未知';
+}
+
+function updateWeatherLocationStatus() {
+    const statusEl = document.getElementById('weatherLocationStatus');
+    if (!statusEl) return;
+
+    const preference = getWeatherPreference();
+    const strategyText = preference.mode === 'manual'
+        ? `定位策略：手动城市（${preference.city || '未设置'}）`
+        : '定位策略：自动定位';
+
+    if (!currentLocation) {
+        statusEl.textContent = strategyText;
+        return;
+    }
+
+    const sourceLabel = getLocationSourceLabel(currentLocation.source);
+    const cityText = currentLocation.city ? `（${currentLocation.city}）` : '';
+    statusEl.textContent = `${strategyText} · 当前来源：${sourceLabel}${cityText}`;
+}
+
+function initWeatherLocationSettings() {
+    const cityInput = document.getElementById('weatherCityInput');
+    if (!cityInput) return;
+
+    const preference = getWeatherPreference();
+    if (preference.mode === 'manual' && preference.city) {
+        cityInput.value = preference.city;
+    } else {
+        cityInput.value = '';
+    }
+
+    cityInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            saveManualWeatherLocation();
+        }
+    });
+
+    updateWeatherLocationStatus();
+}
+
+function toFiniteNumber(value) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : null;
+}
+
+function buildWeatherLocationKey(location) {
+    const lat = toFiniteNumber(location?.lat);
+    const lon = toFiniteNumber(location?.lon);
+    const roundedLat = lat === null ? '0.00' : lat.toFixed(2);
+    const roundedLon = lon === null ? '0.00' : lon.toFixed(2);
+    const city = (location?.city || '').trim();
+    return `${location?.source || 'unknown'}:${roundedLat},${roundedLon}:${city}`;
+}
+
+function readWeatherCache(locationKey) {
+    try {
+        const raw = localStorage.getItem(WEATHER_CACHE_KEY);
+        if (!raw) return null;
+
+        const cache = JSON.parse(raw);
+        if (!cache || !cache.timestamp || !cache.locationKey || !cache.weatherData || !cache.location) {
+            return null;
+        }
+
+        if (Date.now() - cache.timestamp > WEATHER_CACHE_DURATION) {
+            return null;
+        }
+
+        if (cache.locationKey !== locationKey) {
+            return null;
+        }
+
+        return cache;
+    } catch (_error) {
+        return null;
+    }
+}
+
+function writeWeatherCache(location, data) {
+    const cache = {
+        timestamp: Date.now(),
+        locationKey: buildWeatherLocationKey(location),
+        location,
+        weatherData: data
+    };
+    localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(cache));
+}
+
+function clearWeatherCache() {
+    localStorage.removeItem(WEATHER_CACHE_KEY);
+    localStorage.removeItem('weather_cache');
+    localStorage.removeItem('weather_location');
+    localStorage.removeItem('weather_cache_time');
+}
+
+async function geocodeCityLocation(cityName) {
+    const trimmedCity = cityName.trim();
+    if (!trimmedCity) return null;
+
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(trimmedCity)}&count=1&language=zh&format=json`;
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        });
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        const result = data?.results?.[0];
+        if (!result) return null;
+
+        const lat = toFiniteNumber(result.latitude);
+        const lon = toFiniteNumber(result.longitude);
+        if (lat === null || lon === null) return null;
+
+        return {
+            lat,
+            lon,
+            city: result.name || trimmedCity,
+            country: result.country || '',
+            source: 'manual'
+        };
+    } catch (_error) {
+        return null;
+    }
+}
+
+async function saveManualWeatherLocation() {
+    const cityInput = document.getElementById('weatherCityInput');
+    if (!cityInput) return;
+
+    const city = cityInput.value.trim();
+    if (!city) {
+        showToast('请输入城市名称');
+        return;
+    }
+
+    const resolvedLocation = await geocodeCityLocation(city);
+    if (!resolvedLocation) {
+        showToast('未找到该城市，请检查城市名称');
+        return;
+    }
+
+    setWeatherPreference({
+        mode: 'manual',
+        city,
+        lat: resolvedLocation.lat,
+        lon: resolvedLocation.lon
+    });
+
+    clearWeatherCache();
+    await getWeather(true);
+    updateWeatherLocationStatus();
+    showToast(`天气定位已切换到 ${resolvedLocation.city}`);
+}
+
+async function useAutoWeatherLocation() {
+    const cityInput = document.getElementById('weatherCityInput');
+    if (cityInput) {
+        cityInput.value = '';
+    }
+
+    setWeatherPreference({ mode: 'auto' });
+    clearWeatherCache();
+    await getWeather(true);
+    updateWeatherLocationStatus();
+    showToast('已切换为自动定位');
+}
+
 // 初始化天气
 function initWeather() {
     const weatherCard = document.getElementById('weatherCard');
     if (weatherCard) {
         weatherCard.addEventListener('click', refreshWeather);
     }
-    
-    // 尝试从本地存储加载缓存的天气数据
-    const cachedWeather = localStorage.getItem('weather_cache');
-    const cachedLocation = localStorage.getItem('weather_location');
-    const cacheTime = localStorage.getItem('weather_cache_time');
-    
-    // 缓存有效期：30分钟
-    const CACHE_DURATION = 30 * 60 * 1000;
-    
-    if (cachedWeather && cachedLocation && cacheTime) {
-        const now = Date.now();
-        if (now - parseInt(cacheTime) < CACHE_DURATION) {
-            weatherData = JSON.parse(cachedWeather);
-            currentLocation = JSON.parse(cachedLocation);
-            updateWeatherUI();
-            return;
-        }
-    }
-    
-    // 获取新数据
+
+    updateWeatherLocationStatus();
     getWeather();
 }
 
 // 获取天气
-function getWeather() {
+async function getWeather(forceRefresh = false) {
     updateWeatherLoading(true);
-    
-    // 检查是否支持地理定位
-    if (!navigator.geolocation) {
-        // 使用 IP 定位作为备选
-        getLocationByIP();
-        return;
-    }
-    
-    navigator.geolocation.getCurrentPosition(
-        // 成功回调
-        (position) => {
-            const { latitude, longitude } = position.coords;
-            currentLocation = { lat: latitude, lon: longitude, source: 'gps' };
-            fetchWeatherData(latitude, longitude);
-        },
-        // 错误回调
-        (error) => {
-            console.warn('GPS 定位失败，尝试 IP 定位:', error.message);
-            getLocationByIP();
-        },
-        // 选项
-        {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 300000 // 5分钟缓存
+
+    try {
+        const resolvedLocation = await resolveWeatherLocation();
+        currentLocation = resolvedLocation;
+
+        const cacheKey = buildWeatherLocationKey(resolvedLocation);
+        if (!forceRefresh) {
+            const cached = readWeatherCache(cacheKey);
+            if (cached) {
+                weatherData = cached.weatherData;
+                currentLocation = cached.location;
+                updateWeatherUI();
+                return;
+            }
         }
-    );
+
+        await fetchWeatherData(resolvedLocation.lat, resolvedLocation.lon);
+    } catch (error) {
+        console.warn('天气定位失败:', error.message || error);
+        updateWeatherError();
+    }
 }
 
-// IP 定位（备选方案）
+async function resolveWeatherLocation() {
+    const preference = getWeatherPreference();
+    if (preference.mode === 'manual' && preference.city) {
+        const manualLocation = await resolveManualWeatherLocation(preference);
+        if (manualLocation) return manualLocation;
+    }
+    return resolveAutoWeatherLocation();
+}
+
+async function resolveManualWeatherLocation(preference) {
+    const lat = toFiniteNumber(preference.lat);
+    const lon = toFiniteNumber(preference.lon);
+    if (lat !== null && lon !== null) {
+        return {
+            lat,
+            lon,
+            city: preference.city,
+            source: 'manual'
+        };
+    }
+
+    const geocodedLocation = await geocodeCityLocation(preference.city);
+    if (!geocodedLocation) return null;
+
+    setWeatherPreference({
+        mode: 'manual',
+        city: preference.city,
+        lat: geocodedLocation.lat,
+        lon: geocodedLocation.lon
+    });
+    return geocodedLocation;
+}
+
+async function resolveAutoWeatherLocation() {
+    let gpsLocation = null;
+    if (navigator.geolocation) {
+        gpsLocation = await getGpsLocation();
+        if (gpsLocation && gpsLocation.accuracy <= GPS_ACCURACY_THRESHOLD_METERS) {
+            return gpsLocation;
+        }
+    }
+
+    const ipLocation = await getLocationByIP();
+    if (ipLocation) return ipLocation;
+
+    if (gpsLocation) {
+        return {
+            lat: gpsLocation.lat,
+            lon: gpsLocation.lon,
+            city: gpsLocation.city || '',
+            source: 'gps-low-accuracy'
+        };
+    }
+
+    return DEFAULT_WEATHER_LOCATION;
+}
+
+function getGpsLocation() {
+    return new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = toFiniteNumber(position.coords.latitude);
+                const lon = toFiniteNumber(position.coords.longitude);
+                if (lat === null || lon === null) {
+                    resolve(null);
+                    return;
+                }
+
+                resolve({
+                    lat,
+                    lon,
+                    city: '',
+                    source: 'gps',
+                    accuracy: toFiniteNumber(position.coords.accuracy) || Number.MAX_SAFE_INTEGER
+                });
+            },
+            () => resolve(null),
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000
+            }
+        );
+    });
+}
+
 async function getLocationByIP() {
+    const providers = [fetchLocationFromIpApiCo, fetchLocationFromIpWhoIs];
+    for (const provider of providers) {
+        const location = await provider();
+        if (location) return location;
+    }
+    return null;
+}
+
+async function fetchLocationFromIpApiCo() {
     try {
-        // 使用 ipapi.co 免费服务
         const response = await fetch('https://ipapi.co/json/', {
             method: 'GET',
             headers: { 'Accept': 'application/json' }
         });
-        
-        if (!response.ok) throw new Error('IP 定位失败');
-        
+
+        if (!response.ok) return null;
+
         const data = await response.json();
-        currentLocation = {
-            lat: data.latitude,
-            lon: data.longitude,
-            city: data.city,
-            country: data.country_name,
+        const lat = toFiniteNumber(data.latitude);
+        const lon = toFiniteNumber(data.longitude);
+        if (lat === null || lon === null) return null;
+
+        return {
+            lat,
+            lon,
+            city: data.city || '',
+            country: data.country_name || '',
             source: 'ip'
         };
-        
-        fetchWeatherData(data.latitude, data.longitude);
-    } catch (error) {
-        console.error('IP 定位失败:', error);
-        // 使用默认城市（北京）
-        currentLocation = { lat: 39.9042, lon: 116.4074, city: '北京', source: 'default' };
-        fetchWeatherData(39.9042, 116.4074);
+    } catch (_error) {
+        return null;
+    }
+}
+
+async function fetchLocationFromIpWhoIs() {
+    try {
+        const response = await fetch('https://ipwho.is/', {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        });
+
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        if (data.success === false) return null;
+
+        const lat = toFiniteNumber(data.latitude);
+        const lon = toFiniteNumber(data.longitude);
+        if (lat === null || lon === null) return null;
+
+        return {
+            lat,
+            lon,
+            city: data.city || '',
+            country: data.country || '',
+            source: 'ip'
+        };
+    } catch (_error) {
+        return null;
     }
 }
 
@@ -1666,22 +1973,18 @@ async function fetchWeatherData(lat, lon) {
     try {
         // 使用 Open-Meteo API（免费，无需 API key）
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`;
-        
+
         const response = await fetch(url);
         if (!response.ok) throw new Error('天气数据获取失败');
-        
+
         const data = await response.json();
         weatherData = {
             temperature: Math.round(data.current.temperature_2m),
             weatherCode: data.current.weather_code,
             time: data.current.time
         };
-        
-        // 缓存数据
-        localStorage.setItem('weather_cache', JSON.stringify(weatherData));
-        localStorage.setItem('weather_location', JSON.stringify(currentLocation));
-        localStorage.setItem('weather_cache_time', Date.now().toString());
-        
+
+        writeWeatherCache(currentLocation, weatherData);
         updateWeatherUI();
     } catch (error) {
         console.error('获取天气失败:', error);
@@ -1716,6 +2019,8 @@ function updateWeatherUI() {
     if (iconEl) {
         iconEl.innerHTML = `<i class="fas ${weatherInfo.icon}" style="color: ${weatherInfo.color}"></i>`;
     }
+
+    updateWeatherLocationStatus();
 }
 
 // 更新加载状态
@@ -1739,23 +2044,21 @@ function updateWeatherLoading(loading) {
 // 更新错误状态
 function updateWeatherError() {
     updateWeatherLoading(false);
-    
+
     const tempEl = document.getElementById('weatherTemp');
     const descEl = document.getElementById('weatherDesc');
     const iconEl = document.getElementById('weatherIcon');
-    
+
     if (tempEl) tempEl.textContent = '--°';
     if (descEl) descEl.textContent = '获取失败';
     if (iconEl) iconEl.innerHTML = '<i class="fas fa-exclamation-circle" style="color: #ff6b6b"></i>';
+    updateWeatherLocationStatus();
 }
 
 // 刷新天气
 function refreshWeather() {
-    // 清除缓存
-    localStorage.removeItem('weather_cache');
-    localStorage.removeItem('weather_cache_time');
-    
-    getWeather();
+    clearWeatherCache();
+    getWeather(true);
 }
 
 // ========================================
