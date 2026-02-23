@@ -4,6 +4,79 @@
  */
 
 // ========================================
+// Submission History (localStorage-backed)
+// ========================================
+
+const submissionHistory = {
+    _storageKey: 'leetcode_submissions',
+
+    _load() {
+        try {
+            return JSON.parse(localStorage.getItem(this._storageKey)) || [];
+        } catch { return []; }
+    },
+
+    _save(data) {
+        localStorage.setItem(this._storageKey, JSON.stringify(data));
+    },
+
+    addSubmission(entry) {
+        const submissions = this._load();
+        entry.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        submissions.unshift(entry);
+        if (submissions.length > 500) submissions.length = 500;
+        this._save(submissions);
+        return entry;
+    },
+
+    updateSubmission(id, updates) {
+        const submissions = this._load();
+        const idx = submissions.findIndex(s => s.id === id);
+        if (idx !== -1) {
+            Object.assign(submissions[idx], updates);
+            this._save(submissions);
+        }
+    },
+
+    getAllSubmissions() {
+        return this._load();
+    },
+
+    getStats() {
+        const submissions = this._load();
+        const accepted = new Set(
+            submissions.filter(s => s.status === 'accepted').map(s => s.problemId)
+        ).size;
+        return { total: submissions.length, accepted };
+    },
+
+    getStreakDays() {
+        const submissions = this._load();
+        if (submissions.length === 0) return 0;
+
+        const days = new Set(
+            submissions.map(s => new Date(s.timestamp).toDateString())
+        );
+        const sorted = [...days].map(d => new Date(d)).sort((a, b) => b - a);
+
+        let streak = 1;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const latest = sorted[0];
+        latest.setHours(0, 0, 0, 0);
+        const diffToday = (today - latest) / 86400000;
+        if (diffToday > 1) return 0;
+
+        for (let i = 1; i < sorted.length; i++) {
+            const diff = (sorted[i - 1] - sorted[i]) / 86400000;
+            if (diff === 1) streak++;
+            else break;
+        }
+        return streak;
+    }
+};
+
+// ========================================
 // 全局状态
 // ========================================
 
