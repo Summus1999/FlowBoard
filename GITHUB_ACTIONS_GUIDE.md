@@ -3,6 +3,7 @@
 ## 🎯 概述
 
 GitHub Actions 配置已完成，支持：
+
 - ✅ Windows (NSIS 安装程序 + 便携版)
 - ✅ macOS (DMG + ZIP)
 - ✅ Linux (AppImage + DEB + TAR.GZ)
@@ -85,7 +86,7 @@ pull_request:          # PR 触发
 ### 构建矩阵
 
 | Job | 运行环境 | 输出格式 |
-|-----|---------|---------|
+| --- | ------- | ------- |
 | build-windows | windows-latest | .exe, .zip |
 | build-macos | macos-latest | .dmg, .zip |
 | build-linux | ubuntu-latest | .AppImage, .deb, .tar.gz |
@@ -127,6 +128,7 @@ README.md 已添加构建状态徽章：
 **原因**: 网络连接问题
 
 **解决**: 已配置国内镜像 `npmmirror.com`，如仍有问题可尝试：
+
 ```yaml
 env:
   ELECTRON_MIRROR: https://registry.npmmirror.com/binary.html?path=electron/
@@ -156,13 +158,14 @@ env:
 
 建议使用 [语义化版本](https://semver.org/lang/zh-CN/)：
 
-```
+```text
 主版本号.次版本号.修订号
 1.0.0
 ```
 
 预发布版本：
-```
+
+```text
 1.0.0-beta.1
 1.0.0-rc.1
 ```

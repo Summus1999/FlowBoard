@@ -15,27 +15,28 @@
 1. **多平台账户密码管理**
    - 卡片式展示各平台账户（12个国内常用账号预设）
    - 分类筛选（社交/工作/金融/娱乐）
-   - 密码强度可视化指示
+   - 密码强度可视化指示（弱/中/强）
    - 一键复制用户名/密码
    - 添加/编辑/删除账户
+   - 安全评分圆环显示
 
 2. **界面UI风格切换**
    - 4种主题风格：深海蓝、极光紫、森林绿、简约白
    - 毛玻璃效果开关
    - 动画效果控制
-   - 圆角大小调节
+   - 圆角大小调节（0-20px）
    - 主题设置自动保存
 
 3. **实时资讯整合**
    - 热榜展示（AI/科技/财经/娱乐/社会分类）
    - 多平台数据源（微博/知乎/抖音/今日头条）
-   - 资讯卡片布局
+   - 精美头条区域（动态渐变背景）
    - 热门话题标签
 
 4. **Markdown 笔记编辑器**
    - 三种编辑模式：编辑/预览/分屏
    - 完整的 Markdown 语法支持
-   - 代码语法高亮
+   - 代码语法高亮（highlight.js）
    - 自动保存功能
    - 笔记分类管理（工作/学习/生活/灵感）
 
@@ -48,15 +49,17 @@
 6. **LeetCode 刷题集成**
    - 题目列表（支持 API 和本地数据双模式）
    - Monaco Editor 代码编辑器（VS Code 同款）
+   - 备用 textarea 编辑器（Monaco 加载失败时自动切换）
    - 代码智能提示（算法模板、常用代码片段）
    - 多语言支持（JavaScript/Python/Java/C++等）
    - 本地模拟运行和提交
+   - 提交历史追踪（连续打卡天数统计）
 
 7. **GitHub 项目追踪**
    - 用户名登录（支持 Token 访问私有仓库）
    - 自动显示最近更新的仓库
-   - 仓库统计（Stars/Forks/语言）
-   - 提交时间追踪
+   - 仓库统计（Stars/Forks/语言/最后提交时间）
+   - 用户统计（公开仓库数/关注者数/总星标数）
 
 8. **应用中心**
    - 快速启动本地应用（微信/QQ/VS Code/浏览器等）
@@ -80,6 +83,7 @@
     - 自动定位（GPS → IP → 默认城市）
     - 当前温度和天气状况
     - 点击刷新功能
+    - 5分钟缓存机制
 
 12. **系统设置**
     - 开机自动启动（Windows/macOS）
@@ -92,7 +96,7 @@
 - 📱 响应式布局，适配各种屏幕
 - 💾 本地数据持久化存储（localStorage + IndexedDB）
 - 🔔 系统托盘支持
-- ⌨️ 快捷键支持
+- ⌨️ 快捷键支持（Ctrl+K 搜索、Ctrl+S 保存等）
 - 🔒 Electron 安全最佳实践（contextIsolation + preload）
 
 ## 技术栈
@@ -128,7 +132,7 @@
 
 ```bash
 npm install
-```
+```bash
 
 ### 开发模式运行
 
@@ -138,7 +142,7 @@ npm run dev
 
 # macOS/Linux
 NODE_ENV=development npm start
-```
+```bash
 
 ### 构建应用
 
@@ -154,13 +158,13 @@ npm run build:mac
 
 # 仅构建 Linux 版本
 npm run build:linux
-```
+```bash
 
 构建后的文件将位于 `dist` 目录中。
 
 ## 项目结构
 
-```
+```text
 FlowBoard/
 ├── assets/              # 应用图标和资源
 ├── build/               # 构建配置
@@ -192,7 +196,7 @@ FlowBoard/
 ├── package.json         # 项目配置
 ├── README.md            # 项目说明
 └── FlowBoard Docs.md    # 详细产品文档
-```
+```text
 
 ## 开发说明
 
@@ -222,7 +226,7 @@ if (window.electronAPI) {
     // 设置开机启动
     await window.electronAPI.setAutoLaunch(true);
 }
-```
+```javascript
 
 ### Electron 安全架构
 
@@ -278,6 +282,7 @@ if (window.electronAPI) {
 | localStorage | `flowboard_notes` | 笔记数据 |
 | localStorage | `flowboard_events` | 日程事件 |
 | localStorage | `github_username` | GitHub 登录信息 |
+| localStorage | `leetcode_submissions` | LeetCode 提交历史 |
 | IndexedDB | `FlowBoardInterviewDB` | 面试录音文件 |
 
 ## 贡献指南
@@ -301,10 +306,13 @@ MIT License - 详见 [LICENSE](LICENSE) 文件
 ## 更新日志
 
 ### v1.2 (2026-02-23)
-- 新增实时天气功能
+- 新增实时天气功能（自动定位、温度显示）
 - Electron 安全加固（contextIsolation + preload）
-- 应用中心新增 AI 图标选项
+- 应用中心新增 AI 图标选项（机器人、芯片、代码图标）
+- LeetCode 编辑器优化（AMD loader 检测、备用编辑器）
+- GitHub 初始化优化（防止重复初始化）
 - 移除主页「新消息」装饰功能
+- 资讯中心头条区域美化（动态渐变背景）
 
 ### v1.1 (2026-02-23)
 - 新增开机启动设置

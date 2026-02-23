@@ -7,9 +7,9 @@
 无需安装任何环境，直接在 GitHub 上获取构建好的应用：
 
 1. 打开 GitHub 仓库页面
-2. 点击 **Actions** 标签
-3. 选择最新的 **Build and Release** 工作流
-4. 在页面底部 **Artifacts** 区域下载对应平台的构建包
+1. 点击 **Actions** 标签
+1. 选择最新的 **Build and Release** 工作流
+1. 在页面底部 **Artifacts** 区域下载对应平台的构建包
 
 或者查看 [Releases](https://github.com/Summus1999/FlowBoard/releases) 页面下载稳定版本。
 
@@ -22,18 +22,22 @@
 ## 🚀 一键启动
 
 ### Windows
+
 双击运行 `start.bat` 或在终端执行：
+
 ```bash
 npm run dev
 ```
 
 ### macOS / Linux
+
 ```bash
 chmod +x start.sh
 ./start.sh
 ```
 
 或者：
+
 ```bash
 npm run dev
 ```
@@ -43,14 +47,17 @@ npm run dev
 ## 📦 构建桌面应用
 
 ### 先决条件
+
 确保已安装 Node.js (>= 16.x)
 
 ### 1. 安装依赖
+
 ```bash
 npm install
 ```
 
 ### 2. 开发模式运行
+
 ```bash
 npm run dev
 ```
@@ -58,21 +65,25 @@ npm run dev
 ### 3. 构建应用
 
 **构建所有平台：**
+
 ```bash
 npm run build:all
 ```
 
 **仅 Windows：**
+
 ```bash
 npm run build:win
 ```
 
 **仅 macOS：**
+
 ```bash
 npm run build:mac
 ```
 
 构建完成后，安装包位于 `dist` 目录：
+
 - Windows: `dist/FlowBoard-1.0.0.exe` (安装程序) 和 `FlowBoard-1.0.0-portable.exe` (便携版)
 - macOS: `dist/FlowBoard-1.0.0.dmg` 和 `FlowBoard-1.0.0.zip`
 
@@ -80,7 +91,7 @@ npm run build:mac
 
 ## 📁 项目结构
 
-```
+```text
 FlowBoard/
 ├── assets/              # 图标和资源
 │   └── icon.svg         # 应用图标源文件
@@ -109,13 +120,14 @@ FlowBoard/
 ## 🎨 自定义图标（可选）
 
 1. 替换 `assets/icon.svg` 为你自己的 SVG 图标
-2. 运行图标生成脚本：
+1. 运行图标生成脚本：
+
 ```bash
 npm install sharp --save-dev
 node scripts/generate-icons.js
 ```
 
-3. 按照生成的说明转换为平台特定格式：
+1. 按照生成的说明转换为平台特定格式：
    - macOS: `icon.icns`
    - Windows: `icon.ico`
 
@@ -124,13 +136,16 @@ node scripts/generate-icons.js
 ## 🔧 常见问题
 
 ### 启动时白屏？
+
 - 检查是否正确安装了依赖：`npm install`
 - 尝试删除 `node_modules` 后重新安装
 
 ### 如何调试？
+
 开发模式下按 `Ctrl+Shift+I` (Windows/Linux) 或 `Cmd+Option+I` (macOS) 打开开发者工具。
 
 ### 数据存储在哪里？
+
 - Windows: `%APPDATA%/flowboard/`
 - macOS: `~/Library/Application Support/flowboard/`
 - Linux: `~/.config/flowboard/`

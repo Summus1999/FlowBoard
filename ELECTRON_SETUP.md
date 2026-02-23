@@ -28,17 +28,20 @@ node scripts/generate-icons.js
 ```
 
 然后按照生成的说明文件转换为平台特定格式：
+
 - macOS: `icon.icns`（参考 `assets/ICNS-README.md`）
 - Windows: `icon.ico`（参考 `assets/ICO-README.md`）
 
 ### 3. 开发模式运行
 
 Windows:
+
 ```bash
 npm run dev
 ```
 
 macOS/Linux:
+
 ```bash
 npm run dev
 # 或者
@@ -48,16 +51,19 @@ NODE_ENV=development npm start
 ### 4. 构建应用
 
 构建所有平台：
+
 ```bash
 npm run build:all
 ```
 
 仅构建 Windows：
+
 ```bash
 npm run build:win
 ```
 
 仅构建 macOS：
+
 ```bash
 npm run build:mac
 ```
@@ -66,7 +72,7 @@ npm run build:mac
 
 ## 项目文件说明
 
-```
+```text
 FlowBoard/
 ├── electron/
 │   ├── main.js          # 主进程 - 窗口管理、系统托盘等
@@ -132,6 +138,7 @@ FlowBoard/
 ### Q: 构建失败，提示缺少依赖？
 
 确保已安装所有依赖：
+
 ```bash
 npm install
 npm run postinstall  # 安装 Electron 原生依赖
@@ -161,6 +168,7 @@ xattr -cr /Applications/FlowBoard.app
 ### 代码签名（推荐用于正式发布）
 
 #### macOS
+
 需要 Apple Developer ID 证书。在 `package.json` 中添加：
 
 ```json
@@ -174,9 +182,11 @@ xattr -cr /Applications/FlowBoard.app
 ```
 
 #### Windows
+
 需要代码签名证书。可以通过以下方式配置：
 
 环境变量方式：
+
 ```bash
 set WIN_CSC_LINK=path/to/certificate.p12
 set WIN_CSC_KEY_PASSWORD=your-password
