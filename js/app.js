@@ -463,6 +463,15 @@ function showPage(pageName) {
     if (pageName === 'interview' && typeof initInterview === 'function') {
         setTimeout(initInterview, 100);
     }
+    
+    // 初始化 LeetCode 页面
+    if (pageName === 'leetcode') {
+        setTimeout(() => {
+            if (typeof initLeetCode === 'function') {
+                initLeetCode();
+            }
+        }, 100);
+    }
 }
 
 // ========================================

@@ -133,20 +133,22 @@ function getIconPath() {
 
 // 创建系统托盘
 function createTray() {
-    const iconPath = path.join(__dirname, '../assets/tray-icon.png');
+    // 使用应用主图标作为托盘图标
+    const iconPath = path.join(__dirname, '../assets/icon.png');
     
-    // 如果托盘图标不存在，创建一个简单的图标
     let trayIcon;
     if (fs.existsSync(iconPath)) {
         trayIcon = nativeImage.createFromPath(iconPath);
+        // Windows 和 macOS 都需要调整为适合托盘的尺寸
+        if (process.platform === 'darwin') {
+            trayIcon = trayIcon.resize({ width: 16, height: 16 });
+        } else {
+            // Windows/Linux 使用 16x16 或 32x32
+            trayIcon = trayIcon.resize({ width: 16, height: 16 });
+        }
     } else {
-        // 使用默认的 16x16 透明图标
-        trayIcon = nativeImage.createEmpty();
-    }
-    
-    // macOS 需要调整图标大小
-    if (process.platform === 'darwin') {
-        trayIcon = trayIcon.resize({ width: 16, height: 16 });
+        // 如果图标不存在，创建一个简单的颜色块作为占位
+        trayIcon = nativeImage.createFromNamedImage('application', [16, 16]);
     }
 
     tray = new Tray(trayIcon);

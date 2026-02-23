@@ -29,6 +29,15 @@ let leetCodeState = {
 // ========================================
 
 function initLeetCode() {
+    // 防止重复初始化
+    if (leetCodeState.initialized) {
+        console.log('LeetCode 已初始化，跳过');
+        return;
+    }
+    leetCodeState.initialized = true;
+    
+    console.log('开始初始化 LeetCode...');
+    
     // 初始化 Monaco Editor
     initMonacoEditor();
     
@@ -190,18 +199,47 @@ function showLoading(show) {
 // ========================================
 
 function initMonacoEditor() {
+    const container = document.getElementById('monacoEditor');
+    if (!container) {
+        console.warn('Monaco Editor 容器不存在');
+        return;
+    }
+
+    // 如果已经有编辑器实例，跳过初始化
+    if (leetCodeState.editor) {
+        console.log('编辑器已存在，跳过初始化');
+        return;
+    }
+
+    // 检查 require 是否可用（Monaco 需要 AMD loader）
+    if (typeof require === 'undefined') {
+        console.warn('AMD loader 不可用，使用备用编辑器');
+        initFallbackEditor();
+        return;
+    }
+
+    // 检查是否是 AMD loader
+    if (typeof require.config !== 'function') {
+        console.warn('require 不是 AMD loader，使用备用编辑器');
+        initFallbackEditor();
+        return;
+    }
+
+    console.log('开始加载 Monaco Editor...');
+
     // 设置加载超时
     const monacoTimeout = setTimeout(() => {
         console.warn('Monaco Editor 加载超时，切换到备用编辑器');
         initFallbackEditor();
-    }, 10000); // 10秒超时
+    }, 15000);
 
     try {
+        // 配置 Monaco 路径
         require.config({ 
             paths: { 
                 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' 
             },
-            waitSeconds: 30 // 增加加载超时时间
+            waitSeconds: 30
         });
 
         require(['vs/editor/editor.main'], function() {

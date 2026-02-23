@@ -12,7 +12,8 @@ let githubState = {
     token: localStorage.getItem('github_token') || '',
     repos: [],
     isLoading: false,
-    isLoggedIn: false
+    isLoggedIn: false,
+    initialized: false
 };
 
 // 检查登录状态
@@ -54,15 +55,49 @@ const languageColors = {
 // ========================================
 
 function initGithub() {
+    // 防止重复初始化
+    if (githubState.initialized) {
+        console.log('GitHub 已初始化，跳过');
+        return;
+    }
+    githubState.initialized = true;
+    
+    console.log('开始初始化 GitHub...');
+    
+    // 检查登录状态
     checkGithubLoginStatus();
     
     // 加载保存的用户名
     const savedUsername = localStorage.getItem('github_username');
     if (savedUsername) {
         const usernameInput = document.getElementById('githubUsername');
-        if (usernameInput) usernameInput.value = savedUsername;
+        if (usernameInput) {
+            usernameInput.value = savedUsername;
+        }
         // 自动加载最近更新的2个仓库
-        loadGithubRepos();
+        // 使用 setTimeout 确保 DOM 完全加载
+        setTimeout(() => {
+            loadGithubRepos().catch(err => {
+                console.error('自动加载仓库失败:', err);
+            });
+        }, 100);
+    } else {
+        // 未登录，显示空状态
+        renderEmptyState();
+    }
+}
+
+// 显示未登录状态
+function renderEmptyState() {
+    const container = document.getElementById('githubRepos');
+    if (container) {
+        container.innerHTML = `
+            <div class="github-empty">
+                <i class="fab fa-github" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                <p>请点击右上角「登录」按钮输入 GitHub 用户名</p>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">查看最近更新的项目</p>
+            </div>
+        `;
     }
 }
 
@@ -175,7 +210,7 @@ function logoutGithub() {
         if (usernameInput) usernameInput.value = '';
         
         updateGithubLoginUI();
-        renderGithubRepos([]);
+        renderEmptyState(); // 显示未登录提示
         
         // 重置统计
         document.getElementById('githubRepoCount').textContent = '-';
@@ -216,15 +251,26 @@ function updateGithubLoginUI() {
 // ========================================
 
 async function loadGithubRepos() {
-    const username = document.getElementById('githubUsername').value.trim();
+    // 获取用户名 - 优先使用传入的或已保存的
+    let username = githubState.username;
+    
+    // 如果没有保存的用户名，尝试从输入框获取
+    const usernameInput = document.getElementById('githubUsername');
+    if (!username && usernameInput) {
+        username = usernameInput.value.trim();
+    }
+    
     if (!username) {
         showToast('请输入 GitHub 用户名');
+        renderEmptyState();
         return;
     }
     
+    // 保存用户名到状态
     githubState.username = username;
     localStorage.setItem('github_username', username);
     githubState.isLoading = true;
+    githubState.isLoggedIn = true;
     
     renderLoading();
     
