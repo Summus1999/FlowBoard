@@ -1,0 +1,38 @@
+appId: com.flowboard.app
+productName: FlowBoard
+copyright: Copyright © 2026 FlowBoard
+directories:
+  output: dist
+files:
+  - index.html
+  - css/**/*
+  - js/**/*
+  - assets/**/*
+  - electron/**/*
+asar: true
+compression: maximum
+electronDownload:
+  mirror: https://github.com/electron/electron/releases/download/
+  customDir: v28.3.3
+  customFilename: electron-v28.3.3-win32-x64.zip
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+        - ia32
+    - target: portable
+      arch:
+        - x64
+  icon: assets/icon.ico
+  publisherName: FlowBoard Team
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  installerIcon: assets/icon.ico
+  uninstallerIcon: assets/icon.ico
+  installerHeaderIcon: assets/icon.ico
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: FlowBoard
+  include: build/installer.nsh

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- 背景 -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a8a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- 圆角矩形背景 -->
+  <rect x="40" y="40" width="432" height="432" rx="100" fill="url(#bgGradient)"/>
+  
+  <!-- 玻璃层效果 -->
+  <rect x="60" y="60" width="392" height="392" rx="80" fill="rgba(255,255,255,0.1)"/>
+  
+  <!-- 图标主体 - 分层面板 -->
+  <g fill="white" filter="url(#glow)">
+    <!-- 底部面板 -->
+    <rect x="130" y="280" width="140" height="100" rx="12" fill="rgba(255,255,255,0.4)"/>
+    
+    <!-- 中间面板 -->
+    <rect x="190" y="200" width="140" height="100" rx="12" fill="rgba(255,255,255,0.6)"/>
+    
+    <!-- 顶部面板 -->
+    <rect x="250" y="120" width="140" height="100" rx="12" fill="rgba(255,255,255,0.9)"/>
+  </g>
+  
+  <!-- 装饰线条 -->
+  <line x1="145" y1="310" x2="255" y2="310" stroke="rgba(255,255,255,0.5)" stroke-width="6" stroke-linecap="round"/>
+  <line x1="145" y1="330" x2="220" y2="330" stroke="rgba(255,255,255,0.5)" stroke-width="6" stroke-linecap="round"/>
+  <line x1="205" y1="230" x2="315" y2="230" stroke="rgba(255,255,255,0.7)" stroke-width="6" stroke-linecap="round"/>
+  <line x1="265" y1="150" x2="375" y2="150" stroke="rgba(255,255,255,0.9)" stroke-width="6" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowBoard - 个人工作台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="theme-dark-blue">
+    <div class="app-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-layer-group"></i>
+                    <span>FlowBoard</span>
+                </div>
+                <p class="tagline">EXPLORE OS</p>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <a href="#" class="nav-item active" data-page="dashboard">
+                        <i class="fas fa-th-large"></i>
+                        <span>我的主页</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="passwords">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>账户管理</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="news">
+                        <i class="fas fa-newspaper"></i>
+                        <span>资讯中心</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="settings">
+                        <i class="fas fa-cog"></i>
+                        <span>界面设置</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <p class="section-title">工具</p>
+                    <a href="#" class="nav-item" data-page="todo">
+                        <i class="fas fa-check-circle"></i>
+                        <span>待办事项</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="notes">
+                        <i class="fas fa-sticky-note"></i>
+                        <span>笔记记录</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="calendar">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>日程管理</span>
+                    </a>
+                </div>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-card">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-info">
+                        <p class="user-name">个人用户</p>
+                        <p class="user-role">PRO MEMBER</p>
+                    </div>
+                </div>
+                <div class="footer-actions">
+                    <button class="icon-btn"><i class="fas fa-home"></i></button>
+                    <button class="icon-btn"><i class="fas fa-user"></i></button>
+                    <button class="icon-btn"><i class="fas fa-cog"></i></button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 顶部统计栏 -->
+            <header class="stats-header">
+                <div class="stat-card">
+                    <div class="stat-icon icon-password">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number" id="passwordCount">12</span>
+                        <span class="stat-label">账户密码</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon icon-task">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number" id="taskCount">5</span>
+                        <span class="stat-label">待办任务</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon icon-message">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number" id="messageCount">3</span>
+                        <span class="stat-label">新消息</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon icon-weather">
+                        <i class="fas fa-cloud-sun"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number">22°</span>
+                        <span class="stat-label">多云</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 页面内容 -->
+            <div class="page-content">
+                <!-- 仪表盘页面 -->
+                <div class="page active" id="page-dashboard">
+                    <div class="content-grid">
+                        <!-- 左侧：账户密码管理概览 -->
+                        <div class="content-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-shield-alt"></i> 账户安全</h3>
+                                <button class="btn-text" onclick="showPage('passwords')">查看全部</button>
+                            </div>
+                            <div class="password-preview">
+                                <div class="security-score">
+                                    <div class="score-ring">
+                                        <svg viewBox="0 0 100 100">
+                                            <circle class="ring-bg" cx="50" cy="50" r="45"/>
+                                            <circle class="ring-progress" cx="50" cy="50" r="45" style="--progress: 85"/>
+                                        </svg>
+                                        <div class="score-value">85</div>
+                                    </div>
+                                    <p class="score-text">安全评分</p>
+                                </div>
+                                <div class="password-list-short">
+                                    <div class="pwd-item">
+                                        <div class="pwd-icon" style="background: linear-gradient(135deg, #1da1f2, #0d8bd9);">
+                                            <i class="fab fa-twitter"></i>
+                                        </div>
+                                        <div class="pwd-info">
+                                            <span class="pwd-name">Twitter</span>
+                                            <span class="pwd-strength strong">强</span>
+                                        </div>
+                                    </div>
+                                    <div class="pwd-item">
+                                        <div class="pwd-icon" style="background: linear-gradient(135deg, #ea4335, #d33b28);">
+                                            <i class="fab fa-google"></i>
+                                        </div>
+                                        <div class="pwd-info">
+                                            <span class="pwd-name">Google</span>
+                                            <span class="pwd-strength strong">强</span>
+                                        </div>
+                                    </div>
+                                    <div class="pwd-item">
+                                        <div class="pwd-icon" style="background: linear-gradient(135deg, #7289da, #5b6eae);">
+                                            <i class="fab fa-discord"></i>
+                                        </div>
+                                        <div class="pwd-info">
+                                            <span class="pwd-name">Discord</span>
+                                            <span class="pwd-strength medium">中</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 中间：待办事项 -->
+                        <div class="content-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-check-circle"></i> 待办事项</h3>
+                                <button class="btn-text">全部</button>
+                            </div>
+                            <div class="todo-list">
+                                <div class="todo-item">
+                                    <input type="checkbox" class="todo-check" id="todo1">
+                                    <label for="todo1" class="todo-text">更新项目文档</label>
+                                    <span class="todo-tag urgent">紧急</span>
+                                </div>
+                                <div class="todo-item">
+                                    <input type="checkbox" class="todo-check" id="todo2" checked>
+                                    <label for="todo2" class="todo-text completed">修改账户密码</label>
+                                    <span class="todo-tag">一般</span>
+                                </div>
+                                <div class="todo-item">
+                                    <input type="checkbox" class="todo-check" id="todo3">
+                                    <label for="todo3" class="todo-text">查看今日资讯</label>
+                                    <span class="todo-tag">日常</span>
+                                </div>
+                                <div class="todo-item">
+                                    <input type="checkbox" class="todo-check" id="todo4">
+                                    <label for="todo4" class="todo-text">备份重要数据</label>
+                                    <span class="todo-tag">重要</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 右侧：热榜资讯 -->
+                        <div class="content-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-fire"></i> 热榜中心</h3>
+                                <div class="tab-switcher">
+                                    <button class="tab-btn active" data-tab="tech">科技</button>
+                                    <button class="tab-btn" data-tab="finance">财经</button>
+                                    <button class="tab-btn" data-tab="social">社交</button>
+                                </div>
+                            </div>
+                            <div class="news-list">
+                                <div class="news-item">
+                                    <span class="news-rank hot">1</span>
+                                    <div class="news-content">
+                                        <p class="news-title">OpenAI发布GPT-5新功能</p>
+                                        <p class="news-meta">125万热度</p>
+                                    </div>
+                                </div>
+                                <div class="news-item">
+                                    <span class="news-rank">2</span>
+                                    <div class="news-content">
+                                        <p class="news-title">苹果WWDC 2026时间确定</p>
+                                        <p class="news-meta">98万热度</p>
+                                    </div>
+                                </div>
+                                <div class="news-item">
+                                    <span class="news-rank">3</span>
+                                    <div class="news-content">
+                                        <p class="news-title">SpaceX星舰第六次试飞成功</p>
+                                        <p class="news-meta">87万热度</p>
+                                    </div>
+                                </div>
+                                <div class="news-item">
+                                    <span class="news-rank">4</span>
+                                    <div class="news-content">
+                                        <p class="news-title">特斯拉新款Model 2谍照曝光</p>
+                                        <p class="news-meta">76万热度</p>
+                                    </div>
+                                </div>
+                                <div class="news-item">
+                                    <span class="news-rank">5</span>
+                                    <div class="news-content">
+                                        <p class="news-title">微软Copilot重大更新</p>
+                                        <p class="news-meta">65万热度</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 账户密码管理页面 -->
+                <div class="page" id="page-passwords">
+                    <div class="page-header">
+                        <h2><i class="fas fa-shield-alt"></i> 账户密码管理</h2>
+                        <button class="btn-primary" onclick="openAddPasswordModal()">
+                            <i class="fas fa-plus"></i> 添加账户
+                        </button>
+                    </div>
+                    <div class="password-grid">
+                        <div class="password-categories">
+                            <button class="cat-btn active" data-cat="all">
+                                <i class="fas fa-th"></i> 全部
+                            </button>
+                            <button class="cat-btn" data-cat="social">
+                                <i class="fas fa-share-alt"></i> 社交
+                            </button>
+                            <button class="cat-btn" data-cat="work">
+                                <i class="fas fa-briefcase"></i> 工作
+                            </button>
+                            <button class="cat-btn" data-cat="finance">
+                                <i class="fas fa-credit-card"></i> 金融
+                            </button>
+                            <button class="cat-btn" data-cat="entertainment">
+                                <i class="fas fa-gamepad"></i> 娱乐
+                            </button>
+                        </div>
+                        <div class="password-cards" id="passwordCards">
+                            <!-- 密码卡片将通过JS动态生成 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 实时资讯页面 -->
+                <div class="page" id="page-news">
+                    <div class="page-header">
+                        <h2><i class="fas fa-newspaper"></i> 实时资讯</h2>
+                        <div class="news-filters">
+                            <button class="filter-btn active">全部</button>
+                            <button class="filter-btn">科技</button>
+                            <button class="filter-btn">财经</button>
+                            <button class="filter-btn">娱乐</button>
+                            <button class="filter-btn">体育</button>
+                        </div>
+                    </div>
+                    <div class="news-grid">
+                        <div class="news-main">
+                            <div class="featured-news">
+                                <div class="featured-image">
+                                    <div class="placeholder-img" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                        <i class="fas fa-image"></i>
+                                    </div>
+                                    <div class="featured-overlay">
+                                        <span class="featured-tag">头条</span>
+                                        <h3>AI技术突破：新一代大模型能力大幅提升</h3>
+                                        <p>2小时前 · 科技日报</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="news-list-detailed" id="newsList">
+                                <!-- 资讯列表将通过JS动态生成 -->
+                            </div>
+                        </div>
+                        <div class="news-sidebar">
+                            <div class="sidebar-card">
+                                <h4><i class="fas fa-chart-line"></i> 热门话题</h4>
+                                <div class="trending-topics">
+                                    <span class="topic-tag">#人工智能</span>
+                                    <span class="topic-tag">#新能源汽车</span>
+                                    <span class="topic-tag">#股市行情</span>
+                                    <span class="topic-tag">#SpaceX</span>
+                                    <span class="topic-tag">#苹果新品</span>
+                                    <span class="topic-tag">#区块链</span>
+                                </div>
+                            </div>
+                            <div class="sidebar-card">
+                                <h4><i class="fas fa-rss"></i> 订阅源</h4>
+                                <div class="rss-sources">
+                                    <div class="rss-item">
+                                        <i class="fas fa-check-circle active"></i>
+                                        <span>36氪</span>
+                                    </div>
+                                    <div class="rss-item">
+                                        <i class="fas fa-check-circle active"></i>
+                                        <span>虎嗅</span>
+                                    </div>
+                                    <div class="rss-item">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>知乎热榜</span>
+                                    </div>
+                                    <div class="rss-item">
+                                        <i class="fas fa-check-circle active"></i>
+                                        <span>IT之家</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 界面设置页面 -->
+                <div class="page" id="page-settings">
+                    <div class="page-header">
+                        <h2><i class="fas fa-palette"></i> 界面设置</h2>
+                    </div>
+                    <div class="settings-grid">
+                        <div class="settings-card">
+                            <h3><i class="fas fa-paint-brush"></i> 主题风格</h3>
+                            <div class="theme-options">
+                                <div class="theme-card active" data-theme="theme-dark-blue">
+                                    <div class="theme-preview dark-blue">
+                                        <div class="preview-sidebar"></div>
+                                        <div class="preview-content">
+                                            <div class="preview-card"></div>
+                                            <div class="preview-card"></div>
+                                        </div>
+                                    </div>
+                                    <span class="theme-name">深海蓝</span>
+                                    <i class="fas fa-check theme-check"></i>
+                                </div>
+                                <div class="theme-card" data-theme="theme-dark-purple">
+                                    <div class="theme-preview dark-purple">
+                                        <div class="preview-sidebar"></div>
+                                        <div class="preview-content">
+                                            <div class="preview-card"></div>
+                                            <div class="preview-card"></div>
+                                        </div>
+                                    </div>
+                                    <span class="theme-name">极光紫</span>
+                                    <i class="fas fa-check theme-check"></i>
+                                </div>
+                                <div class="theme-card" data-theme="theme-dark-green">
+                                    <div class="theme-preview dark-green">
+                                        <div class="preview-sidebar"></div>
+                                        <div class="preview-content">
+                                            <div class="preview-card"></div>
+                                            <div class="preview-card"></div>
+                                        </div>
+                                    </div>
+                                    <span class="theme-name">森林绿</span>
+                                    <i class="fas fa-check theme-check"></i>
+                                </div>
+                                <div class="theme-card" data-theme="theme-light">
+                                    <div class="theme-preview light">
+                                        <div class="preview-sidebar"></div>
+                                        <div class="preview-content">
+                                            <div class="preview-card"></div>
+                                            <div class="preview-card"></div>
+                                        </div>
+                                    </div>
+                                    <span class="theme-name">简约白</span>
+                                    <i class="fas fa-check theme-check"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="settings-card">
+                            <h3><i class="fas fa-desktop"></i> 显示设置</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-name">毛玻璃效果</span>
+                                    <span class="setting-desc">启用半透明模糊效果</span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked id="toggleGlass">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-name">动画效果</span>
+                                    <span class="setting-desc">启用界面过渡动画</span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked id="toggleAnim">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-name">圆角大小</span>
+                                    <span class="setting-desc">调整界面元素圆角</span>
+                                </div>
+                                <div class="range-control">
+                                    <input type="range" min="0" max="20" value="12" id="radiusRange">
+                                    <span class="range-value">12px</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="settings-card">
+                            <h3><i class="fas fa-bell"></i> 通知设置</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-name">密码过期提醒</span>
+                                    <span class="setting-desc">密码即将过期时通知</span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-name">资讯推送</span>
+                                    <span class="setting-desc">每日热点资讯推送</span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-name">任务提醒</span>
+                                    <span class="setting-desc">待办事项到期提醒</span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 添加密码模态框 -->
+    <div class="modal" id="addPasswordModal">
+        <div class="modal-overlay" onclick="closeAddPasswordModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus-circle"></i> 添加账户</h3>
+                <button class="close-btn" onclick="closeAddPasswordModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>平台名称</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-globe"></i>
+                        <input type="text" placeholder="例如: GitHub" id="platformName">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>用户名 / 邮箱</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-user"></i>
+                        <input type="text" placeholder="your@email.com" id="username">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" placeholder="输入密码" id="password">
+                        <button class="input-action" onclick="togglePasswordVisibility()">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="password-strength-meter">
+                        <div class="strength-bar" id="strengthBar"></div>
+                        <span class="strength-text" id="strengthText">密码强度</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>分类</label>
+                    <div class="category-select">
+                        <button class="cat-option active" data-value="social">
+                            <i class="fas fa-share-alt"></i> 社交
+                        </button>
+                        <button class="cat-option" data-value="work">
+                            <i class="fas fa-briefcase"></i> 工作
+                        </button>
+                        <button class="cat-option" data-value="finance">
+                            <i class="fas fa-credit-card"></i> 金融
+                        </button>
+                        <button class="cat-option" data-value="entertainment">
+                            <i class="fas fa-gamepad"></i> 娱乐
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>备注 (可选)</label>
+                    <textarea placeholder="添加备注信息..." rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeAddPasswordModal()">取消</button>
+                <button class="btn-primary" onclick="savePassword()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        // Electron 环境检测
+        window.isElectron = typeof process !== 'undefined' && process.versions && process.versions.electron;
+        
+        // 如果是 Electron 环境，启用本地存储功能
+        if (window.isElectron) {
+            console.log('Running in Electron environment');
+            
+            // 重写 localStorage 方法，使用 Electron 的 IPC 进行持久化
+            const originalSetItem = localStorage.setItem;
+            const originalRemoveItem = localStorage.removeItem;
+            
+            localStorage.setItem = function(key, value) {
+                originalSetItem.call(localStorage, key, value);
+                // 同步保存到 Electron 的用户数据目录
+                if (window.electronAPI && window.electronAPI.saveData) {
+                    window.electronAPI.saveData('localStorage.json', JSON.stringify(localStorage));
+                }
+            };
+            
+            localStorage.removeItem = function(key) {
+                originalRemoveItem.call(localStorage, key);
+                if (window.electronAPI && window.electronAPI.saveData) {
+                    window.electronAPI.saveData('localStorage.json', JSON.stringify(localStorage));
+                }
+            };
+            
+            // 监听快捷键
+            document.addEventListener('keydown', (e) => {
+                // F11 全屏
+                if (e.key === 'F11') {
+                    e.preventDefault();
+                }
+                // F5 刷新
+                if (e.key === 'F5') {
+                    e.preventDefault();
+                    location.reload();
+                }
+            });
+        }
+    </script>
+</body>
+</html>

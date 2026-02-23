@@ -1,0 +1,54 @@
+# 依赖目录
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 构建输出
+dist/
+out/
+release/
+build/icons/
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 日志
+logs/
+*.log
+
+# 本地环境配置
+.env
+.env.local
+
+# 测试覆盖率
+coverage/
+
+# Electron 相关
+app/node_modules/
+app/dist/
+
+# 临时文件
+*.tmp
+.temp/
+tmp/
+
+# 打包相关（但保留 build/installer.nsh）
+!build/
+build/*
+!build/installer.nsh
+
+# 资源文件（保留 SVG 源文件）
+assets/*.png
+assets/*.icns
+assets/*.ico
+!assets/icon.svg
