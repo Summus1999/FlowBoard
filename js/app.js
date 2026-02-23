@@ -292,6 +292,11 @@ function showPage(pageName) {
     if (pageName === 'notes' && typeof initNotes === 'function') {
         setTimeout(initNotes, 100);
     }
+    
+    // 初始化日程页面
+    if (pageName === 'calendar' && typeof initCalendar === 'function') {
+        setTimeout(initCalendar, 100);
+    }
 }
 
 // ========================================
@@ -838,6 +843,16 @@ setInterval(() => {
 // 热榜中心点击跳转
 // ========================================
 
+function openFeaturedNews() {
+    // 打开头条新闻链接
+    const url = 'https://www.thepaper.cn/newsDetail_forward_12345678';
+    if (window.electronAPI && window.electronAPI.openExternal) {
+        window.electronAPI.openExternal(url);
+    } else {
+        window.open(url, '_blank');
+    }
+}
+
 function initNewsClickHandler() {
     // 为热榜中心的新闻项添加点击事件
     const newsItems = document.querySelectorAll('.news-item');
@@ -881,6 +896,7 @@ function initNewsClickHandler() {
 
 function initTodoList() {
     renderTodoList();
+    renderDashboardTodoList();
     updateTaskCount();
 }
 
@@ -972,6 +988,7 @@ function showAddTodoModal() {
         };
         todoData.push(newTodo);
         renderTodoList();
+        renderDashboardTodoList();
         updateTaskCount();
         showToast('已添加');
     }
@@ -984,6 +1001,52 @@ function updateTaskCount() {
     if (taskCountEl) {
         taskCountEl.textContent = uncompletedCount;
     }
+}
+
+// ========================================
+// 主页待办事项功能
+// ========================================
+
+function renderDashboardTodoList() {
+    const todoList = document.getElementById('dashboardTodoList');
+    if (!todoList) return;
+    
+    todoList.innerHTML = todoData.map(todo => `
+        <div class="todo-item">
+            <input type="checkbox" class="todo-check" id="todo${todo.id}" ${todo.completed ? 'checked' : ''} onchange="toggleDashboardTodo(${todo.id})">
+            <label for="todo${todo.id}" class="todo-text ${todo.completed ? 'completed' : ''}">${escapeHtml(todo.text)}</label>
+            <span class="todo-tag ${todo.tag === '紧急' ? 'urgent' : ''}">${todo.tag}</span>
+            <button class="todo-delete-btn" onclick="deleteDashboardTodo(${todo.id})">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+function toggleDashboardTodo(id) {
+    const todo = todoData.find(t => t.id === id);
+    if (todo) {
+        todo.completed = !todo.completed;
+        renderDashboardTodoList();
+        updateTaskCount();
+        renderTodoList(); // 同时更新其他页面的列表
+    }
+}
+
+function deleteDashboardTodo(id) {
+    if (confirm('确定要删除这个待办事项吗？')) {
+        todoData = todoData.filter(t => t.id !== id);
+        renderDashboardTodoList();
+        updateTaskCount();
+        renderTodoList();
+        showToast('已删除');
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // 页面加载完成后初始化
@@ -1026,7 +1089,6 @@ function closeProfileModal() {
 
 function saveProfile() {
     const name = document.getElementById('profileNameInput').value.trim();
-    const role = document.getElementById('profileRoleInput').value.trim();
     
     if (!name) {
         showToast('请输入显示名称');
@@ -1036,7 +1098,6 @@ function saveProfile() {
     // 保存到 localStorage
     const profile = {
         name: name,
-        role: role || 'PRO MEMBER',
         avatar: localStorage.getItem('user_avatar') || null
     };
     localStorage.setItem('user_profile', JSON.stringify(profile));
@@ -1088,7 +1149,6 @@ function loadUserProfile() {
         try {
             const profile = JSON.parse(stored);
             document.getElementById('profileNameInput').value = profile.name || '个人用户';
-            document.getElementById('profileRoleInput').value = profile.role || 'PRO MEMBER';
             updateUserCardDisplay(profile);
         } catch (e) {
             console.error('加载用户配置失败:', e);
@@ -1108,11 +1168,9 @@ function loadUserProfile() {
 function updateUserCardDisplay(profile) {
     // 更新侧边栏用户卡片
     const userNameEl = document.querySelector('.user-name');
-    const userRoleEl = document.querySelector('.user-role');
     const userAvatarEl = document.querySelector('.user-avatar');
     
     if (userNameEl) userNameEl.textContent = profile.name;
-    if (userRoleEl) userRoleEl.textContent = profile.role;
     
     // 更新头像
     const avatar = localStorage.getItem('user_avatar');

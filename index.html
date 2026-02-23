@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="css/leetcode.css">
     <link rel="stylesheet" href="css/submissions.css">
     <link rel="stylesheet" href="css/notes.css">
+    <link rel="stylesheet" href="css/calendar.css">
     <!-- Monaco Editor -->
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"></script>
 </head>
@@ -189,28 +190,42 @@
                         <div class="content-card">
                             <div class="card-header">
                                 <h3><i class="fas fa-check-circle"></i> 待办事项</h3>
-                                <button class="btn-text">全部</button>
+                                <button class="btn-text" onclick="showAddTodoModal()">
+                                    <i class="fas fa-plus"></i> 添加待办
+                                </button>
                             </div>
-                            <div class="todo-list">
+                            <div class="todo-list" id="dashboardTodoList">
                                 <div class="todo-item">
-                                    <input type="checkbox" class="todo-check" id="todo1">
+                                    <input type="checkbox" class="todo-check" id="todo1" onchange="toggleDashboardTodo(1)">
                                     <label for="todo1" class="todo-text">更新项目文档</label>
                                     <span class="todo-tag urgent">紧急</span>
+                                    <button class="todo-delete-btn" onclick="deleteDashboardTodo(1)">
+                                        <i class="fas fa-times"></i>
+                                    </button>
                                 </div>
                                 <div class="todo-item">
-                                    <input type="checkbox" class="todo-check" id="todo2" checked>
+                                    <input type="checkbox" class="todo-check" id="todo2" checked onchange="toggleDashboardTodo(2)">
                                     <label for="todo2" class="todo-text completed">修改账户密码</label>
                                     <span class="todo-tag">一般</span>
+                                    <button class="todo-delete-btn" onclick="deleteDashboardTodo(2)">
+                                        <i class="fas fa-times"></i>
+                                    </button>
                                 </div>
                                 <div class="todo-item">
-                                    <input type="checkbox" class="todo-check" id="todo3">
+                                    <input type="checkbox" class="todo-check" id="todo3" onchange="toggleDashboardTodo(3)">
                                     <label for="todo3" class="todo-text">查看今日资讯</label>
                                     <span class="todo-tag">日常</span>
+                                    <button class="todo-delete-btn" onclick="deleteDashboardTodo(3)">
+                                        <i class="fas fa-times"></i>
+                                    </button>
                                 </div>
                                 <div class="todo-item">
-                                    <input type="checkbox" class="todo-check" id="todo4">
+                                    <input type="checkbox" class="todo-check" id="todo4" onchange="toggleDashboardTodo(4)">
                                     <label for="todo4" class="todo-text">备份重要数据</label>
                                     <span class="todo-tag">重要</span>
+                                    <button class="todo-delete-btn" onclick="deleteDashboardTodo(4)">
+                                        <i class="fas fa-times"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -312,7 +327,7 @@
                     </div>
                     <div class="news-grid">
                         <div class="news-main">
-                            <div class="featured-news">
+                            <div class="featured-news" onclick="openFeaturedNews()" style="cursor: pointer;">
                                 <div class="featured-image">
                                     <div class="placeholder-img" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                                         <i class="fas fa-image"></i>
@@ -463,6 +478,56 @@
                                 <span id="noteSaveStatus">自动保存</span>
                                 <span id="noteWordCount">0 字</span>
                                 <span class="markdown-hint">支持 Markdown 语法</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 日程管理页面 -->
+                <div class="page" id="page-calendar">
+                    <div class="page-header">
+                        <h2><i class="fas fa-calendar-alt"></i> 日程管理</h2>
+                        <button class="btn-primary" onclick="openEventModal()">
+                            <i class="fas fa-plus"></i> 添加日程
+                        </button>
+                    </div>
+                    <div class="calendar-container">
+                        <!-- 左侧：日历 -->
+                        <div class="calendar-main">
+                            <div class="calendar-header">
+                                <button class="calendar-nav-btn" onclick="changeMonth(-1)">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <div class="calendar-title">
+                                    <span id="calendarYear">2024</span>年
+                                    <span id="calendarMonth">1</span>月
+                                </div>
+                                <button class="calendar-nav-btn" onclick="changeMonth(1)">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                            <div class="calendar-weekdays">
+                                <div class="weekday">日</div>
+                                <div class="weekday">一</div>
+                                <div class="weekday">二</div>
+                                <div class="weekday">三</div>
+                                <div class="weekday">四</div>
+                                <div class="weekday">五</div>
+                                <div class="weekday">六</div>
+                            </div>
+                            <div class="calendar-days" id="calendarDays">
+                                <!-- 日历天数将通过 JS 生成 -->
+                            </div>
+                        </div>
+                        
+                        <!-- 右侧：日程列表 -->
+                        <div class="calendar-sidebar">
+                            <div class="selected-date-info">
+                                <h3 id="selectedDateTitle">今日日程</h3>
+                                <span id="selectedDateFull">2024年1月1日</span>
+                            </div>
+                            <div class="events-list" id="eventsList">
+                                <!-- 日程列表将通过 JS 生成 -->
                             </div>
                         </div>
                     </div>
@@ -675,6 +740,9 @@
                             <button class="btn-primary" id="leetcodeLoginBtn" onclick="toggleLeetCodeLogin()">
                                 <i class="fas fa-sign-in-alt"></i> 登录
                             </button>
+                            <a href="https://leetcode.cn" target="_blank" class="btn-secondary leetcode-link-btn" title="访问 LeetCode 官网">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
                         </div>
                     </div>
                     <div class="leetcode-container">
@@ -944,17 +1012,69 @@
                         <input type="text" placeholder="输入你的名称" id="profileNameInput" value="个人用户">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>角色标签</label>
-                    <div class="input-with-icon">
-                        <i class="fas fa-tag"></i>
-                        <input type="text" placeholder="例如: PRO MEMBER" id="profileRoleInput" value="PRO MEMBER">
-                    </div>
-                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn-secondary" onclick="closeProfileModal()">取消</button>
                 <button class="btn-primary" onclick="saveProfile()">
+                    <i class="fas fa-save"></i> 保存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 日程管理模态框 -->
+    <div class="modal event-modal" id="eventModal">
+        <div class="modal-overlay" onclick="closeEventModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-calendar-plus"></i> <span id="eventModalTitle">添加日程</span></h3>
+                <button class="close-btn" onclick="closeEventModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>日程标题</label>
+                    <input type="text" placeholder="输入日程标题" id="eventTitleInput">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>日期</label>
+                        <input type="date" id="eventDateInput">
+                    </div>
+                    <div class="form-group">
+                        <label>时间</label>
+                        <input type="time" id="eventTimeInput">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>类型</label>
+                    <div class="event-type-select">
+                        <button class="event-type-btn active" data-type="work" onclick="selectEventType('work')">
+                            <i class="fas fa-briefcase" style="color: #1677FF;"></i> 工作
+                        </button>
+                        <button class="event-type-btn" data-type="personal" onclick="selectEventType('personal')">
+                            <i class="fas fa-user" style="color: #07C160;"></i> 个人
+                        </button>
+                        <button class="event-type-btn" data-type="important" onclick="selectEventType('important')">
+                            <i class="fas fa-star" style="color: #FF5000;"></i> 重要
+                        </button>
+                        <button class="event-type-btn" data-type="other" onclick="selectEventType('other')">
+                            <i class="fas fa-circle" style="color: #999;"></i> 其他
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>备注</label>
+                    <textarea placeholder="添加备注..." rows="3" id="eventDescInput"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-danger" id="deleteEventBtn" onclick="deleteCurrentEvent()" style="display: none; margin-right: auto;">
+                    <i class="fas fa-trash"></i> 删除
+                </button>
+                <button class="btn-secondary" onclick="closeEventModal()">取消</button>
+                <button class="btn-primary" onclick="saveEvent()">
                     <i class="fas fa-save"></i> 保存
                 </button>
             </div>
@@ -968,6 +1088,7 @@
     <script src="js/leetcode.js"></script>
     <script src="js/submissions-page.js"></script>
     <script src="js/notes.js"></script>
+    <script src="js/calendar.js"></script>
     <script>
         // Electron 环境检测
         window.isElectron = typeof process !== 'undefined' && process.versions && process.versions.electron;
