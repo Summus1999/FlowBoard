@@ -1,12 +1,12 @@
-# FlowBoard AI Service - 开发总结（第1-3期）
+# FlowBoard AI Service - 开发总结（第1-4期）
 
 ## 项目概述
 
-本文档汇总了 FlowBoard AI Service 第1-3期的完整开发内容，包括基础底座、RAG接入、检索与引用完善三大阶段。
+本文档汇总了 FlowBoard AI Service 第1-4期的完整开发内容，包括基础底座、RAG接入、检索与引用完善、Agent规划与确认四大阶段。
 
 **开发周期**: 2026-02-24  
-**当前版本**: v0.3.0  
-**总代码量**: ~8000行
+**当前版本**: v0.4.0  
+**总代码量**: ~12000行
 
 ---
 
@@ -535,33 +535,31 @@ curl -X POST http://localhost:8000/api/v1/eval/retrieval/evaluate \
 
 ## 各期验收对照
 
-| 规划功能 | 第1期 | 第2期 | 第3期 |
-|----------|-------|-------|-------|
-| FastAPI骨架 | ✅ | - | - |
-| LangGraph编排 | ✅ | - | - |
-| Model Gateway | ✅ | - | - |
-| PostgreSQL+pgvector | ✅ | - | - |
-| 会话API | ✅ | - | - |
-| 文档解析 | - | ✅ | - |
-| 文本清洗分块 | - | ✅ | - |
-| 增量同步 | - | ✅ | - |
-| 索引版本管理 | - | ✅ | - |
-| 混合检索 | - | ✅ | ✅ |
-| LCEL检索链 | - | - | ✅ |
-| Rerank | - | - | ✅ |
-| 可解释引用 | - | - | ✅ |
-| 中文检索 | - | - | ✅ |
-| 质量评估 | - | - | ✅ |
+| 规划功能 | 第1期 | 第2期 | 第3期 | 第4期 |
+|----------|-------|-------|-------|-------|
+| FastAPI骨架 | ✅ | - | - | - |
+| LangGraph编排 | ✅ | - | - | - |
+| Model Gateway | ✅ | - | - | - |
+| PostgreSQL+pgvector | ✅ | - | - | - |
+| 会话API | ✅ | - | - | - |
+| 文档解析 | - | ✅ | - | - |
+| 文本清洗分块 | - | ✅ | - | - |
+| 增量同步 | - | ✅ | - | - |
+| 索引版本管理 | - | ✅ | - | - |
+| 混合检索 | - | ✅ | ✅ | - |
+| LCEL检索链 | - | - | ✅ | - |
+| Rerank | - | - | ✅ | - |
+| 可解释引用 | - | - | ✅ | - |
+| 中文检索 | - | - | ✅ | - |
+| 质量评估 | - | - | ✅ | - |
+| Planner Agent | - | - | - | ✅ |
+| 计划确认流程 | - | - | - | ✅ |
+| 版本回滚 | - | - | - | ✅ |
+| 工具联动 | - | - | - | ✅ |
 
 ---
 
 ## 后续规划
-
-### 第4期：Agent规划与确认
-- Planner Agent完整实现
-- 计划提案与确认流程
-- 计划版本管理与回滚
-- Calendar/Todo工具联动
 
 ### 第5期：任务拆解与恢复
 - Decomposer Agent增强
@@ -615,6 +613,95 @@ CREATE INDEX ON rag_chunks USING hnsw (embedding vector_cosine_ops);
 
 ---
 
-**文档版本**: v1.0  
+**文档版本**: v1.1  
 **最后更新**: 2026-02-24  
-**项目状态**: 第1-3期已完成，等待第4期开发
+**项目状态**: 第1-4期已完成，等待第5期开发
+
+
+---
+
+## 第4期：Agent规划与确认
+
+### 4.1 Planner Agent
+
+**文件**: `app/services/planner_service.py`
+
+功能：
+- **目标分析**: LLM分析学习目标，提取技能、难度、前置知识
+- **模板库**: 后端/前端/数据科学三大模板
+- **里程碑生成**: 根据模板或自定义生成
+- **任务分解**: 自动拆解具体学习任务
+- **时间计算**: 总时长和每周投入计算
+- **风险评估**: 识别潜在风险
+
+计划提案结构：
+```
+PlanProposal
+├── title: 计划标题
+├── overview: 目标概述
+├── goals: [LearningGoal]
+├── milestones: [Milestone]
+├── tasks: [LearningTask]
+├── total_duration_days
+├── total_hours
+├── weekly_schedule
+├── risk_assessment
+└── alternatives
+```
+
+### 4.2 确认服务
+
+**文件**: `app/services/plan_confirmation.py`
+
+人类在环确认机制：
+
+| 确认类型 | 场景 | 撤销窗口 |
+|---------|------|---------|
+| PLAN_CREATION | 创建学习计划 | 30分钟 |
+| PLAN_UPDATE | 更新计划 | 30分钟 |
+| BATCH_TASK_UPDATE | 批量修改任务 | 10分钟 |
+| TASK_DELETE | 删除任务 | 5分钟 |
+
+### 4.3 版本管理
+
+**文件**: `app/services/plan_version_manager.py`
+
+功能：
+- 版本历史追踪
+- 版本对比（新增/删除/修改）
+- 版本回滚
+- 自动清理旧版本
+
+### 4.4 工具集成
+
+**文件**: `app/services/tool_integration.py`
+
+集成工具：
+- Calendar: 创建学习提醒和里程碑截止
+- Todo: 创建学习任务待办
+- Scheduler Agent: 批量执行工具调用
+
+### 4.5 API端点（第4期新增）
+
+```
+GET    /plans/{id}/versions              # 版本历史
+POST   /plans/{id}/rollback              # 版本回滚
+POST   /plans/{id}/versions/{no}/compare # 版本对比
+GET    /plans                            # 计划列表
+```
+
+### 4.6 使用示例
+
+```bash
+# 创建学习计划
+curl -X POST http://localhost:8000/api/v1/plans/propose \
+  -d '{"goal": "三个月掌握Python后端", "constraints": ["每周10小时"]}'
+
+# 确认执行
+curl -X POST http://localhost:8000/api/v1/plans/{id}/confirm \
+  -d '{"confirmation_id": "xxx", "confirm": true}'
+
+# 版本回滚
+curl -X POST http://localhost:8000/api/v1/plans/{id}/rollback \
+  -d '{"target_version": 3, "reason": "当前版本过于激进"}'
+```
