@@ -1820,3 +1820,28 @@ textarea:focus {
     border: 1px solid var(--border-color);
     z-index: 100;
 }
+
+/* 主页待办列表滚动样式 */
+#dashboardTodoList {
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+#dashboardTodoList::-webkit-scrollbar {
+    width: 6px;
+}
+
+#dashboardTodoList::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+#dashboardTodoList::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+#dashboardTodoList::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
