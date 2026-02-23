@@ -404,7 +404,10 @@ body {
 .page#page-calendar.active,
 .page#page-growth.active,
 .page#page-interview.active,
-.page#page-github.active {
+.page#page-github.active,
+.page#page-leetcode.active,
+.page#page-apps.active,
+.page#page-submissions.active {
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -414,7 +417,10 @@ body {
 #page-calendar .page-header,
 #page-growth .page-header,
 #page-interview .page-header,
-#page-github .page-header {
+#page-github .page-header,
+#page-leetcode .page-header,
+#page-apps .page-header,
+#page-submissions .page-header {
     flex-shrink: 0;
 }
 

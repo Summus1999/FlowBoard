@@ -4,8 +4,9 @@
 
 .apps-container {
     padding: 0 24px 24px;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
-    height: calc(100% - 80px);
 }
 
 /* 应用网格 */

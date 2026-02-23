@@ -6,7 +6,8 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
-    height: calc(100% - 80px);
+    flex: 1;
+    min-height: 0;
 }
 
 .submissions-filters {
@@ -105,6 +106,7 @@
 /* 提交列表 */
 .submissions-list {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     background: var(--card-bg);
     backdrop-filter: var(--glass-blur);

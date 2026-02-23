@@ -33,7 +33,8 @@
     display: grid;
     grid-template-columns: 360px 1fr;
     gap: 20px;
-    height: calc(100% - 80px);
+    flex: 1;
+    min-height: 0;
 }
 
 /* 左侧边栏 */
@@ -45,12 +46,14 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    min-height: 0;
 }
 
 /* 筛选区域 */
 .leetcode-filters {
     padding: 16px;
     border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
 
 .search-box {
@@ -163,6 +166,7 @@
 /* 题目列表 */
 .problem-list {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     padding: 8px;
 }
@@ -260,6 +264,7 @@
     flex-direction: column;
     gap: 16px;
     overflow: hidden;
+    min-height: 0;
 }
 
 /* 题目详情 */
@@ -270,6 +275,7 @@
     border-radius: var(--border-radius);
     padding: 20px;
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
 }
 
@@ -435,6 +441,7 @@
     display: flex;
     flex-direction: column;
     height: 400px;
+    flex-shrink: 0;
 }
 
 .editor-header {
@@ -656,6 +663,7 @@
 @media (max-width: 900px) {
     .leetcode-container {
         grid-template-columns: 1fr;
+        grid-template-rows: minmax(0, auto) minmax(0, 1fr);
     }
     
     .leetcode-sidebar {
@@ -663,6 +671,6 @@
     }
     
     .leetcode-main {
-        min-height: 600px;
+        min-height: 0;
     }
 }
