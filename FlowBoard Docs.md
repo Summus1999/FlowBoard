@@ -1,6 +1,6 @@
 # FlowBoard 产品文档
 
-> 版本：v1.1  
+> 版本：v1.2  
 > 更新日期：2026-02-23  
 > 产品定位：个人工作台应用 - 集成效率工具、学习管理与信息追踪的桌面端应用
 
@@ -42,7 +42,7 @@ FlowBoard
 ├── 功能模块
 │   ├── 账户管理（密码管理）
 │   ├── 资讯中心（热点新闻 + AI 追踪）
-│   ├── 我的主页（待办事项、账户概览、热榜资讯）
+│   ├── 我的主页（待办事项、账户概览、热榜资讯、天气）
 │   ├── 笔记记录（Markdown 编辑器）
 │   ├── 日程管理（日历视图）
 │   ├── 个人提升（学习计划）
@@ -67,17 +67,19 @@ FlowBoard
 
 **功能组件**：
 
-|组件|功能描述|交互方式|
-|-----|--------|--------|
-|账户安全概览|显示密码管理入口|点击「查看全部」进入账户管理页面|
-|待办事项|显示全部待办任务（支持滚动浏览）|点击复选框完成/取消，点击 × 删除，点击「添加待办」新增|
-|热榜资讯|显示热门新闻头条|点击跳转外部链接|
+| 组件 | 功能描述 | 交互方式 |
+|------|----------|----------|
+| 账户安全概览 | 显示密码管理入口 | 点击「查看全部」进入账户管理页面 |
+| 待办事项 | 显示全部待办任务（支持滚动浏览） | 点击复选框完成/取消，点击 × 删除，点击「添加待办」新增 |
+| 热榜资讯 | 显示热门新闻头条 | 点击跳转外部链接 |
+| 实时天气 | 显示当前位置温度和天气状况 | 点击刷新天气 |
 
 **交互逻辑**：
 
 - 主页是应用启动后的默认页面
 - 所有模块数据与其他页面实时同步
 - 待办事项仅在主页显示，移除独立页面入口
+- 天气数据自动定位（GPS → IP → 北京），点击可手动刷新
 
 ---
 
@@ -112,13 +114,16 @@ FlowBoard
 
 **功能特性**：
 
-|分类|说明|
-|-----|-----|
-|全部|显示所有类别新闻|
-|AI|**新增**：追踪 AI 行业最新动态|
-|科技|科技行业新闻|
-|财经|财经新闻|
-|娱乐|娱乐资讯|
+| 分类 | 说明 |
+|------|------|
+| 全部 | 显示所有类别新闻 |
+| AI | 追踪 AI 行业最新动态 |
+| 科技 | 科技行业新闻 |
+| 财经 | 财经新闻 |
+| 娱乐 | 娱乐资讯 |
+| 社会 | 社会热点 |
+
+**数据来源**：微博热搜、知乎热榜、抖音热榜、今日头条等
 
 **交互逻辑**：
 
@@ -156,11 +161,11 @@ FlowBoard
 
 **编辑器模式**：
 
-|模式|说明|使用场景|
-|-----|-----|---------|
-|Markdown|纯编辑模式|编写笔记|
-|预览|纯渲染模式|查看效果|
-|分屏|左编右览|实时对照|
+| 模式 | 说明 | 使用场景 |
+|------|------|---------|
+| Markdown | 纯编辑模式 | 编写笔记 |
+| 预览 | 纯渲染模式 | 查看效果 |
+| 分屏 | 左编右览 | 实时对照 |
 
 **工具栏功能**：
 
@@ -171,6 +176,8 @@ FlowBoard
 - 代码块（支持语法高亮）
 - 链接/图片插入
 - 分隔线
+
+**分类标签**：工作、学习、生活、灵感
 
 **交互逻辑**：
 
@@ -188,11 +195,11 @@ FlowBoard
 
 **功能组件**：
 
-|组件|功能|
-|-----|-----|
-|月历视图|显示当月日历，支持月份切换|
-|日期选择|点击日期查看当日日程|
-|日程列表|右侧显示选中日期的所有日程|
+| 组件 | 功能 |
+|------|------|
+| 月历视图 | 显示当月日历，支持月份切换 |
+| 日期选择 | 点击日期查看当日日程 |
+| 日程列表 | 右侧显示选中日期的所有日程 |
 
 **事件类型**：
 
@@ -220,7 +227,7 @@ FlowBoard
 
 - **导入方式**：
   - 上传 Markdown 文件 (.md)
-  - 上传 PDF 文件（提示转换为 Markdown）
+  - 直接粘贴 Markdown 内容
 - **预设模板**：
   - 前端进阶计划（HTML/CSS/JS/React/Vue/工程化）
   - 算法训练计划（数组/链表/树/图/动态规划）
@@ -265,10 +272,9 @@ FlowBoard
 
 #### 8.2 录音设置
 
-- **存储路径**：自定义录音文件保存目录
-- **录音质量**：高质量(320kbps)/标准(128kbps)/节省空间(64kbps)
-- **自动保存**：录音结束后自动保存到指定路径
-- **音乐暂停**：录音时自动暂停背景音乐
+- **存储路径**：使用 IndexedDB 存储录音文件
+- **录音质量**：可调节比特率（高质量/标准/节省空间）
+- **自动保存**：录音结束后自动保存
 
 #### 8.3 录音管理
 
@@ -290,8 +296,8 @@ FlowBoard
 
 1. 首次使用请求麦克风权限
 2. 录音使用 MediaRecorder API
-3. 录音列表实时更新
-4. 支持在面试过程中随时开始/停止录音
+3. 录音存储在 IndexedDB（支持大文件）
+4. 录音列表实时更新
 
 ---
 
@@ -315,7 +321,7 @@ FlowBoard
 - **主题**：leetcode-dark 暗色主题
 - **快捷键**：Ctrl+S 运行，Ctrl+Enter 提交
 
-#### 9.3 代码智能提示 ⭐ 新增
+#### 9.3 代码智能提示
 
 - **算法模板**：两数之和、BFS、DFS、动态规划、二分查找、快速排序、并查集、优先队列、滑动窗口、回溯算法、LCA 等
 - **代码片段**：for循环、foreach、map、filter、reduce 等常用代码块
@@ -333,7 +339,7 @@ FlowBoard
 - Cookie 登录（支持 LeetCode 中国/国际版）
 - 登录后获取真实题目数据和提交记录
 
-#### 9.6 官网链接 ⭐ 更新
+#### 9.6 官网链接
 
 - **位置**：页面右上角「官网」按钮
 - **样式**：圆角胶囊形状，渐变色背景，与主题风格匹配
@@ -348,7 +354,7 @@ FlowBoard
 
 ---
 
-### 10. GitHub 项目跟踪 ⭐ 更新
+### 10. GitHub 项目跟踪
 
 **入口**：侧边栏「GitHub」
 
@@ -379,7 +385,7 @@ FlowBoard
 
 ---
 
-### 11. 应用中心 ⭐ 新增
+### 11. 应用中心
 
 **入口**：侧边栏「应用中心」（原「提交记录」）
 
@@ -387,48 +393,58 @@ FlowBoard
 
 **应用分类**：
 
-|分类|包含应用|
-|-----|---------|
-|社交应用|微信、QQ、TIM、钉钉、飞书|
-|开发工具|VS Code、IntelliJ IDEA、WebStorm、DataGrip、Postman、Git Bash|
-|浏览器|Chrome、Edge、Firefox|
-|媒体娱乐|网易云音乐、QQ音乐、哔哩哔哩|
-|办公效率|WPS Office、Typora、Notion、XMind、Snipaste|
-|系统工具|命令提示符、PowerShell、文件资源管理器、任务管理器|
+| 分类 | 包含应用 |
+|------|---------|
+| 社交应用 | 微信、QQ、TIM、钉钉、飞书 |
+| 开发工具 | VS Code、IntelliJ IDEA、WebStorm、DataGrip、Postman、Git Bash |
+| 浏览器 | Chrome、Edge、Firefox |
+| 媒体娱乐 | 网易云音乐、QQ音乐、哔哩哔哩 |
+| 办公效率 | WPS Office、Typora、Notion、XMind、Snipaste |
+| 系统工具 | 命令提示符、PowerShell、文件资源管理器、任务管理器 |
+
+**自定义应用**：
+
+- **添加应用**：点击「添加应用」→ 输入名称 → 选择可执行文件路径 → 选择图标 → 保存
+- **图标选择**：提供 25 种预设图标（含 AI 应用专属图标）
+- **编辑/删除**：支持修改应用信息和删除应用
+
+**图标选项**：
+- 系统类：桌面、代码、文件夹、浏览器、音乐、视频、游戏、聊天、邮件、图像、终端、数据库、设计、文档、工具
+- AI 类：AI应用（🤖）、AI智能（🧠）、AI助手（✨）
+- 浏览器：Chrome、Firefox、Edge
+- 国内常用：微信、QQ
+- 开发类：GitHub、Steam
 
 **交互逻辑**：
 
 1. 点击应用卡片启动对应程序
 2. Electron 环境下自动查找可执行文件
 3. 浏览器环境下尝试使用 URL Scheme 启动
-4. 应用卡片显示可用状态指示器（绿色圆点）
+4. 支持自定义添加本地应用
 
 ---
 
-### 12. 界面设置 ⭐ 更新
+### 12. 界面设置
 
 **入口**：底部 ⚙️ 螺丝按钮
 
 **设置项**：
 
-|设置|选项|
-|-----|-----|
-|主题风格|深海蓝 / 极光紫 / 森林绿 / 简约白|
-|毛玻璃效果|开 / 关|
-|动画效果|开 / 关|
-|圆角大小|0-20px 滑动调节|
-|**开机自动启动**|**开 / 关（新增）**|
-|**启动时最小化**|**开 / 关（新增）**|
-|**关闭时最小化**|**开 / 关（新增）**|
-|密码过期提醒|开 / 关|
-|资讯推送|开 / 关|
-|任务提醒|开 / 关|
+| 设置 | 选项 |
+|------|------|
+| 主题风格 | 深海蓝 / 极光紫 / 森林绿 / 简约白 |
+| 毛玻璃效果 | 开 / 关 |
+| 动画效果 | 开 / 关 |
+| 圆角大小 | 0-20px 滑动调节 |
+| **开机自动启动** | 开 / 关 |
+| **启动时最小化** | 开 / 关 |
+| **关闭时最小化** | 开 / 关 |
 
 **交互逻辑**：
 
 1. 点击主题卡片实时切换主题
 2. 所有设置自动保存到 localStorage
-3. 开机启动设置需要 Electron 环境支持
+3. 开机启动设置需要 Electron 环境支持（Windows/macOS）
 4. 切换即时生效，无需重启
 
 ---
@@ -447,6 +463,25 @@ FlowBoard
 1. 点击头像区域选择图片
 2. 修改后点击保存即时生效
 3. 头像和名称显示在侧边栏用户卡片
+
+---
+
+### 14. 实时天气
+
+**入口**：主页顶部统计栏
+
+**功能特性**：
+
+- **自动定位**：优先使用 GPS 定位，失败时使用 IP 定位，最后使用默认城市（北京）
+- **天气数据**：温度、天气状况（晴/阴/雨/雪等）
+- **数据来源**：Open-Meteo API（免费，无需 API Key）
+- **缓存机制**：5 分钟缓存，点击可手动刷新
+
+**交互逻辑**：
+
+1. 应用启动时自动获取天气
+2. 点击天气卡片刷新数据
+3. 定位失败时显示默认城市天气
 
 ---
 
@@ -470,12 +505,12 @@ FlowBoard
 
 ### 快捷键汇总
 
-|快捷键|功能|适用页面|
-|-------|------|---------|
-|Ctrl/Cmd + S|保存|笔记、LeetCode|
-|Ctrl/Cmd + Enter|提交|LeetCode|
-|Tab|缩进|Markdown 编辑器|
-|ESC|关闭弹窗|全局|
+| 快捷键 | 功能 | 适用页面 |
+|--------|------|---------|
+| Ctrl/Cmd + S | 保存 | 笔记、LeetCode |
+| Ctrl/Cmd + Enter | 提交 | LeetCode |
+| Tab | 缩进 | Markdown 编辑器 |
+| ESC | 关闭弹窗 | 全局 |
 
 ---
 
@@ -483,15 +518,15 @@ FlowBoard
 
 ### 技术栈
 
-|层级|技术|
-|-----|-----|
-|桌面端|Electron ^28.0.0|
-|前端|HTML5 + CSS3 + JavaScript (ES6+)|
-|样式|Tailwind CSS (CDN)|
-|图标|Font Awesome 6.4.0|
-|编辑器|Monaco Editor (VS Code 内核)|
-|Markdown|marked.js|
-|代码高亮|highlight.js|
+| 层级 | 技术 |
+|------|------|
+| 桌面端 | Electron ^28.0.0 |
+| 前端 | HTML5 + CSS3 + JavaScript (ES6+) |
+| 样式 | Tailwind CSS (CDN) |
+| 图标 | Font Awesome 6.4.0 |
+| 编辑器 | Monaco Editor (VS Code 内核) |
+| Markdown | marked.js |
+| 代码高亮 | highlight.js |
 
 ### 文件结构
 
@@ -500,7 +535,7 @@ FlowBoard/
 ├── index.html              # 主入口
 ├── electron/
 │   ├── main.js            # Electron 主进程
-│   └── preload.js         # 预加载脚本
+│   └── preload.js         # 预加载脚本（安全暴露 API）
 ├── css/
 │   ├── style.css          # 全局样式 + UI动效
 │   ├── leetcode.css       # LeetCode 页面样式
@@ -509,14 +544,14 @@ FlowBoard/
 │   ├── github.css         # GitHub 页面样式
 │   ├── growth.css         # 个人提升样式
 │   ├── interview.css      # 面试追踪样式
-│   └── apps.css           # 应用中心样式 ⭐ 新增
+│   └── apps.css           # 应用中心样式
 ├── js/
 │   ├── app.js             # 主应用逻辑
 │   ├── languages.js       # 编程语言配置
-│   ├── code-snippets.js   # 代码智能提示配置 ⭐ 新增
+│   ├── code-snippets.js   # 代码智能提示配置
 │   ├── leetcode-api.js    # LeetCode API
 │   ├── leetcode.js        # LeetCode 页面逻辑
-│   ├── app-center.js      # 应用中心逻辑 ⭐ 新增
+│   ├── app-center.js      # 应用中心逻辑
 │   ├── notes.js           # 笔记功能
 │   ├── calendar.js        # 日程管理
 │   ├── github.js          # GitHub 跟踪
@@ -525,39 +560,66 @@ FlowBoard/
 └── package.json           # 项目配置
 ```
 
+### Electron 安全设置
+
+```javascript
+webPreferences: {
+    nodeIntegration: false,       // 禁用 Node 集成（安全）
+    contextIsolation: true,       // 启用上下文隔离（安全）
+    enableRemoteModule: false,    // 禁用 remote 模块（安全）
+    preload: path.join(__dirname, 'preload.js'),  // 预加载脚本
+    webSecurity: false            // 开发环境禁用（生产环境视情况）
+}
+```
+
 ---
 
 ## 数据存储
 
 ### localStorage 键值表
 
-|Key|用途|数据格式|
-|----|----|---------|
-|`todos`|待办事项数据|JSON Array|
-|`flowboard_notes`|笔记内容|JSON Array|
-|`flowboard_events`|日程事件|JSON Array|
-|`flowboard_repos`|GitHub 仓库缓存|JSON Array|
-|`user_profile`|用户配置（名称）|JSON Object|
-|`user_avatar`|用户头像（Base64）|String|
-|`github_username`|GitHub 用户名|String|
-|`github_token`|GitHub Token（可选）|String|
-|`growth_plan_content`|个人提升计划内容|String|
-|`growth_reminders`|学习提醒设置|JSON Array|
-|`interview_settings`|录音设置|JSON Object|
+| Key | 用途 | 数据格式 |
+|-----|------|---------|
+| `todos` | 待办事项数据 | JSON Array |
+| `flowboard_notes` | 笔记内容 | JSON Array |
+| `flowboard_events` | 日程事件 | JSON Array |
+| `flowboard_repos` | GitHub 仓库缓存 | JSON Array |
+| `user_profile` | 用户配置（名称） | JSON Object |
+| `user_avatar` | 用户头像（Base64） | String |
+| `github_username` | GitHub 用户名 | String |
+| `github_token` | GitHub Token（可选） | String |
+| `growth_plan_content` | 个人提升计划内容 | String |
+| `growth_reminders` | 学习提醒设置 | JSON Array |
+| `interview_settings` | 录音设置 | JSON Object |
+| `weather_cache` | 天气数据缓存 | JSON Object |
+| `theme` | 当前主题 | String |
+| `minimizeOnLaunch` | 启动时最小化 | Boolean |
+| `minimizeOnClose` | 关闭时最小化 | Boolean |
 
 ### IndexedDB 存储
 
-|数据库名|对象存储|用途|
-|---------|---------|-----|
-|`FlowBoardInterviewDB`|`recordings`|面试录音 Blob 数据（支持大文件存储）|
-|`leetcode_session`|LeetCode 登录状态|String|
-|`theme`|当前主题|String|
-|`minimizeOnLaunch`|启动时最小化|Boolean|
-|`minimizeOnClose`|关闭时最小化|Boolean|
+| 数据库名 | 对象存储 | 用途 |
+|---------|---------|------|
+| `FlowBoardInterviewDB` | `recordings` | 面试录音 Blob 数据（支持大文件存储） |
 
 ---
 
 ## 更新日志
+
+### v1.2 (2026-02-23)
+
+**新增功能**：
+
+- ✅ **实时天气**：主页显示当前位置天气，支持自动定位
+
+**优化**：
+
+- ✅ **Electron 安全加固**：启用 contextIsolation，使用 preload 脚本安全暴露 API
+- ✅ **应用中心图标**：新增 AI 应用专属图标，移除国内少用图标（Spotify、Discord）
+
+**删除**：
+
+- ❌ **新消息统计**：从主页顶部统计栏移除（原装饰性功能）
 
 ### v1.1 (2026-02-23)
 
