@@ -123,7 +123,7 @@ let interviewState = {
     recordings: [],
     settings: JSON.parse(localStorage.getItem('interview_settings') || JSON.stringify({
         storagePath: '',
-        quality: 'medium',
+        quality: 'high',
         autoSave: true,
         pauseMusic: true
     }))
