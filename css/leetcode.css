@@ -1,0 +1,668 @@
+/* ========================================
+   LeetCode 刷题页面样式
+   ======================================== */
+
+/* 页面头部 */
+.leetcode-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.leetcode-stats {
+    display: flex;
+    gap: 20px;
+}
+
+.leetcode-stats .stat-item {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.leetcode-stats .stat-item i {
+    margin-right: 6px;
+}
+
+.leetcode-stats .stat-item b {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* 主容器布局 */
+.leetcode-container {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 20px;
+    height: calc(100% - 80px);
+}
+
+/* 左侧边栏 */
+.leetcode-sidebar {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* 筛选区域 */
+.leetcode-filters {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.search-box {
+    position: relative;
+    margin-bottom: 12px;
+}
+
+.search-box i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 10px 12px 10px 36px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    outline: none;
+    transition: var(--transition);
+}
+
+.search-box input:focus {
+    border-color: var(--accent-color);
+}
+
+.search-box input::placeholder {
+    color: var(--text-muted);
+}
+
+/* 难度筛选标签 */
+.filter-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.filter-tab {
+    flex: 1;
+    padding: 8px 12px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.filter-tab:hover {
+    background: var(--card-hover);
+    color: var(--text-primary);
+}
+
+.filter-tab.active {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
+}
+
+/* 状态筛选 */
+.problem-status-filter {
+    display: flex;
+    gap: 8px;
+}
+
+.status-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.status-btn:hover {
+    background: var(--card-bg);
+    color: var(--text-primary);
+}
+
+.status-btn.active {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
+}
+
+.status-btn[data-status="solved"].active {
+    background: #22c55e;
+    border-color: #22c55e;
+}
+
+.status-btn[data-status="unsolved"].active {
+    background: #6b7280;
+    border-color: #6b7280;
+}
+
+/* 题目列表 */
+.problem-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.problem-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-bottom: 4px;
+}
+
+.problem-item:hover {
+    background: var(--card-bg);
+}
+
+.problem-item.active {
+    background: var(--accent-color);
+}
+
+.problem-item.active .problem-item-title,
+.problem-item.active .problem-item-id {
+    color: white;
+}
+
+.problem-status {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.problem-status.solved {
+    color: #22c55e;
+}
+
+.problem-status.unsolved {
+    color: var(--text-muted);
+}
+
+.problem-status.attempted {
+    color: #f59e0b;
+}
+
+.problem-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.problem-item-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.problem-item-id {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.problem-item-difficulty {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.problem-item-difficulty.easy {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.problem-item-difficulty.medium {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.problem-item-difficulty.hard {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+/* 右侧主内容区 */
+.leetcode-main {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow: hidden;
+}
+
+/* 题目详情 */
+.problem-detail {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.problem-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.problem-title-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.problem-number {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.problem-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.problem-difficulty {
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.problem-difficulty.easy {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.problem-difficulty.medium {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.problem-difficulty.hard {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.problem-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: none;
+    background: var(--card-bg);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon:hover {
+    background: var(--accent-color);
+    color: white;
+}
+
+.btn-icon.active {
+    background: #f59e0b;
+    color: white;
+}
+
+/* 题目内容 */
+.problem-content {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text-primary);
+}
+
+.problem-description {
+    margin-bottom: 24px;
+}
+
+.problem-description p {
+    margin-bottom: 12px;
+}
+
+.problem-description code {
+    background: var(--bg-primary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    color: var(--accent-secondary);
+}
+
+.problem-examples {
+    margin-bottom: 24px;
+}
+
+.problem-examples h4,
+.problem-constraints h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+}
+
+.example {
+    margin-bottom: 16px;
+}
+
+.example pre {
+    background: var(--bg-primary);
+    padding: 12px 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 0;
+}
+
+.example code {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+.problem-constraints ul {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--text-secondary);
+}
+
+.problem-constraints li {
+    margin-bottom: 4px;
+}
+
+.problem-constraints code {
+    background: var(--bg-primary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 12px;
+}
+
+/* 代码编辑器容器 */
+.code-editor-container {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    display: flex;
+    flex-direction: column;
+    height: 400px;
+}
+
+.editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.language-selector select {
+    padding: 8px 12px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+}
+
+.language-selector select:focus {
+    border-color: var(--accent-color);
+}
+
+.editor-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* 代码编辑器 */
+.code-editor-wrapper {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.code-editor {
+    width: 100%;
+    height: 100%;
+    padding: 16px;
+    background: #1e1e1e;
+    border: none;
+    color: #d4d4d4;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    resize: none;
+    outline: none;
+    tab-size: 4;
+}
+
+/* Monaco Editor 容器 */
+.monaco-editor-container {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Monaco Editor 自定义主题适配 */
+.monaco-editor .overflow-guard {
+    border-radius: 0 !important;
+}
+
+/* 控制台面板 */
+.console-panel {
+    height: 120px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+}
+
+.console-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    background: var(--bg-primary);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.console-header i {
+    margin-right: 6px;
+}
+
+.console-content {
+    flex: 1;
+    padding: 12px 16px;
+    overflow-y: auto;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.console-placeholder {
+    color: var(--text-muted);
+    text-align: center;
+    padding-top: 20px;
+}
+
+.console-line {
+    margin-bottom: 4px;
+    padding: 4px 0;
+}
+
+.console-line.success {
+    color: #22c55e;
+}
+
+.console-line.error {
+    color: #ef4444;
+}
+
+.console-line.info {
+    color: #3b82f6;
+}
+
+.console-line.output {
+    color: var(--text-primary);
+}
+
+/* 登录模态框 */
+.leetcode-login-modal .modal-content {
+    max-width: 400px;
+}
+
+.login-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.login-tab {
+    flex: 1;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.login-tab:hover {
+    background: var(--card-bg);
+}
+
+.login-tab.active {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
+}
+
+/* 登录提示 */
+.login-prompt {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 数据源标识 */
+.data-source-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 8px;
+}
+
+.data-source-badge.api {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.data-source-badge.local {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+/* 页面头部数据状态 */
+.leetcode-data-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-right: 12px;
+}
+
+.leetcode-data-status i {
+    font-size: 14px;
+}
+
+.leetcode-data-status.connected {
+    color: #22c55e;
+}
+
+.leetcode-data-status.local {
+    color: #f59e0b;
+}
+
+/* 响应式适配 */
+@media (max-width: 1200px) {
+    .leetcode-container {
+        grid-template-columns: 300px 1fr;
+    }
+}
+
+@media (max-width: 900px) {
+    .leetcode-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .leetcode-sidebar {
+        max-height: 300px;
+    }
+    
+    .leetcode-main {
+        min-height: 600px;
+    }
+}

@@ -184,6 +184,12 @@ document.addEventListener('DOMContentLoaded', () => {
     initTabSwitcher();
     initPasswordStrength();
     initSettings();
+    
+    // 延迟初始化 LeetCode，确保 DOM 完全加载
+    setTimeout(() => {
+        initLeetCode();
+        initSubmissionsPage();
+    }, 100);
 });
 
 // ========================================

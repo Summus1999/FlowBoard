@@ -43,6 +43,11 @@ jobs:
         env:
           ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
 
+      - name: Generate icons
+        run: |
+          npm run create-icons:simple
+          npm run create-icons:png
+
       - name: Build Windows App
         run: npm run build:win
         env:
