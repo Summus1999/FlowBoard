@@ -4,6 +4,19 @@
  */
 
 // ========================================
+// 获取用户目录路径（兼容浏览器和 Electron）
+// ========================================
+
+function getUserPath(type) {
+    // 在 Electron 环境中通过 API 获取
+    if (window.electronAPI && window.electronAPI.getUserPath) {
+        return window.electronAPI.getUserPath(type) || '';
+    }
+    // 浏览器环境返回空字符串
+    return '';
+}
+
+// ========================================
 // 应用配置 - 可执行文件路径
 // ========================================
 
@@ -13,9 +26,9 @@ const AppConfigs = {
         name: '微信',
         paths: [
             'C:\\Program Files (x86)\\Tencent\\WeChat\\WeChat.exe',
-            'C:\\Program Files\\Tencent\\WeChat\\WeChat.exe',
-            `${process.env.USERPROFILE}\\AppData\\Roaming\\Tencent\\WeChat\\WeChat.exe`
+            'C:\\Program Files\\Tencent\\WeChat\\WeChat.exe'
         ],
+        dynamicPaths: ['USERPROFILE\\AppData\\Roaming\\Tencent\\WeChat\\WeChat.exe'],
         command: 'start wechat',
         icon: 'fab fa-weixin'
     },
@@ -41,18 +54,18 @@ const AppConfigs = {
         name: '钉钉',
         paths: [
             'C:\\Program Files (x86)\\DingDing\\DingtalkLauncher.exe',
-            'C:\\Program Files\\DingDing\\DingtalkLauncher.exe',
-            `${process.env.LOCALAPPDATA}\\DingTalk\\DingtalkLauncher.exe`
+            'C:\\Program Files\\DingDing\\DingtalkLauncher.exe'
         ],
+        dynamicPaths: ['LOCALAPPDATA\\DingTalk\\DingtalkLauncher.exe'],
         command: 'start dingtalk',
         icon: 'fas fa-dingding'
     },
     feishu: {
         name: '飞书',
         paths: [
-            'C:\\Program Files\\Feishu\\Feishu.exe',
-            `${process.env.LOCALAPPDATA}\\Feishu\\Feishu.exe`
+            'C:\\Program Files\\Feishu\\Feishu.exe'
         ],
+        dynamicPaths: ['LOCALAPPDATA\\Feishu\\Feishu.exe'],
         command: 'start feishu',
         icon: 'fas fa-paper-plane'
     },
@@ -62,9 +75,9 @@ const AppConfigs = {
         name: 'VS Code',
         paths: [
             'C:\\Program Files\\Microsoft VS Code\\Code.exe',
-            'C:\\Program Files (x86)\\Microsoft VS Code\\Code.exe',
-            `${process.env.LOCALAPPDATA}\\Programs\\Microsoft VS Code\\Code.exe`
+            'C:\\Program Files (x86)\\Microsoft VS Code\\Code.exe'
         ],
+        dynamicPaths: ['LOCALAPPDATA\\Programs\\Microsoft VS Code\\Code.exe'],
         command: 'code',
         icon: 'fas fa-code'
     },
@@ -72,36 +85,38 @@ const AppConfigs = {
         name: 'IntelliJ IDEA',
         paths: [
             'C:\\Program Files\\JetBrains\\IntelliJ IDEA Community Edition\\bin\\idea64.exe',
-            'C:\\Program Files\\JetBrains\\IntelliJ IDEA Ultimate\\bin\\idea64.exe',
-            `${process.env.PROGRAMFILES}\\JetBrains\\IntelliJ IDEA\\bin\\idea64.exe`
+            'C:\\Program Files\\JetBrains\\IntelliJ IDEA Ultimate\\bin\\idea64.exe'
         ],
+        dynamicPaths: ['PROGRAMFILES\\JetBrains\\IntelliJ IDEA\\bin\\idea64.exe'],
         command: 'idea',
         icon: 'fas fa-coffee'
     },
     webstorm: {
         name: 'WebStorm',
         paths: [
-            'C:\\Program Files\\JetBrains\\WebStorm\\bin\\webstorm64.exe',
-            `${process.env.PROGRAMFILES}\\JetBrains\\WebStorm\\bin\\webstorm64.exe`
+            'C:\\Program Files\\JetBrains\\WebStorm\\bin\\webstorm64.exe'
         ],
+        dynamicPaths: ['PROGRAMFILES\\JetBrains\\WebStorm\\bin\\webstorm64.exe'],
         command: 'webstorm',
         icon: 'fab fa-js'
     },
     datagrip: {
         name: 'DataGrip',
         paths: [
-            'C:\\Program Files\\JetBrains\\DataGrip\\bin\\datagrip64.exe',
-            `${process.env.PROGRAMFILES}\\JetBrains\\DataGrip\\bin\\datagrip64.exe`
+            'C:\\Program Files\\JetBrains\\DataGrip\\bin\\datagrip64.exe'
         ],
+        dynamicPaths: ['PROGRAMFILES\\JetBrains\\DataGrip\\bin\\datagrip64.exe'],
         command: 'datagrip',
         icon: 'fas fa-database'
     },
     postman: {
         name: 'Postman',
         paths: [
-            'C:\\Program Files\\Postman\\Postman.exe',
-            `${process.env.LOCALAPPDATA}\\Postman\\Postman.exe`,
-            `${process.env.USERPROFILE}\\AppData\\Local\\Postman\\Postman.exe`
+            'C:\\Program Files\\Postman\\Postman.exe'
+        ],
+        dynamicPaths: [
+            'LOCALAPPDATA\\Postman\\Postman.exe',
+            'USERPROFILE\\AppData\\Local\\Postman\\Postman.exe'
         ],
         command: 'start postman',
         icon: 'fas fa-rocket'
@@ -121,9 +136,9 @@ const AppConfigs = {
         name: 'Google Chrome',
         paths: [
             'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-            'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-            `${process.env.LOCALAPPDATA}\\Google\\Chrome\\Application\\chrome.exe`
+            'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
         ],
+        dynamicPaths: ['LOCALAPPDATA\\Google\\Chrome\\Application\\chrome.exe'],
         command: 'start chrome',
         icon: 'fab fa-chrome'
     },
@@ -168,9 +183,9 @@ const AppConfigs = {
     bilibili: {
         name: '哔哩哔哩',
         paths: [
-            'C:\\Program Files\\bilibili\\bilibili.exe',
-            `${process.env.USERPROFILE}\\AppData\\Local\\bilibili\\bilibili.exe`
+            'C:\\Program Files\\bilibili\\bilibili.exe'
         ],
+        dynamicPaths: ['USERPROFILE\\AppData\\Local\\bilibili\\bilibili.exe'],
         command: 'start bilibili',
         icon: 'fas fa-tv'
     },
@@ -196,9 +211,10 @@ const AppConfigs = {
     },
     notion: {
         name: 'Notion',
-        paths: [
-            `${process.env.LOCALAPPDATA}\\Programs\\Notion\\Notion.exe`,
-            `${process.env.USERPROFILE}\\AppData\\Local\\Programs\\Notion\\Notion.exe`
+        paths: [],
+        dynamicPaths: [
+            'LOCALAPPDATA\\Programs\\Notion\\Notion.exe',
+            'USERPROFILE\\AppData\\Local\\Programs\\Notion\\Notion.exe'
         ],
         command: 'start notion',
         icon: 'fas fa-sticky-note'

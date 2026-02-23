@@ -270,11 +270,14 @@ async function loadGithubRepos() {
             })
         );
         
+        // 获取用户所有仓库的总星标数
+        const totalStars = await fetchTotalStars(username, userData.public_repos);
+        
         githubState.repos = reposWithCommits;
         githubState.isLoading = false;
         
-        // 更新统计信息
-        updateGithubStats(userData, reposWithCommits);
+        // 更新统计信息（使用真实的总星标数）
+        updateGithubStats(userData, totalStars);
         
         // 渲染仓库列表
         renderGithubRepos(reposWithCommits);
@@ -285,6 +288,31 @@ async function loadGithubRepos() {
         console.error('GitHub API 错误:', error);
         githubState.isLoading = false;
         renderError('获取数据失败，请检查网络或用户名');
+    }
+}
+
+// 获取用户所有仓库的总星标数
+async function fetchTotalStars(username, totalRepos) {
+    try {
+        // GitHub API 每页最多100个仓库，需要分页获取
+        const perPage = 100;
+        const pages = Math.ceil(totalRepos / perPage);
+        let totalStars = 0;
+        
+        for (let page = 1; page <= pages; page++) {
+            const response = await fetch(
+                `https://api.github.com/users/${username}/repos?per_page=${perPage}&page=${page}`
+            );
+            if (response.ok) {
+                const repos = await response.json();
+                totalStars += repos.reduce((sum, repo) => sum + repo.stargazers_count, 0);
+            }
+        }
+        
+        return totalStars;
+    } catch (error) {
+        console.error('获取总星标数失败:', error);
+        return 0;
     }
 }
 
@@ -317,10 +345,7 @@ function renderError(message) {
     document.getElementById('githubStars').textContent = '-';
 }
 
-function updateGithubStats(userData, repos) {
-    // 计算总星数
-    const totalStars = repos.reduce((sum, repo) => sum + repo.stargazers_count, 0);
-    
+function updateGithubStats(userData, totalStars) {
     document.getElementById('githubRepoCount').textContent = userData.public_repos;
     document.getElementById('githubFollowers').textContent = userData.followers;
     document.getElementById('githubStars').textContent = totalStars;

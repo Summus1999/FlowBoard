@@ -341,9 +341,10 @@ FlowBoard
 - **统计卡片**：
   - 公开仓库数
   - 关注者数
-  - 获得总星标数
+  - 获得总星标数（通过 API 获取用户所有仓库的真实总星标）
 
 **交互逻辑**：
+
 1. 点击「登录」按钮输入 GitHub 用户名
 2. 登录后自动加载最近更新的 2 个仓库
 3. 使用 GitHub 公开 API（可选 Token 认证）
@@ -516,8 +517,13 @@ FlowBoard/
 | `github_token` | GitHub Token（可选） | String |
 | `growth_plan_content` | 个人提升计划内容 | String |
 | `growth_reminders` | 学习提醒设置 | JSON Array |
-| `interview_recordings` | 录音记录 | JSON Array |
 | `interview_settings` | 录音设置 | JSON Object |
+
+### IndexedDB 存储
+
+| 数据库名 | 对象存储 | 用途 |
+|----------|----------|------|
+| `FlowBoardInterviewDB` | `recordings` | 面试录音 Blob 数据（支持大文件存储） |
 | `leetcode_session` | LeetCode 登录状态 | String |
 | `theme` | 当前主题 | String |
 | `minimizeOnLaunch` | 启动时最小化 | Boolean |

@@ -4,6 +4,113 @@
  */
 
 // ========================================
+// IndexedDB 配置
+// ========================================
+
+const INTERVIEW_DB_NAME = 'FlowBoardInterviewDB';
+const INTERVIEW_DB_VERSION = 1;
+const INTERVIEW_STORE_NAME = 'recordings';
+
+let interviewDB = null;
+
+// 初始化 IndexedDB
+function initInterviewDB() {
+    return new Promise((resolve, reject) => {
+        if (interviewDB) {
+            resolve(interviewDB);
+            return;
+        }
+        
+        const request = indexedDB.open(INTERVIEW_DB_NAME, INTERVIEW_DB_VERSION);
+        
+        request.onerror = () => {
+            console.error('IndexedDB 打开失败:', request.error);
+            reject(request.error);
+        };
+        
+        request.onsuccess = () => {
+            interviewDB = request.result;
+            console.log('IndexedDB 初始化成功');
+            resolve(interviewDB);
+        };
+        
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains(INTERVIEW_STORE_NAME)) {
+                const store = db.createObjectStore(INTERVIEW_STORE_NAME, { keyPath: 'id' });
+                store.createIndex('date', 'date', { unique: false });
+            }
+        };
+    });
+}
+
+// 保存录音到 IndexedDB
+async function saveRecordingToDB(recording) {
+    try {
+        const db = await initInterviewDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([INTERVIEW_STORE_NAME], 'readwrite');
+            const store = transaction.objectStore(INTERVIEW_STORE_NAME);
+            
+            const request = store.put(recording);
+            
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    } catch (error) {
+        console.error('保存录音到 IndexedDB 失败:', error);
+    }
+}
+
+// 从 IndexedDB 加载所有录音
+async function loadRecordingsFromDB() {
+    try {
+        const db = await initInterviewDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([INTERVIEW_STORE_NAME], 'readonly');
+            const store = transaction.objectStore(INTERVIEW_STORE_NAME);
+            
+            const request = store.getAll();
+            
+            request.onsuccess = () => {
+                const recordings = request.result || [];
+                // 按日期倒序排列
+                recordings.sort((a, b) => new Date(b.date) - new Date(a.date));
+                // 重建 URL 对象
+                recordings.forEach(rec => {
+                    if (rec.blob) {
+                        rec.url = URL.createObjectURL(rec.blob);
+                    }
+                });
+                resolve(recordings);
+            };
+            request.onerror = () => reject(request.error);
+        });
+    } catch (error) {
+        console.error('从 IndexedDB 加载录音失败:', error);
+        return [];
+    }
+}
+
+// 从 IndexedDB 删除录音
+async function deleteRecordingFromDB(id) {
+    try {
+        const db = await initInterviewDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([INTERVIEW_STORE_NAME], 'readwrite');
+            const store = transaction.objectStore(INTERVIEW_STORE_NAME);
+            
+            const request = store.delete(id);
+            
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    } catch (error) {
+        console.error('从 IndexedDB 删除录音失败:', error);
+    }
+}
+
+// ========================================
 // 全局状态
 // ========================================
 
@@ -13,7 +120,7 @@ let interviewState = {
     audioChunks: [],
     startTime: null,
     timerInterval: null,
-    recordings: JSON.parse(localStorage.getItem('interview_recordings') || '[]'),
+    recordings: [],
     settings: JSON.parse(localStorage.getItem('interview_settings') || JSON.stringify({
         storagePath: '',
         quality: 'medium',
@@ -26,8 +133,11 @@ let interviewState = {
 // 初始化
 // ========================================
 
-function initInterview() {
+async function initInterview() {
     loadInterviewSettings();
+    
+    // 从 IndexedDB 加载录音数据
+    interviewState.recordings = await loadRecordingsFromDB();
     renderInterviewList();
     
     // 请求录音权限
@@ -113,7 +223,7 @@ function stopRecording() {
     showToast('录音已停止');
 }
 
-function saveRecording() {
+async function saveRecording() {
     const audioBlob = new Blob(interviewState.audioChunks, { type: 'audio/webm' });
     const duration = Math.floor((Date.now() - interviewState.startTime) / 1000);
     
@@ -127,13 +237,9 @@ function saveRecording() {
     };
     
     interviewState.recordings.unshift(recording);
-    localStorage.setItem('interview_recordings', JSON.stringify(
-        interviewState.recordings.map(r => ({
-            ...r,
-            blob: null, // blob 不能存 localStorage
-            url: null
-        }))
-    ));
+    
+    // 保存到 IndexedDB
+    await saveRecordingToDB(recording);
     
     // 如果设置了自动保存到文件
     if (interviewState.settings.autoSave && interviewState.settings.storagePath) {
@@ -265,7 +371,7 @@ function downloadRecordingById(id) {
     downloadRecording(recording);
 }
 
-function deleteRecording(id) {
+async function deleteRecording(id) {
     if (!confirm('确定要删除这个录音吗？')) return;
     
     const index = interviewState.recordings.findIndex(r => r.id === id);
@@ -276,9 +382,9 @@ function deleteRecording(id) {
         }
         
         interviewState.recordings.splice(index, 1);
-        localStorage.setItem('interview_recordings', JSON.stringify(
-            interviewState.recordings.map(r => ({ ...r, blob: null, url: null }))
-        ));
+        
+        // 从 IndexedDB 删除
+        await deleteRecordingFromDB(id);
         
         renderInterviewList();
         showToast('录音已删除');

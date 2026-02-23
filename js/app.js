@@ -234,14 +234,47 @@ const newsData = [
 ];
 
 // 待办事项数据
-let todoData = [
-    { id: 1, text: '更新项目文档', completed: false, tag: '紧急' },
-    { id: 2, text: '修改账户密码', completed: true, tag: '一般' },
-    { id: 3, text: '查看今日资讯', completed: false, tag: '日常' },
-    { id: 4, text: '备份重要数据', completed: false, tag: '重要' }
-];
+let todoData = [];
 
-let todoIdCounter = 5;
+let todoIdCounter = 1;
+
+// ========================================
+// 待办事项数据持久化
+// ========================================
+
+function loadTodosFromStorage() {
+    try {
+        const stored = localStorage.getItem('todos');
+        if (stored) {
+            todoData = JSON.parse(stored);
+            // 更新计数器
+            if (todoData.length > 0) {
+                todoIdCounter = Math.max(...todoData.map(t => t.id)) + 1;
+            }
+        } else {
+            // 没有存储数据时使用默认数据
+            todoData = [
+                { id: 1, text: '更新项目文档', completed: false, tag: '紧急' },
+                { id: 2, text: '修改账户密码', completed: true, tag: '一般' },
+                { id: 3, text: '查看今日资讯', completed: false, tag: '日常' },
+                { id: 4, text: '备份重要数据', completed: false, tag: '重要' }
+            ];
+            todoIdCounter = 5;
+            saveTodosToStorage();
+        }
+    } catch (error) {
+        console.error('加载待办事项失败:', error);
+        todoData = [];
+    }
+}
+
+function saveTodosToStorage() {
+    try {
+        localStorage.setItem('todos', JSON.stringify(todoData));
+    } catch (error) {
+        console.error('保存待办事项失败:', error);
+    }
+}
 
 // ========================================
 // DOM 元素
@@ -786,10 +819,6 @@ function disableAutoLaunchSettings(reason) {
 // ========================================
 
 function openAddPasswordModal() {
-    modal.classList.add('active');
-}
-
-function openAddPasswordModal() {
     // 重置编辑状态
     editingPasswordId = null;
     
@@ -1072,6 +1101,7 @@ function initNewsClickHandler() {
 // ========================================
 
 function initTodoList() {
+    loadTodosFromStorage();
     renderTodoList();
     renderDashboardTodoList();
     updateTaskCount();
@@ -1143,6 +1173,7 @@ function toggleTodo(id) {
     const todo = todoData.find(t => t.id === id);
     if (todo) {
         todo.completed = !todo.completed;
+        saveTodosToStorage();
         renderTodoList();
         updateTaskCount();
     }
@@ -1151,6 +1182,7 @@ function toggleTodo(id) {
 function deleteTodo(id) {
     if (confirm('确定要删除这个待办事项吗？')) {
         todoData = todoData.filter(t => t.id !== id);
+        saveTodosToStorage();
         renderTodoList();
         updateTaskCount();
         showToast('已删除');
@@ -1168,6 +1200,7 @@ function showAddTodoModal() {
             tag: tag
         };
         todoData.push(newTodo);
+        saveTodosToStorage();
         renderTodoList();
         renderDashboardTodoList();
         updateTaskCount();
@@ -1208,6 +1241,7 @@ function toggleDashboardTodo(id) {
     const todo = todoData.find(t => t.id === id);
     if (todo) {
         todo.completed = !todo.completed;
+        saveTodosToStorage();
         renderDashboardTodoList();
         updateTaskCount();
         renderTodoList(); // 同时更新其他页面的列表
@@ -1217,6 +1251,7 @@ function toggleDashboardTodo(id) {
 function deleteDashboardTodo(id) {
     if (confirm('确定要删除这个待办事项吗？')) {
         todoData = todoData.filter(t => t.id !== id);
+        saveTodosToStorage();
         renderDashboardTodoList();
         updateTaskCount();
         renderTodoList();
