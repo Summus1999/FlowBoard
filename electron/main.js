@@ -57,9 +57,10 @@ function createMainWindow() {
         icon: getIconPath(),
         show: false, // 先不显示，等加载完成再显示
         webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false,
-            enableRemoteModule: true,
+            nodeIntegration: false,
+            contextIsolation: true,
+            enableRemoteModule: false,
+            preload: path.join(__dirname, 'preload.js'),
             webSecurity: false // 开发环境禁用，生产环境视情况而定
         },
         titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',

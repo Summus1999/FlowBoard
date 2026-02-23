@@ -99,6 +99,9 @@
                         <i class="fas fa-cog"></i>
                     </button>
                 </div>
+                <div class="version-info">
+                    <span id="versionText">v1.1.0</span>
+                </div>
             </div>
         </aside>
 
@@ -133,13 +136,13 @@
                         <span class="stat-label">新消息</span>
                     </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon icon-weather">
+                <div class="stat-card weather-card" id="weatherCard" title="点击刷新天气">
+                    <div class="stat-icon icon-weather" id="weatherIcon">
                         <i class="fas fa-cloud-sun"></i>
                     </div>
                     <div class="stat-info">
-                        <span class="stat-number">22°</span>
-                        <span class="stat-label">多云</span>
+                        <span class="stat-number" id="weatherTemp">--°</span>
+                        <span class="stat-label" id="weatherDesc">定位中...</span>
                     </div>
                 </div>
             </header>

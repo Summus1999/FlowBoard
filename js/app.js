@@ -304,6 +304,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initTabSwitcher();
     initPasswordStrength();
     initSettings();
+    initWeather();
+    initVersion();
     
     // 延迟初始化 LeetCode，确保 DOM 完全加载
     setTimeout(() => {
@@ -1437,6 +1439,307 @@ function updateUserCardDisplay(profile) {
     const profileAvatarDisplay = document.getElementById('profileAvatarDisplay');
     if (profileAvatarDisplay && avatar) {
         profileAvatarDisplay.innerHTML = `<img src="${avatar}" alt="头像">`;
+    }
+}
+
+console.log('FlowBoard 已加载完成 🚀');
+
+
+// ========================================
+// 天气功能
+// ========================================
+
+let weatherData = null;
+let currentLocation = null;
+
+// WMO 天气代码映射
+const weatherCodeMap = {
+    0: { desc: '晴', icon: 'fa-sun', color: '#FFA500' },
+    1: { desc: '多云', icon: 'fa-cloud-sun', color: '#87CEEB' },
+    2: { desc: '多云', icon: 'fa-cloud-sun', color: '#87CEEB' },
+    3: { desc: '阴', icon: 'fa-cloud', color: '#B0C4DE' },
+    45: { desc: '雾', icon: 'fa-smog', color: '#C0C0C0' },
+    48: { desc: '雾凇', icon: 'fa-smog', color: '#C0C0C0' },
+    51: { desc: '毛毛雨', icon: 'fa-cloud-rain', color: '#4682B4' },
+    53: { desc: '小雨', icon: 'fa-cloud-rain', color: '#4682B4' },
+    55: { desc: '中雨', icon: 'fa-cloud-rain', color: '#4682B4' },
+    61: { desc: '小雨', icon: 'fa-cloud-rain', color: '#4682B4' },
+    63: { desc: '中雨', icon: 'fa-cloud-showers-heavy', color: '#4169E1' },
+    65: { desc: '大雨', icon: 'fa-cloud-showers-heavy', color: '#4169E1' },
+    71: { desc: '小雪', icon: 'fa-snowflake', color: '#87CEFA' },
+    73: { desc: '中雪', icon: 'fa-snowflake', color: '#87CEFA' },
+    75: { desc: '大雪', icon: 'fa-snowflake', color: '#87CEFA' },
+    80: { desc: '阵雨', icon: 'fa-cloud-showers-heavy', color: '#4169E1' },
+    81: { desc: '强阵雨', icon: 'fa-cloud-showers-heavy', color: '#4169E1' },
+    82: { desc: '暴雨', icon: 'fa-cloud-showers-heavy', color: '#0000CD' },
+    95: { desc: '雷雨', icon: 'fa-bolt', color: '#FFD700' },
+    96: { desc: '雷阵雨', icon: 'fa-bolt', color: '#FFD700' },
+    99: { desc: '强雷雨', icon: 'fa-bolt', color: '#FFD700' }
+};
+
+// 初始化天气
+function initWeather() {
+    const weatherCard = document.getElementById('weatherCard');
+    if (weatherCard) {
+        weatherCard.addEventListener('click', refreshWeather);
+    }
+    
+    // 尝试从本地存储加载缓存的天气数据
+    const cachedWeather = localStorage.getItem('weather_cache');
+    const cachedLocation = localStorage.getItem('weather_location');
+    const cacheTime = localStorage.getItem('weather_cache_time');
+    
+    // 缓存有效期：30分钟
+    const CACHE_DURATION = 30 * 60 * 1000;
+    
+    if (cachedWeather && cachedLocation && cacheTime) {
+        const now = Date.now();
+        if (now - parseInt(cacheTime) < CACHE_DURATION) {
+            weatherData = JSON.parse(cachedWeather);
+            currentLocation = JSON.parse(cachedLocation);
+            updateWeatherUI();
+            return;
+        }
+    }
+    
+    // 获取新数据
+    getWeather();
+}
+
+// 获取天气
+function getWeather() {
+    updateWeatherLoading(true);
+    
+    // 检查是否支持地理定位
+    if (!navigator.geolocation) {
+        // 使用 IP 定位作为备选
+        getLocationByIP();
+        return;
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+        // 成功回调
+        (position) => {
+            const { latitude, longitude } = position.coords;
+            currentLocation = { lat: latitude, lon: longitude, source: 'gps' };
+            fetchWeatherData(latitude, longitude);
+        },
+        // 错误回调
+        (error) => {
+            console.warn('GPS 定位失败，尝试 IP 定位:', error.message);
+            getLocationByIP();
+        },
+        // 选项
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000 // 5分钟缓存
+        }
+    );
+}
+
+// IP 定位（备选方案）
+async function getLocationByIP() {
+    try {
+        // 使用 ipapi.co 免费服务
+        const response = await fetch('https://ipapi.co/json/', {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        });
+        
+        if (!response.ok) throw new Error('IP 定位失败');
+        
+        const data = await response.json();
+        currentLocation = {
+            lat: data.latitude,
+            lon: data.longitude,
+            city: data.city,
+            country: data.country_name,
+            source: 'ip'
+        };
+        
+        fetchWeatherData(data.latitude, data.longitude);
+    } catch (error) {
+        console.error('IP 定位失败:', error);
+        // 使用默认城市（北京）
+        currentLocation = { lat: 39.9042, lon: 116.4074, city: '北京', source: 'default' };
+        fetchWeatherData(39.9042, 116.4074);
+    }
+}
+
+// 获取天气数据
+async function fetchWeatherData(lat, lon) {
+    try {
+        // 使用 Open-Meteo API（免费，无需 API key）
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`;
+        
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('天气数据获取失败');
+        
+        const data = await response.json();
+        weatherData = {
+            temperature: Math.round(data.current.temperature_2m),
+            weatherCode: data.current.weather_code,
+            time: data.current.time
+        };
+        
+        // 缓存数据
+        localStorage.setItem('weather_cache', JSON.stringify(weatherData));
+        localStorage.setItem('weather_location', JSON.stringify(currentLocation));
+        localStorage.setItem('weather_cache_time', Date.now().toString());
+        
+        updateWeatherUI();
+    } catch (error) {
+        console.error('获取天气失败:', error);
+        updateWeatherError();
+    }
+}
+
+// 更新天气 UI
+function updateWeatherUI() {
+    updateWeatherLoading(false);
+    
+    if (!weatherData) {
+        updateWeatherError();
+        return;
+    }
+    
+    const tempEl = document.getElementById('weatherTemp');
+    const descEl = document.getElementById('weatherDesc');
+    const iconEl = document.getElementById('weatherIcon');
+    
+    if (tempEl) tempEl.textContent = `${weatherData.temperature}°`;
+    
+    // 获取天气描述和图标
+    const weatherInfo = weatherCodeMap[weatherData.weatherCode] || weatherCodeMap[0];
+    
+    if (descEl) {
+        const cityName = currentLocation?.city ? `${currentLocation.city} · ` : '';
+        descEl.textContent = `${cityName}${weatherInfo.desc}`;
+    }
+    
+    // 更新图标
+    if (iconEl) {
+        iconEl.innerHTML = `<i class="fas ${weatherInfo.icon}" style="color: ${weatherInfo.color}"></i>`;
+    }
+}
+
+// 更新加载状态
+function updateWeatherLoading(loading) {
+    const card = document.getElementById('weatherCard');
+    const descEl = document.getElementById('weatherDesc');
+    
+    if (card) {
+        if (loading) {
+            card.classList.add('loading');
+        } else {
+            card.classList.remove('loading');
+        }
+    }
+    
+    if (descEl && loading) {
+        descEl.textContent = '定位中...';
+    }
+}
+
+// 更新错误状态
+function updateWeatherError() {
+    updateWeatherLoading(false);
+    
+    const tempEl = document.getElementById('weatherTemp');
+    const descEl = document.getElementById('weatherDesc');
+    const iconEl = document.getElementById('weatherIcon');
+    
+    if (tempEl) tempEl.textContent = '--°';
+    if (descEl) descEl.textContent = '获取失败';
+    if (iconEl) iconEl.innerHTML = '<i class="fas fa-exclamation-circle" style="color: #ff6b6b"></i>';
+}
+
+// 刷新天气
+function refreshWeather() {
+    // 清除缓存
+    localStorage.removeItem('weather_cache');
+    localStorage.removeItem('weather_cache_time');
+    
+    getWeather();
+}
+
+// ========================================
+// 版本信息
+// ========================================
+
+function initVersion() {
+    const versionEl = document.getElementById('versionText');
+    if (versionEl) {
+        // 从 package.json 获取版本号（Electron 环境）
+        // 或者使用硬编码版本号
+        let version = 'v1.1.0';
+        
+        // 尝试从 localStorage 获取版本（如果有保存）
+        const storedVersion = localStorage.getItem('app_version');
+        if (storedVersion) {
+            version = storedVersion;
+        }
+        
+        versionEl.textContent = version;
+        
+        // 点击版本号显示更多信息
+        versionEl.addEventListener('click', showVersionInfo);
+    }
+}
+
+// 显示版本信息
+function showVersionInfo() {
+    const versionInfo = {
+        version: 'v1.1.0',
+        buildDate: '2026-02-23',
+        electron: window.isElectron ? '已启用' : '未启用',
+        platform: navigator.platform,
+        userAgent: navigator.userAgent
+    };
+    
+    // 创建简单的版本信息弹窗
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.id = 'versionInfoModal';
+    modal.innerHTML = `
+        <div class="modal-overlay" onclick="closeVersionModal()"></div>
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-info-circle"></i> 关于 FlowBoard</h3>
+                <button class="close-btn" onclick="closeVersionModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="version-detail">
+                    <p><strong>版本号:</strong> ${versionInfo.version}</p>
+                    <p><strong>构建日期:</strong> ${versionInfo.buildDate}</p>
+                    <p><strong>Electron:</strong> ${versionInfo.electron}</p>
+                    <p><strong>平台:</strong> ${versionInfo.platform}</p>
+                    <hr style="margin: 15px 0; border-color: var(--border-color);">
+                    <p style="font-size: 12px; color: var(--text-muted);">
+                        FlowBoard - 个人工作台<br>
+                        一款跨平台的个人效率工具
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeVersionModal()">关闭</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('active'), 10);
+}
+
+// 关闭版本弹窗
+function closeVersionModal() {
+    const modal = document.getElementById('versionInfoModal');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => modal.remove(), 300);
     }
 }
 

@@ -247,6 +247,21 @@ body {
     justify-content: center;
 }
 
+/* 版本信息 */
+.version-info {
+    text-align: center;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
+.version-info span {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'Segoe UI', monospace;
+    letter-spacing: 0.5px;
+}
+
 .icon-btn {
     width: 32px;
     height: 32px;
@@ -264,6 +279,21 @@ body {
 .icon-btn:hover {
     background: var(--accent-color);
     color: white;
+}
+
+/* 天气卡片 */
+.weather-card {
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.weather-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.weather-card.loading {
+    opacity: 0.7;
 }
 
 /* ========================================
@@ -1427,6 +1457,7 @@ body {
     border-radius: 2px;
     outline: none;
     -webkit-appearance: none;
+    appearance: none;
 }
 
 .range-control input[type="range"]::-webkit-slider-thumb {
@@ -2367,7 +2398,8 @@ textarea:focus {
 .password-card,
 .settings-card {
     position: relative;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 /* 页面标题动画 */
