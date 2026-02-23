@@ -6,10 +6,10 @@ RAG API路由
 import hashlib
 import os
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional, List
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,7 +23,10 @@ from app.api.schemas import (
     RAGIndexVersionResponse,
 )
 from app.api.deps import get_db, get_trace_id, get_request_id
-from app.models.rag import RAGDocument, RAGDocVersion, RAGIndexVersion, DocumentStatus
+from app.models.rag import RAGDocument, RAGDocVersion, RAGChunk, RAGIndexVersion, DocumentStatus
+from app.services.rag_worker import get_rag_worker
+from app.services.indexing_service import get_indexing_service, get_version_manager
+from app.services.retrieval_service import get_retrieval_service
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -32,6 +35,7 @@ router = APIRouter()
 @router.post("/sources", response_model=RAGSourceResponse)
 async def add_source(
     request: RAGSourceRequest,
+    background_tasks: BackgroundTasks,
     trace_id: str = Depends(get_trace_id),
     request_id: str = Depends(get_request_id),
     db: AsyncSession = Depends(get_db),
@@ -39,7 +43,7 @@ async def add_source(
     """
     添加RAG数据源
     
-    支持本地目录
+    支持本地目录，会自动启动监控
     """
     if request.source_type == "local_dir":
         # 验证路径存在
@@ -50,13 +54,14 @@ async def add_source(
             raise HTTPException(status_code=400, detail="路径不是目录")
         
         # 创建文档记录
+        source_id = str(uuid4())
         doc = RAGDocument(
-            id=str(uuid4()),
+            id=source_id,
             source_type=request.source_type,
             source_path=request.path,
             file_name=os.path.basename(request.path),
-            file_size=0,  # 目录大小稍后计算
-            file_hash="",  # 目录hash稍后计算
+            file_size=0,
+            file_hash="",
             mime_type="inode/directory",
             status=DocumentStatus.PENDING.value,
         )
@@ -65,16 +70,28 @@ async def add_source(
         await db.commit()
         await db.refresh(doc)
         
+        # 如果启用自动同步，启动监控
+        if request.auto_sync:
+            worker = get_rag_worker()
+            await worker.start(watch_path=request.path, source_id=source_id)
+            
+            # 后台触发全量索引
+            background_tasks.add_task(
+                worker.trigger_full_index,
+                watch_path=request.path,
+                source_id=source_id,
+            )
+        
         logger.info(
             "rag.source_added",
-            source_id=doc.id,
+            source_id=source_id,
             path=request.path,
         )
         
         return RAGSourceResponse(
             trace_id=trace_id,
             request_id=request_id,
-            source_id=doc.id,
+            source_id=source_id,
             source_type=request.source_type,
             path=request.path,
             status=doc.status,
@@ -83,9 +100,10 @@ async def add_source(
         raise HTTPException(status_code=400, detail="不支持的source_type")
 
 
-@router.post("/index-jobs", response_model=RAGIndexResponse)
+@router.post("/index-jobs", response_model=RAGIndexIndexResponse)
 async def create_index_job(
     request: RAGIndexRequest,
+    background_tasks: BackgroundTasks,
     trace_id: str = Depends(get_trace_id),
     request_id: str = Depends(get_request_id),
     db: AsyncSession = Depends(get_db),
@@ -97,14 +115,38 @@ async def create_index_job(
     """
     job_id = str(uuid4())
     
+    if request.mode == "full":
+        # 全量索引
+        if request.source_id:
+            # 获取源路径
+            result = await db.execute(
+                select(RAGDocument).where(RAGDocument.id == request.source_id)
+            )
+            source = result.scalar_one_or_none()
+            
+            if not source:
+                raise HTTPException(status_code=404, detail="数据源不存在")
+            
+            # 后台执行全量索引
+            worker = get_rag_worker()
+            background_tasks.add_task(
+                worker.trigger_full_index,
+                watch_path=source.source_path,
+                source_id=request.source_id,
+            )
+        else:
+            raise HTTPException(status_code=400, detail="全量索引需要source_id")
+    
+    elif request.mode == "incremental":
+        # 增量索引由watcher自动处理
+        pass
+    
     logger.info(
         "rag.index_job_created",
         job_id=job_id,
         mode=request.mode,
         source_id=request.source_id,
     )
-    
-    # TODO: 实际触发后台索引任务
     
     return RAGIndexResponse(
         trace_id=trace_id,
@@ -145,12 +187,41 @@ async def list_index_versions(
                 "is_active": v.is_active,
                 "document_count": v.document_count,
                 "chunk_count": v.chunk_count,
-                "created_at": v.created_at.isoformat(),
+                "created_at": v.created_at.isoformat() if v.created_at else None,
             }
             for v in versions
         ],
         active_version=active_version,
     )
+
+
+@router.post("/index-versions")
+async def create_index_version(
+    name: str,
+    description: str = "",
+    trace_id: str = Depends(get_trace_id),
+    request_id: str = Depends(get_request_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    创建新的索引版本
+    """
+    manager = get_version_manager()
+    
+    version = await manager.create_version(
+        name=name,
+        description=description,
+        db=db,
+    )
+    
+    return {
+        "trace_id": trace_id,
+        "request_id": request_id,
+        "version_id": version.id,
+        "version_name": version.version_name,
+        "document_count": version.document_count,
+        "chunk_count": version.chunk_count,
+    }
 
 
 @router.post("/index-versions/{version_id}/activate")
@@ -163,34 +234,12 @@ async def activate_index_version(
     """
     激活指定的索引版本
     """
-    # 获取目标版本
-    result = await db.execute(
-        select(RAGIndexVersion).where(RAGIndexVersion.id == version_id)
-    )
-    version = result.scalar_one_or_none()
+    manager = get_version_manager()
     
-    if not version:
-        raise HTTPException(status_code=404, detail="索引版本不存在")
-    
-    # 取消其他版本的激活状态
-    await db.execute(
-        select(RAGIndexVersion)
-        .where(RAGIndexVersion.is_active == True)
-    )
-    result = await db.execute(
-        select(RAGIndexVersion).where(RAGIndexVersion.is_active == True)
-    )
-    active_versions = result.scalars().all()
-    for v in active_versions:
-        v.is_active = False
-    
-    # 激活目标版本
-    version.is_active = True
-    version.activated_at = datetime.now()
-    
-    await db.commit()
-    
-    logger.info("rag.index_version_activated", version_id=version_id)
+    try:
+        await manager.activate_version(version_id=version_id, db=db)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     
     return {
         "trace_id": trace_id,
@@ -203,8 +252,8 @@ async def activate_index_version(
 @router.get("/documents")
 async def list_documents(
     status: Optional[str] = None,
-    limit: int = 20,
-    offset: int = 0,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     trace_id: str = Depends(get_trace_id),
     request_id: str = Depends(get_request_id),
     db: AsyncSession = Depends(get_db),
@@ -232,8 +281,76 @@ async def list_documents(
                 "source_path": d.source_path,
                 "status": d.status,
                 "file_size": d.file_size,
-                "created_at": d.created_at.isoformat(),
+                "created_at": d.created_at.isoformat() if d.created_at else None,
             }
             for d in documents
         ],
+    }
+
+
+@router.post("/search")
+async def search_documents(
+    query: str,
+    top_k: int = Query(5, ge=1, le=20),
+    trace_id: str = Depends(get_trace_id),
+    request_id: str = Depends(get_request_id),
+    session_id: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    搜索文档
+    
+    混合检索：稀疏检索 + 稠密检索 + RRF融合
+    """
+    retrieval_service = get_retrieval_service()
+    
+    results = await retrieval_service.retrieve(
+        query=query,
+        db=db,
+        session_id=session_id,
+        trace_id=trace_id,
+        top_k=top_k,
+    )
+    
+    # 评估置信度
+    confidence = await retrieval_service.evaluate_confidence(query, results)
+    
+    return {
+        "trace_id": trace_id,
+        "request_id": request_id,
+        "query": query,
+        "results": [
+            {
+                "chunk_id": r.chunk_id,
+                "content": r.content,
+                "score": r.score,
+                "doc_name": r.doc_name,
+                "section_path": r.section_path,
+                "page_number": r.page_number,
+                "source_path": r.source_path,
+                "rank": r.rank,
+            }
+            for r in results
+        ],
+        "confidence": confidence,
+        "result_count": len(results),
+    }
+
+
+@router.get("/stats")
+async def get_stats(
+    trace_id: str = Depends(get_trace_id),
+    request_id: str = Depends(get_request_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    获取RAG统计信息
+    """
+    indexing_service = get_indexing_service()
+    stats = await indexing_service.get_document_stats(db)
+    
+    return {
+        "trace_id": trace_id,
+        "request_id": request_id,
+        "stats": stats,
     }

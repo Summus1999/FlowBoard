@@ -25,6 +25,12 @@ pypdf==5.1.0
 python-docx==1.1.0
 markdown==3.7.0
 python-magic==0.4.27
+chardet==5.2.0
+pyyaml==6.0.2
+
+# Async database
+asyncpg==0.30.0
+aiosqlite==0.20.0
 
 # Audio Processing (optional)
 # whisper-openai==20231117
