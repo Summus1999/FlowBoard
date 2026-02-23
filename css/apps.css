@@ -8,43 +8,20 @@
     height: calc(100% - 80px);
 }
 
-.apps-category {
-    margin-bottom: 32px;
-}
-
-.apps-category h3 {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.apps-category h3 i {
-    color: var(--accent-color);
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--card-bg);
-    border-radius: 6px;
-}
-
+/* 应用网格 */
 .apps-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 16px;
 }
 
+/* 应用卡片 */
 .app-card {
     background: var(--card-bg);
     backdrop-filter: var(--glass-blur);
     border: 1px solid var(--border-color);
     border-radius: 16px;
-    padding: 20px 12px;
+    padding: 20px 12px 16px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -52,6 +29,7 @@
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-align: center;
+    position: relative;
 }
 
 .app-card:hover {
@@ -65,14 +43,15 @@
     transform: translateY(-2px) scale(0.98);
 }
 
+/* 应用图标 */
 .app-icon {
-    width: 48px;
-    height: 48px;
+    width: 56px;
+    height: 56px;
     border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 26px;
     color: white;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     transition: transform 0.3s ease;
@@ -82,6 +61,7 @@
     transform: scale(1.1);
 }
 
+/* 应用名称 */
 .app-name {
     font-size: 13px;
     font-weight: 600;
@@ -92,6 +72,7 @@
     max-width: 100%;
 }
 
+/* 应用描述 */
 .app-desc {
     font-size: 11px;
     color: var(--text-muted);
@@ -101,112 +82,152 @@
     max-width: 100%;
 }
 
-/* 应用可用性状态 */
-.app-available {
-    position: relative;
-}
-
-.app-available::after {
-    content: '';
+/* 应用操作按钮 */
+.app-actions {
     position: absolute;
     top: 8px;
     right: 8px;
-    width: 8px;
-    height: 8px;
-    background: #22c55e;
-    border-radius: 50%;
-    box-shadow: 0 0 0 2px var(--bg-primary);
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
 }
 
-.app-unavailable {
-    filter: grayscale(0.5);
+.app-card:hover .app-actions {
+    opacity: 1;
 }
 
-/* ========================================
-   LeetCode 官网按钮样式
-   ======================================== */
-
-.btn-leetcode-official {
-    padding: 10px 20px;
-    background: linear-gradient(135deg, var(--accent-color), var(--accent-secondary));
-    color: white;
+.app-action-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
     border: none;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 500;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: all 0.2s ease;
 }
 
-.btn-leetcode-official:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4), 0 0 20px rgba(59, 130, 246, 0.2);
-    filter: brightness(1.1);
+.app-action-btn:hover {
+    background: var(--accent-color);
+    color: white;
+    transform: scale(1.1);
 }
 
-.btn-leetcode-official:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+.app-action-btn.delete:hover {
+    background: #ef4444;
+}
+
+/* 空状态 */
+.apps-empty {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.apps-empty i {
+    font-size: 64px;
+    margin-bottom: 20px;
+    opacity: 0.3;
+}
+
+.apps-empty h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.apps-empty p {
+    font-size: 14px;
+    max-width: 300px;
 }
 
 /* ========================================
-   GitHub 登录状态样式
+   图标选择器样式
    ======================================== */
 
-.github-login-status {
+.icon-selector-wrapper {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.selected-icon-preview {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
     display: flex;
     align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    flex-shrink: 0;
+}
+
+.icon-selector {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
     gap: 8px;
-    padding: 8px 16px;
-    background: var(--card-bg);
-    border-radius: 20px;
-    font-size: 13px;
-    color: var(--text-secondary);
-    border: 1px solid var(--border-color);
+    flex: 1;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 4px;
 }
 
-.github-login-status i {
-    font-size: 10px;
-    color: var(--text-muted);
-}
-
-.github-login-status.logged-in {
-    background: rgba(34, 197, 94, 0.1);
-    border-color: rgba(34, 197, 94, 0.3);
-    color: #22c55e;
-}
-
-.github-login-status.logged-in i {
-    color: #22c55e;
-}
-
-.github-header-actions {
+.icon-option {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--bg-primary);
+    border: 2px solid transparent;
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-/* GitHub 登录模态框样式 */
-.github-login-modal .modal-content {
-    max-width: 420px;
+.icon-option:hover {
+    background: var(--card-hover);
+    border-color: var(--border-color);
+    transform: scale(1.1);
 }
 
-/* 响应式调整 */
+.icon-option.selected {
+    border-color: var(--accent-color);
+    background: rgba(59, 130, 246, 0.1);
+}
+
+/* ========================================
+   响应式调整
+   ======================================== */
+
 @media (max-width: 768px) {
     .apps-grid {
-        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
         gap: 12px;
     }
     
     .app-card {
-        padding: 16px 8px;
+        padding: 16px 8px 12px;
     }
     
     .app-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 20px;
+        width: 44px;
+        height: 44px;
+        font-size: 22px;
     }
     
     .app-name {
@@ -217,8 +238,23 @@
         font-size: 10px;
     }
     
-    .github-header-actions {
-        flex-wrap: wrap;
-        justify-content: flex-end;
+    .icon-selector {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .apps-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .icon-selector-wrapper {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .icon-selector {
+        grid-template-columns: repeat(6, 1fr);
+        max-height: 150px;
     }
 }

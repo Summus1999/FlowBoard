@@ -1149,7 +1149,7 @@ function createTodoElement(todo) {
     label.textContent = todo.text;
     
     const tag = document.createElement('span');
-    tag.className = 'todo-tag' + (todo.tag === '紧急' ? ' urgent' : '');
+    tag.className = 'todo-tag ' + getTagClass(todo.tag);
     tag.textContent = todo.tag;
     
     const deleteBtn = document.createElement('button');
@@ -1190,22 +1190,51 @@ function deleteTodo(id) {
 }
 
 function showAddTodoModal() {
-    const text = prompt('请输入待办事项：');
-    if (text && text.trim()) {
-        const tag = prompt('请输入标签（紧急/重要/一般/日常）：', '一般') || '一般';
-        const newTodo = {
-            id: todoIdCounter++,
-            text: text.trim(),
-            completed: false,
-            tag: tag
-        };
-        todoData.push(newTodo);
-        saveTodosToStorage();
-        renderTodoList();
-        renderDashboardTodoList();
-        updateTaskCount();
-        showToast('已添加');
+    // 重置表单
+    document.getElementById('todoText').value = '';
+    // 重置标签选择
+    document.querySelectorAll('#todoTagSelect .cat-option').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.value === '一般') {
+            btn.classList.add('active');
+        }
+    });
+    // 显示模态框
+    document.getElementById('addTodoModal').classList.add('active');
+}
+
+function closeAddTodoModal() {
+    document.getElementById('addTodoModal').classList.remove('active');
+}
+
+function selectTodoTag(btn) {
+    document.querySelectorAll('#todoTagSelect .cat-option').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+function saveTodoFromModal() {
+    const text = document.getElementById('todoText').value.trim();
+    if (!text) {
+        showToast('请输入待办内容');
+        return;
     }
+    
+    const activeTag = document.querySelector('#todoTagSelect .cat-option.active');
+    const tag = activeTag ? activeTag.dataset.value : '一般';
+    
+    const newTodo = {
+        id: todoIdCounter++,
+        text: text,
+        completed: false,
+        tag: tag
+    };
+    todoData.push(newTodo);
+    saveTodosToStorage();
+    renderTodoList();
+    renderDashboardTodoList();
+    updateTaskCount();
+    closeAddTodoModal();
+    showToast('已添加');
 }
 
 function updateTaskCount() {
@@ -1225,11 +1254,21 @@ function renderDashboardTodoList() {
     const todoList = document.getElementById('dashboardTodoList');
     if (!todoList) return;
     
+    const getTagClass = (tag) => {
+        switch(tag) {
+            case '紧急': return 'urgent';
+            case '重要': return 'important';
+            case '一般': return 'normal';
+            case '日常': return 'daily';
+            default: return '';
+        }
+    };
+    
     todoList.innerHTML = todoData.map(todo => `
         <div class="todo-item">
             <input type="checkbox" class="todo-check" id="todo${todo.id}" ${todo.completed ? 'checked' : ''} onchange="toggleDashboardTodo(${todo.id})">
             <label for="todo${todo.id}" class="todo-text ${todo.completed ? 'completed' : ''}">${escapeHtml(todo.text)}</label>
-            <span class="todo-tag ${todo.tag === '紧急' ? 'urgent' : ''}">${todo.tag}</span>
+            <span class="todo-tag ${getTagClass(todo.tag)}">${todo.tag}</span>
             <button class="todo-delete-btn" onclick="deleteDashboardTodo(${todo.id})">
                 <i class="fas fa-times"></i>
             </button>
