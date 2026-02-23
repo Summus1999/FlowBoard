@@ -36,6 +36,27 @@ from app.services.retrieval_service import (
     get_retrieval_service,
     RetrievalResult,
 )
+from app.services.rerank_service import (
+    RerankService,
+    get_rerank_service,
+    RankedDocument,
+    CrossEncoderReranker,
+    LLMReranker,
+)
+from app.services.rag_chain import (
+    RAGChain,
+    create_rag_chain,
+    RAGContext,
+    RAGResponse,
+    Citation,
+)
+from app.services.rag_worker import get_rag_worker, RAGWorker
+from app.services.evaluation_service import (
+    RetrievalEvaluator,
+    QAEvaluator,
+    get_retrieval_evaluator,
+    get_qa_evaluator,
+)
 
 __all__ = [
     "ModelGateway",
@@ -62,4 +83,20 @@ __all__ = [
     "RetrievalService",
     "get_retrieval_service",
     "RetrievalResult",
+    "RerankService",
+    "get_rerank_service",
+    "RankedDocument",
+    "CrossEncoderReranker",
+    "LLMReranker",
+    "RAGChain",
+    "create_rag_chain",
+    "RAGContext",
+    "RAGResponse",
+    "Citation",
+    "get_rag_worker",
+    "RAGWorker",
+    "RetrievalEvaluator",
+    "QAEvaluator",
+    "get_retrieval_evaluator",
+    "get_qa_evaluator",
 ]
