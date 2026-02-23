@@ -399,7 +399,6 @@ ipcMain.handle('get-auto-launch-status', async () => {
 // ====================
 
 const { exec, spawn } = require('child_process');
-const os = require('os');
 
 // 检查文件是否存在
 function fileExists(filePath) {
