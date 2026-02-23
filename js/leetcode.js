@@ -103,7 +103,8 @@ async function loadProblemsWithFallback() {
     if (leetCodeState.isLoggedIn) {
         try {
             console.log('正在从 LeetCode API 加载题目...');
-            const apiProblems = await leetCodeAPI.getAllProblems();
+            // 使用批量获取 API，获取 200 道题
+            const apiProblems = await leetCodeAPI.getManyProblems(200);
             
             if (apiProblems && apiProblems.length > 0) {
                 leetCodeState.problems = apiProblems.map(p => ({
@@ -185,74 +186,184 @@ function showLoading(show) {
 }
 
 // ========================================
-// Monaco Editor 初始化
+// Monaco Editor 初始化（带降级方案）
 // ========================================
 
 function initMonacoEditor() {
-    require.config({ 
-        paths: { 
-            'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' 
-        } 
-    });
+    // 设置加载超时
+    const monacoTimeout = setTimeout(() => {
+        console.warn('Monaco Editor 加载超时，切换到备用编辑器');
+        initFallbackEditor();
+    }, 10000); // 10秒超时
 
-    require(['vs/editor/editor.main'], function() {
-        // 定义自定义主题
-        monaco.editor.defineTheme('leetcode-dark', {
-            base: 'vs-dark',
-            inherit: true,
-            rules: [
-                { token: 'comment', foreground: '6A9955' },
-                { token: 'keyword', foreground: '569CD6' },
-                { token: 'identifier', foreground: '9CDCFE' },
-                { token: 'string', foreground: 'CE9178' },
-                { token: 'number', foreground: 'B5CEA8' },
-            ],
-            colors: {
-                'editor.background': '#1e1e1e',
-                'editor.foreground': '#d4d4d4',
-                'editor.lineHighlightBackground': '#2d2d2d',
-                'editorLineNumber.foreground': '#858585',
-                'editor.selectionBackground': '#264f78',
+    try {
+        require.config({ 
+            paths: { 
+                'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' 
+            },
+            waitSeconds: 30 // 增加加载超时时间
+        });
+
+        require(['vs/editor/editor.main'], function() {
+            clearTimeout(monacoTimeout);
+            
+            // 定义自定义主题
+            monaco.editor.defineTheme('leetcode-dark', {
+                base: 'vs-dark',
+                inherit: true,
+                rules: [
+                    { token: 'comment', foreground: '6A9955' },
+                    { token: 'keyword', foreground: '569CD6' },
+                    { token: 'identifier', foreground: '9CDCFE' },
+                    { token: 'string', foreground: 'CE9178' },
+                    { token: 'number', foreground: 'B5CEA8' },
+                ],
+                colors: {
+                    'editor.background': '#1e1e1e',
+                    'editor.foreground': '#d4d4d4',
+                    'editor.lineHighlightBackground': '#2d2d2d',
+                    'editorLineNumber.foreground': '#858585',
+                    'editor.selectionBackground': '#264f78',
+                }
+            });
+
+            // 创建编辑器
+            const container = document.getElementById('monacoEditor');
+            if (!container) return;
+
+            // 清空容器
+            container.innerHTML = '';
+
+            leetCodeState.editor = monaco.editor.create(container, {
+                value: LanguageConfig.getTemplate('javascript'),
+                language: 'javascript',
+                theme: 'leetcode-dark',
+                fontSize: 14,
+                fontFamily: 'Consolas, "Courier New", monospace',
+                lineNumbers: 'on',
+                roundedSelection: false,
+                scrollBeyondLastLine: false,
+                minimap: { enabled: true },
+                automaticLayout: true,
+                tabSize: 4,
+                insertSpaces: true,
+                wordWrap: 'on',
+                folding: true,
+                renderWhitespace: 'selection',
+                matchBrackets: 'always',
+                autoIndent: 'full',
+                formatOnPaste: true,
+                formatOnType: true
+            });
+
+            // 添加快捷键
+            leetCodeState.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function() {
+                runCode();
+            });
+
+            leetCodeState.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, function() {
+                submitCode();
+            });
+
+            // 标记 Monaco 已加载
+            leetCodeState.editorType = 'monaco';
+            console.log('Monaco Editor 初始化完成');
+            
+            // 如果有当前题目，更新编辑器内容
+            if (leetCodeState.currentProblem) {
+                updateEditorCode();
             }
+        }, function(err) {
+            // 加载失败
+            clearTimeout(monacoTimeout);
+            console.error('Monaco Editor 加载失败:', err);
+            initFallbackEditor();
         });
+    } catch (error) {
+        clearTimeout(monacoTimeout);
+        console.error('Monaco Editor 初始化错误:', error);
+        initFallbackEditor();
+    }
+}
 
-        // 创建编辑器
-        const container = document.getElementById('monacoEditor');
-        if (!container) return;
+// ========================================
+// 备用编辑器（简单的 textarea）
+// ========================================
 
-        leetCodeState.editor = monaco.editor.create(container, {
-            value: LanguageConfig.getTemplate('javascript'),
-            language: 'javascript',
-            theme: 'leetcode-dark',
-            fontSize: 14,
-            fontFamily: 'Consolas, "Courier New", monospace',
-            lineNumbers: 'on',
-            roundedSelection: false,
-            scrollBeyondLastLine: false,
-            minimap: { enabled: true },
-            automaticLayout: true,
-            tabSize: 4,
-            insertSpaces: true,
-            wordWrap: 'on',
-            folding: true,
-            renderWhitespace: 'selection',
-            matchBrackets: 'always',
-            autoIndent: 'full',
-            formatOnPaste: true,
-            formatOnType: true
-        });
+function initFallbackEditor() {
+    const container = document.getElementById('monacoEditor');
+    if (!container) return;
 
-        // 添加快捷键
-        leetCodeState.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function() {
-            runCode();
-        });
+    // 清空容器
+    container.innerHTML = '';
+    container.style.background = '#1e1e1e';
+    container.style.padding = '0';
 
-        leetCodeState.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, function() {
+    // 创建 textarea 编辑器
+    const textarea = document.createElement('textarea');
+    textarea.id = 'fallbackEditor';
+    textarea.className = 'code-editor';
+    textarea.style.cssText = `
+        width: 100%;
+        height: 100%;
+        padding: 16px;
+        background: #1e1e1e;
+        border: none;
+        color: #d4d4d4;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-size: 14px;
+        line-height: 1.6;
+        resize: none;
+        outline: none;
+        tab-size: 4;
+        white-space: pre;
+        overflow: auto;
+    `;
+    textarea.value = LanguageConfig.getTemplate('javascript');
+    textarea.placeholder = '// 在此编写你的代码...';
+
+    // 添加 Tab 键支持
+    textarea.addEventListener('keydown', function(e) {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const start = this.selectionStart;
+            const end = this.selectionEnd;
+            this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
+            this.selectionStart = this.selectionEnd = start + 4;
+        }
+        
+        // Ctrl/Cmd + Enter 提交
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
             submitCode();
-        });
-
-        console.log('Monaco Editor 初始化完成');
+        }
     });
+
+    container.appendChild(textarea);
+
+    // 包装对象模拟 Monaco Editor API
+    leetCodeState.editor = {
+        type: 'fallback',
+        getValue: function() {
+            return textarea.value;
+        },
+        setValue: function(value) {
+            textarea.value = value;
+        },
+        setModelLanguage: function(model, language) {
+            // 备用编辑器不支持语法高亮切换，但我们可以记录当前语言
+            this.currentLanguage = language;
+        }
+    };
+    
+    leetCodeState.editorType = 'fallback';
+    console.log('备用编辑器初始化完成');
+    showToast('代码编辑器已加载（备用模式）');
+    
+    // 如果有当前题目，更新编辑器内容
+    if (leetCodeState.currentProblem) {
+        updateEditorCode();
+    }
 }
 
 // ========================================
@@ -270,16 +381,18 @@ function getMockProblems() {
             status: 'solved',
             tags: ['数组', '哈希表'],
             acceptance: '52.3%',
-            description: '给定一个整数数组 nums 和一个整数目标值 target，请你在该数组中找出和为目标值 target 的那两个整数，并返回它们的数组下标。',
+            description: `<p>给定一个整数数组 <code>nums</code> 和一个整数目标值 <code>target</code>，请你在该数组中找出 <strong>和为目标值</strong> <em>target</em> 的那 <strong>两个</strong> 整数，并返回它们的数组下标。</p>
+            <p>你可以假设每种输入只会对应一个答案。但是，数组中同一个元素在答案里不能重复出现。</p>
+            <p>你可以按任意顺序返回答案。</p>`,
             examples: [
                 { input: 'nums = [2,7,11,15], target = 9', output: '[0,1]', explanation: '因为 nums[0] + nums[1] == 9' },
                 { input: 'nums = [3,2,4], target = 6', output: '[1,2]' }
             ],
             constraints: ['2 <= nums.length <= 10^4', '-10^9 <= nums[i] <= 10^9'],
             templates: {
-                javascript: `var twoSum = function(nums, target) {\n    // 在此编写你的代码\n    \n};`,
-                python: `class Solution:\n    def twoSum(self, nums, target):\n        # 在此编写你的代码\n        pass`,
-                java: `class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        return new int[0];\n    }\n}`
+                javascript: `/**\n * @param {number[]} nums\n * @param {number} target\n * @return {number[]}\n */\nvar twoSum = function(nums, target) {\n    const map = new Map();\n    for (let i = 0; i < nums.length; i++) {\n        const complement = target - nums[i];\n        if (map.has(complement)) {\n            return [map.get(complement), i];\n        }\n        map.set(nums[i], i);\n    }\n    return [];\n};`,
+                python: `class Solution:\n    def twoSum(self, nums: List[int], target: int) -> List[int]:\n        hash_map = {}\n        for i, num in enumerate(nums):\n            complement = target - num\n            if complement in hash_map:\n                return [hash_map[complement], i]\n            hash_map[num] = i\n        return []`,
+                java: `class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        Map<Integer, Integer> map = new HashMap<>();\n        for (int i = 0; i < nums.length; i++) {\n            int complement = target - nums[i];\n            if (map.containsKey(complement)) {\n                return new int[] { map.get(complement), i };\n            }\n            map.put(nums[i], i);\n        }\n        return new int[0];\n    }\n}`
             }
         },
         {
@@ -289,17 +402,19 @@ function getMockProblems() {
             titleSlug: 'add-two-numbers',
             difficulty: 'medium',
             status: 'unsolved',
-            tags: ['递归', '链表'],
+            tags: ['递归', '链表', '数学'],
             acceptance: '43.2%',
-            description: '给你两个非空的链表，表示两个非负的整数。它们每位数字都是按照逆序的方式存储的，并且每个节点只能存储一位数字。',
+            description: `<p>给你两个 <strong>非空</strong> 的链表，表示两个非负的整数。它们每位数字都是按照 <strong>逆序</strong> 的方式存储的，并且每个节点只能存储 <strong>一位</strong> 数字。</p>
+            <p>请你将两个数相加，并以相同形式返回一个表示和的链表。</p>
+            <p>你可以假设除了数字 0 之外，这两个数都不会以 0 开头。</p>`,
             examples: [
                 { input: 'l1 = [2,4,3], l2 = [5,6,4]', output: '[7,0,8]', explanation: '342 + 465 = 807' }
             ],
             constraints: ['每个链表中的节点数在范围 [1, 100] 内'],
             templates: {
-                javascript: `var addTwoNumbers = function(l1, l2) {\n    // 在此编写你的代码\n    \n};`,
-                python: `class Solution:\n    def addTwoNumbers(self, l1, l2):\n        pass`,
-                java: `class Solution {\n    public ListNode addTwoNumbers(ListNode l1, ListNode l2) {\n        return null;\n    }\n}`
+                javascript: `/**\n * Definition for singly-linked list.\n * function ListNode(val, next) {\n *     this.val = (val===undefined ? 0 : val)\n *     this.next = (next===undefined ? null : next)\n * }\n */\n/**\n * @param {ListNode} l1\n * @param {ListNode} l2\n * @return {ListNode}\n */\nvar addTwoNumbers = function(l1, l2) {\n    // 在此编写你的代码\n    \n};`,
+                python: `# Definition for singly-linked list.\n# class ListNode:\n#     def __init__(self, val=0, next=None):\n#         self.val = val\n#         self.next = next\nclass Solution:\n    def addTwoNumbers(self, l1: Optional[ListNode], l2: Optional[ListNode]) -> Optional[ListNode]:\n        pass`,
+                java: `/**\n * Definition for singly-linked list.\n * public class ListNode {\n *     int val;\n *     ListNode next;\n *     ListNode() {}\n *     ListNode(int val) { this.val = val; }\n *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }\n * }\n */\nclass Solution {\n    public ListNode addTwoNumbers(ListNode l1, ListNode l2) {\n        return null;\n    }\n}`
             }
         },
         {
@@ -311,14 +426,14 @@ function getMockProblems() {
             status: 'attempted',
             tags: ['哈希表', '字符串', '滑动窗口'],
             acceptance: '38.5%',
-            description: '给定一个字符串 s，请你找出其中不含有重复字符的最长子串的长度。',
+            description: `<p>给定一个字符串 <code>s</code> ，请你找出其中 <strong>不含有重复字符</strong> 的 <strong>最长子串</strong> 的长度。</p>`,
             examples: [
                 { input: 's = "abcabcbb"', output: '3', explanation: '因为无重复字符的最长子串是 "abc"' }
             ],
             constraints: ['0 <= s.length <= 5 * 10^4'],
             templates: {
-                javascript: `var lengthOfLongestSubstring = function(s) {\n    // 在此编写你的代码\n    \n};`,
-                python: `class Solution:\n    def lengthOfLongestSubstring(self, s):\n        pass`,
+                javascript: `/**\n * @param {string} s\n * @return {number}\n */\nvar lengthOfLongestSubstring = function(s) {\n    // 在此编写你的代码\n    \n};`,
+                python: `class Solution:\n    def lengthOfLongestSubstring(self, s: str) -> int:\n        pass`,
                 java: `class Solution {\n    public int lengthOfLongestSubstring(String s) {\n        return 0;\n    }\n}`
             }
         },
@@ -331,14 +446,15 @@ function getMockProblems() {
             status: 'unsolved',
             tags: ['数组', '二分查找', '分治'],
             acceptance: '41.2%',
-            description: '给定两个大小分别为 m 和 n 的正序数组 nums1 和 nums2。请你找出并返回这两个正序数组的中位数。算法的时间复杂度应该为 O(log (m+n))。',
+            description: `<p>给定两个大小分别为 <code>m</code> 和 <code>n</code> 的正序（从小到大）数组 <code>nums1</code> 和 <code>nums2</code>。请你找出并返回这两个正序数组的 <strong>中位数</strong> 。</p>
+            <p>算法的时间复杂度应该为 <code>O(log (m+n))</code> 。</p>`,
             examples: [
                 { input: 'nums1 = [1,3], nums2 = [2]', output: '2.00000', explanation: '合并数组 = [1,2,3]' }
             ],
             constraints: ['0 <= m <= 1000', '0 <= n <= 1000'],
             templates: {
-                javascript: `var findMedianSortedArrays = function(nums1, nums2) {\n    // 在此编写你的代码\n    \n};`,
-                python: `class Solution:\n    def findMedianSortedArrays(self, nums1, nums2):\n        pass`,
+                javascript: `/**\n * @param {number[]} nums1\n * @param {number[]} nums2\n * @return {number}\n */\nvar findMedianSortedArrays = function(nums1, nums2) {\n    // 在此编写你的代码\n    \n};`,
+                python: `class Solution:\n    def findMedianSortedArrays(self, nums1: List[int], nums2: List[int]) -> float:\n        pass`,
                 java: `class Solution {\n    public double findMedianSortedArrays(int[] nums1, int[] nums2) {\n        return 0.0;\n    }\n}`
             }
         },
@@ -351,15 +467,439 @@ function getMockProblems() {
             status: 'solved',
             tags: ['字符串', '动态规划'],
             acceptance: '35.8%',
-            description: '给你一个字符串 s，找到 s 中最长的回文子串。',
+            description: `<p>给你一个字符串 <code>s</code>，找到 <code>s</code> 中最长的 <strong>回文子串</strong>。</p>`,
             examples: [
                 { input: 's = "babad"', output: '"bab"', explanation: '"aba" 同样是符合题意的答案。' }
             ],
             constraints: ['1 <= s.length <= 1000'],
             templates: {
-                javascript: `var longestPalindrome = function(s) {\n    // 在此编写你的代码\n    \n};`,
-                python: `class Solution:\n    def longestPalindrome(self, s):\n        pass`,
+                javascript: `/**\n * @param {string} s\n * @return {string}\n */\nvar longestPalindrome = function(s) {\n    // 在此编写你的代码\n    \n};`,
+                python: `class Solution:\n    def longestPalindrome(self, s: str) -> str:\n        pass`,
                 java: `class Solution {\n    public String longestPalindrome(String s) {\n        return "";\n    }\n}`
+            }
+        },
+        {
+            id: 6,
+            title: 'Z 字形变换',
+            titleEn: 'Zigzag Conversion',
+            titleSlug: 'zigzag-conversion',
+            difficulty: 'medium',
+            status: 'unsolved',
+            tags: ['字符串'],
+            acceptance: '52.1%',
+            description: `<p>将一个给定字符串 <code>s</code> 根据给定的行数 <code>numRows</code> ，以从上往下、从左到右进行 Z 字形排列。</p>`,
+            examples: [
+                { input: 's = "PAYPALISHIRING", numRows = 3', output: '"PAHNAPLSIIGYIR"' }
+            ],
+            constraints: ['1 <= s.length <= 1000', '1 <= numRows <= 1000'],
+            templates: {
+                javascript: `/**\n * @param {string} s\n * @param {number} numRows\n * @return {string}\n */\nvar convert = function(s, numRows) {\n    \n};`,
+                python: `class Solution:\n    def convert(self, s: str, numRows: int) -> str:\n        pass`,
+                java: `class Solution {\n    public String convert(String s, int numRows) {\n        return "";\n    }\n}`
+            }
+        },
+        {
+            id: 7,
+            title: '整数反转',
+            titleEn: 'Reverse Integer',
+            titleSlug: 'reverse-integer',
+            difficulty: 'medium',
+            status: 'solved',
+            tags: ['数学'],
+            acceptance: '36.4%',
+            description: `<p>给你一个 32 位的有符号整数 <code>x</code> ，返回将 <code>x</code> 中的数字部分反转后的结果。</p>
+            <p>如果反转后整数超过 32 位的有符号整数的范围 <code>[−2^31,  2^31 − 1]</code> ，就返回 0。</p>`,
+            examples: [
+                { input: 'x = 123', output: '321' },
+                { input: 'x = -123', output: '-321' }
+            ],
+            constraints: ['-2^31 <= x <= 2^31 - 1'],
+            templates: {
+                javascript: `/**\n * @param {number} x\n * @return {number}\n */\nvar reverse = function(x) {\n    \n};`,
+                python: `class Solution:\n    def reverse(self, x: int) -> int:\n        pass`,
+                java: `class Solution {\n    public int reverse(int x) {\n        return 0;\n    }\n}`
+            }
+        },
+        {
+            id: 8,
+            title: '字符串转换整数 (atoi)',
+            titleEn: 'String to Integer (atoi)',
+            titleSlug: 'string-to-integer-atoi',
+            difficulty: 'medium',
+            status: 'unsolved',
+            tags: ['字符串'],
+            acceptance: '23.8%',
+            description: `<p>请你来实现一个 <code>myAtoi(string s)</code> 函数，使其能将字符串转换成一个 32 位有符号整数（类似 C/C++ 中的 <code>atoi</code> 函数）。</p>`,
+            examples: [
+                { input: 's = "42"', output: '42' },
+                { input: 's = "   -42"', output: '-42' }
+            ],
+            constraints: ['0 <= s.length <= 200'],
+            templates: {
+                javascript: `/**\n * @param {string} s\n * @return {number}\n */\nvar myAtoi = function(s) {\n    \n};`,
+                python: `class Solution:\n    def myAtoi(self, s: str) -> int:\n        pass`,
+                java: `class Solution {\n    public int myAtoi(String s) {\n        return 0;\n    }\n}`
+            }
+        },
+        {
+            id: 9,
+            title: '回文数',
+            titleEn: 'Palindrome Number',
+            titleSlug: 'palindrome-number',
+            difficulty: 'easy',
+            status: 'solved',
+            tags: ['数学'],
+            acceptance: '55.4%',
+            description: `<p>给你一个整数 <code>x</code> ，如果 <code>x</code> 是一个回文整数，返回 <code>true</code> ；否则，返回 <code>false</code> 。</p>
+            <p>回文数是指正序（从左向右）和倒序（从右向左）读都是一样的整数。</p>`,
+            examples: [
+                { input: 'x = 121', output: 'true' },
+                { input: 'x = -121', output: 'false' }
+            ],
+            constraints: ['-2^31 <= x <= 2^31 - 1'],
+            templates: {
+                javascript: `/**\n * @param {number} x\n * @return {boolean}\n */\nvar isPalindrome = function(x) {\n    \n};`,
+                python: `class Solution:\n    def isPalindrome(self, x: int) -> bool:\n        pass`,
+                java: `class Solution {\n    public boolean isPalindrome(int x) {\n        return false;\n    }\n}`
+            }
+        },
+        {
+            id: 10,
+            title: '正则表达式匹配',
+            titleEn: 'Regular Expression Matching',
+            titleSlug: 'regular-expression-matching',
+            difficulty: 'hard',
+            status: 'unsolved',
+            tags: ['递归', '字符串', '动态规划'],
+            acceptance: '31.9%',
+            description: `<p>给你一个字符串 <code>s</code> 和一个字符规律 <code>p</code>，请你来实现一个支持 <code>'.'</code> 和 <code>'*'</code> 的正则表达式匹配。</p>`,
+            examples: [
+                { input: 's = "aa", p = "a"', output: 'false' },
+                { input: 's = "aa", p = "a*"', output: 'true' }
+            ],
+            constraints: ['0 <= s.length <= 20', '0 <= p.length <= 30'],
+            templates: {
+                javascript: `/**\n * @param {string} s\n * @param {string} p\n * @return {boolean}\n */\nvar isMatch = function(s, p) {\n    \n};`,
+                python: `class Solution:\n    def isMatch(self, s: str, p: str) -> bool:\n        pass`,
+                java: `class Solution {\n    public boolean isMatch(String s, String p) {\n        return false;\n    }\n}`
+            }
+        },
+        {
+            id: 11,
+            title: '盛最多水的容器',
+            titleEn: 'Container With Most Water',
+            titleSlug: 'container-with-most-water',
+            difficulty: 'medium',
+            status: 'attempted',
+            tags: ['贪心', '数组', '双指针'],
+            acceptance: '60.5%',
+            description: `<p>给定一个长度为 <code>n</code> 的整数数组 <code>height</code> 。有 <code>n</code> 条垂线，第 <code>i</code> 条线的两个端点是 <code>(i, 0)</code> 和 <code>(i, height[i])</code> 。</p>
+            <p>找出其中的两条线，使得它们与 <code>x</code> 轴共同构成的容器可以容纳最多的水。</p>`,
+            examples: [
+                { input: 'height = [1,8,6,2,5,4,8,3,7]', output: '49', explanation: '图中垂直线代表输入数组 [1,8,6,2,5,4,8,3,7]。在此情况下，容器能够容纳水（表示为蓝色部分）的最大值为 49。' }
+            ],
+            constraints: ['n == height.length', '2 <= n <= 10^5', '0 <= height[i] <= 10^4'],
+            templates: {
+                javascript: `/**\n * @param {number[]} height\n * @return {number}\n */\nvar maxArea = function(height) {\n    \n};`,
+                python: `class Solution:\n    def maxArea(self, height: List[int]) -> int:\n        pass`,
+                java: `class Solution {\n    public int maxArea(int[] height) {\n        return 0;\n    }\n}`
+            }
+        },
+        {
+            id: 12,
+            title: '整数转罗马数字',
+            titleEn: 'Integer to Roman',
+            titleSlug: 'integer-to-roman',
+            difficulty: 'medium',
+            status: 'unsolved',
+            tags: ['哈希表', '数学', '字符串'],
+            acceptance: '67.1%',
+            description: `<p>罗马数字包含以下七种字符： <code>I</code>， <code>V</code>， <code>X</code>， <code>L</code>，<code>C</code>，<code>D</code> 和 <code>M</code>。</p>
+            <p>给定一个整数，将其转为罗马数字。</p>`,
+            examples: [
+                { input: 'num = 3', output: '"III"', explanation: '3 就是三个 I 表示' }
+            ],
+            constraints: ['1 <= num <= 3999'],
+            templates: {
+                javascript: `/**\n * @param {number} num\n * @return {string}\n */\nvar intToRoman = function(num) {\n    \n};`,
+                python: `class Solution:\n    def intToRoman(self, num: int) -> str:\n        pass`,
+                java: `class Solution {\n    public String intToRoman(int num) {\n        return "";\n    }\n}`
+            }
+        },
+        {
+            id: 13,
+            title: '罗马数字转整数',
+            titleEn: 'Roman to Integer',
+            titleSlug: 'roman-to-integer',
+            difficulty: 'easy',
+            status: 'solved',
+            tags: ['哈希表', '数学', '字符串'],
+            acceptance: '63.8%',
+            description: `<p>罗马数字包含以下七种字符: <code>I</code>， <code>V</code>， <code>X</code>， <code>L</code>，<code>C</code>，<code>D</code> 和 <code>M</code>。</p>
+            <p>给定一个罗马数字，将其转换成整数。</p>`,
+            examples: [
+                { input: 's = "III"', output: '3' },
+                { input: 's = "IV"', output: '4' }
+            ],
+            constraints: ['1 <= s.length <= 15'],
+            templates: {
+                javascript: `/**\n * @param {string} s\n * @return {number}\n */\nvar romanToInt = function(s) {\n    \n};`,
+                python: `class Solution:\n    def romanToInt(self, s: str) -> int:\n        pass`,
+                java: `class Solution {\n    public int romanToInt(String s) {\n        return 0;\n    }\n}`
+            }
+        },
+        {
+            id: 14,
+            title: '最长公共前缀',
+            titleEn: 'Longest Common Prefix',
+            titleSlug: 'longest-common-prefix',
+            difficulty: 'easy',
+            status: 'solved',
+            tags: ['字符串'],
+            acceptance: '44.2%',
+            description: `<p>编写一个函数来查找字符串数组中的最长公共前缀。</p>
+            <p>如果不存在公共前缀，返回空字符串 <code>""</code>。</p>`,
+            examples: [
+                { input: 'strs = ["flower","flow","flight"]', output: '"fl"' }
+            ],
+            constraints: ['1 <= strs.length <= 200', '0 <= strs[i].length <= 200'],
+            templates: {
+                javascript: `/**\n * @param {string[]} strs\n * @return {string}\n */\nvar longestCommonPrefix = function(strs) {\n    \n};`,
+                python: `class Solution:\n    def longestCommonPrefix(self, strs: List[str]) -> str:\n        pass`,
+                java: `class Solution {\n    public String longestCommonPrefix(String[] strs) {\n        return "";\n    }\n}`
+            }
+        },
+        {
+            id: 15,
+            title: '三数之和',
+            titleEn: '3Sum',
+            titleSlug: '3sum',
+            difficulty: 'medium',
+            status: 'attempted',
+            tags: ['数组', '双指针', '排序'],
+            acceptance: '36.5%',
+            description: `<p>给你一个整数数组 <code>nums</code> ，判断是否存在三元组 <code>[nums[i], nums[j], nums[k]]</code> 满足 <code>i != j</code>、<code>i != k</code> 且 <code>j != k</code> ，同时还满足 <code>nums[i] + nums[j] + nums[k] == 0</code> 。</p>
+            <p>请你返回所有和为 0 且不重复的三元组。</p>`,
+            examples: [
+                { input: 'nums = [-1,0,1,2,-1,-4]', output: '[[-1,-1,2],[-1,0,1]]' }
+            ],
+            constraints: ['3 <= nums.length <= 3000', '-10^5 <= nums[i] <= 10^5'],
+            templates: {
+                javascript: `/**\n * @param {number[]} nums\n * @return {number[][]}\n */\nvar threeSum = function(nums) {\n    \n};`,
+                python: `class Solution:\n    def threeSum(self, nums: List[int]) -> List[List[int]]:\n        pass`,
+                java: `class Solution {\n    public List<List<Integer>> threeSum(int[] nums) {\n        return new ArrayList<>();\n    }\n}`
+            }
+        },
+        {
+            id: 16,
+            title: '最接近的三数之和',
+            titleEn: '3Sum Closest',
+            titleSlug: '3sum-closest',
+            difficulty: 'medium',
+            status: 'unsolved',
+            tags: ['数组', '双指针', '排序'],
+            acceptance: '47.5%',
+            description: `<p>给你一个长度为 <code>n</code> 的整数数组 <code>nums</code> 和 一个目标值 <code>target</code>。请你从 <code>nums</code> 中选出三个整数，使它们的和与 <code>target</code> 最接近。</p>
+            <p>返回这三个数的和。</p>`,
+            examples: [
+                { input: 'nums = [-1,2,1,-4], target = 1', output: '2', explanation: '与 target 最接近的和是 2 (-1 + 2 + 1 = 2)' }
+            ],
+            constraints: ['3 <= nums.length <= 500', '-1000 <= nums[i] <= 1000'],
+            templates: {
+                javascript: `/**\n * @param {number[]} nums\n * @param {number} target\n * @return {number}\n */\nvar threeSumClosest = function(nums, target) {\n    \n};`,
+                python: `class Solution:\n    def threeSumClosest(self, nums: List[int], target: int) -> int:\n        pass`,
+                java: `class Solution {\n    public int threeSumClosest(int[] nums, int target) {\n        return 0;\n    }\n}`
+            }
+        },
+        {
+            id: 17,
+            title: '电话号码的字母组合',
+            titleEn: 'Letter Combinations of a Phone Number',
+            titleSlug: 'letter-combinations-of-a-phone-number',
+            difficulty: 'medium',
+            status: 'unsolved',
+            tags: ['哈希表', '字符串', '回溯'],
+            acceptance: '58.9%',
+            description: `<p>给定一个仅包含数字 <code>2-9</code> 的字符串，返回所有它能表示的字母组合。答案可以按 <strong>任意顺序</strong> 返回。</p>
+            <p>给出数字到字母的映射如下（与电话按键相同）。注意 1 不对应任何字母。</p>`,
+            examples: [
+                { input: 'digits = "23"', output: '["ad","ae","af","bd","be","bf","cd","ce","cf"]' }
+            ],
+            constraints: ['0 <= digits.length <= 4'],
+            templates: {
+                javascript: `/**\n * @param {string} digits\n * @return {string[]}\n */\nvar letterCombinations = function(digits) {\n    \n};`,
+                python: `class Solution:\n    def letterCombinations(self, digits: str) -> List[str]:\n        pass`,
+                java: `class Solution {\n    public List<String> letterCombinations(String digits) {\n        return new ArrayList<>();\n    }\n}`
+            }
+        },
+        {
+            id: 18,
+            title: '四数之和',
+            titleEn: '4Sum',
+            titleSlug: '4sum',
+            difficulty: 'medium',
+            status: 'unsolved',
+            tags: ['数组', '双指针', '排序'],
+            acceptance: '39.3%',
+            description: `<p>给你一个由 <code>n</code> 个整数组成的数组 <code>nums</code> ，和一个目标值 <code>target</code> 。请你找出并返回满足下述全部条件且不重复的四元组 <code>[nums[a], nums[b], nums[c], nums[d]]</code> ：</p>`,
+            examples: [
+                { input: 'nums = [1,0,-1,0,-2,2], target = 0', output: '[[-2,-1,1,2],[-2,0,0,2],[-1,0,0,1]]' }
+            ],
+            constraints: ['1 <= nums.length <= 200', '-10^9 <= nums[i] <= 10^9'],
+            templates: {
+                javascript: `/**\n * @param {number[]} nums\n * @param {number} target\n * @return {number[][]}\n */\nvar fourSum = function(nums, target) {\n    \n};`,
+                python: `class Solution:\n    def fourSum(self, nums: List[int], target: int) -> List[List[int]]:\n        pass`,
+                java: `class Solution {\n    public List<List<Integer>> fourSum(int[] nums, int target) {\n        return new ArrayList<>();\n    }\n}`
+            }
+        },
+        {
+            id: 19,
+            title: '删除链表的倒数第 N 个结点',
+            titleEn: 'Remove Nth Node From End of List',
+            titleSlug: 'remove-nth-node-from-end-of-list',
+            difficulty: 'medium',
+            status: 'solved',
+            tags: ['链表', '双指针'],
+            acceptance: '45.1%',
+            description: `<p>给你一个链表，删除链表的倒数第 <code>n</code> 个结点，并且返回链表的头结点。</p>`,
+            examples: [
+                { input: 'head = [1,2,3,4,5], n = 2', output: '[1,2,3,5]' }
+            ],
+            constraints: ['链表中结点的数目为 sz', '1 <= sz <= 30'],
+            templates: {
+                javascript: `/**\n * Definition for singly-linked list.\n * function ListNode(val, next) {\n *     this.val = (val===undefined ? 0 : val)\n *     this.next = (next===undefined ? null : next)\n * }\n */\n/**\n * @param {ListNode} head\n * @param {number} n\n * @return {ListNode}\n */\nvar removeNthFromEnd = function(head, n) {\n    \n};`,
+                python: `class Solution:\n    def removeNthFromEnd(self, head: Optional[ListNode], n: int) -> Optional[ListNode]:\n        pass`,
+                java: `class Solution {\n    public ListNode removeNthFromEnd(ListNode head, int n) {\n        return null;\n    }\n}`
+            }
+        },
+        {
+            id: 20,
+            title: '有效的括号',
+            titleEn: 'Valid Parentheses',
+            titleSlug: 'valid-parentheses',
+            difficulty: 'easy',
+            status: 'solved',
+            tags: ['栈', '字符串'],
+            acceptance: '55.1%',
+            description: `<p>给定一个只包括 <code>'('</code>，<code>')'</code>，<code>'{'</code>，<code>'}'</code>，<code>'['</code>，<code>']'</code> 的字符串 <code>s</code> ，判断字符串是否有效。</p>
+            <p>有效字符串需满足：</p>
+            <ul>
+            <li>左括号必须用相同类型的右括号闭合。</li>
+            <li>左括号必须以正确的顺序闭合。</li>
+            <li>每个右括号都有一个对应的相同类型的左括号。</li>
+            </ul>`,
+            examples: [
+                { input: 's = "()"', output: 'true' },
+                { input: 's = "()[]{}"', output: 'true' },
+                { input: 's = "(]"', output: 'false' }
+            ],
+            constraints: ['1 <= s.length <= 10^4'],
+            templates: {
+                javascript: `/**\n * @param {string} s\n * @return {boolean}\n */\nvar isValid = function(s) {\n    \n};`,
+                python: `class Solution:\n    def isValid(self, s: str) -> bool:\n        pass`,
+                java: `class Solution {\n    public boolean isValid(String s) {\n        return false;\n    }\n}`
+            }
+        },
+        {
+            id: 21,
+            title: '合并两个有序链表',
+            titleEn: 'Merge Two Sorted Lists',
+            titleSlug: 'merge-two-sorted-lists',
+            difficulty: 'easy',
+            status: 'solved',
+            tags: ['递归', '链表'],
+            acceptance: '66.1%',
+            description: `<p>将两个升序链表合并为一个新的 <strong>升序</strong> 列表并返回。新链表是通过拼接给定的两个链表的所有节点组成的。</p>`,
+            examples: [
+                { input: 'list1 = [1,2,4], list2 = [1,3,4]', output: '[1,1,2,3,4,4]' }
+            ],
+            constraints: ['两个链表的节点数目范围是 [0, 50]'],
+            templates: {
+                javascript: `/**\n * Definition for singly-linked list.\n * function ListNode(val, next) {\n *     this.val = (val===undefined ? 0 : val)\n *     this.next = (next===undefined ? null : next)\n * }\n */\n/**\n * @param {ListNode} list1\n * @param {ListNode} list2\n * @return {ListNode}\n */\nvar mergeTwoLists = function(list1, list2) {\n    \n};`,
+                python: `class Solution:\n    def mergeTwoLists(self, list1: Optional[ListNode], list2: Optional[ListNode]) -> Optional[ListNode]:\n        pass`,
+                java: `class Solution {\n    public ListNode mergeTwoLists(ListNode list1, ListNode list2) {\n        return null;\n    }\n}`
+            }
+        },
+        {
+            id: 22,
+            title: '括号生成',
+            titleEn: 'Generate Parentheses',
+            titleSlug: 'generate-parentheses',
+            difficulty: 'medium',
+            status: 'unsolved',
+            tags: ['字符串', '动态规划', '回溯'],
+            acceptance: '77.5%',
+            description: `<p>数字 <code>n</code> 代表生成括号的对数，请你设计一个函数，用于能够生成所有可能的并且 <strong>有效的</strong> 括号组合。</p>`,
+            examples: [
+                { input: 'n = 3', output: '["((()))","(()())","(())()","()(())","()()()"]' }
+            ],
+            constraints: ['1 <= n <= 8'],
+            templates: {
+                javascript: `/**\n * @param {number} n\n * @return {string[]}\n */\nvar generateParenthesis = function(n) {\n    \n};`,
+                python: `class Solution:\n    def generateParenthesis(self, n: int) -> List[str]:\n        pass`,
+                java: `class Solution {\n    public List<String> generateParenthesis(int n) {\n        return new ArrayList<>();\n    }\n}`
+            }
+        },
+        {
+            id: 23,
+            title: '合并K个升序链表',
+            titleEn: 'Merge k Sorted Lists',
+            titleSlug: 'merge-k-sorted-lists',
+            difficulty: 'hard',
+            status: 'unsolved',
+            tags: ['链表', '分治', '堆（优先队列）'],
+            acceptance: '58.2%',
+            description: `<p>给你一个链表数组，每个链表都已经按升序排列。</p>
+            <p>请你将所有链表合并到一个升序链表中，返回合并后的链表。</p>`,
+            examples: [
+                { input: 'lists = [[1,4,5],[1,3,4],[2,6]]', output: '[1,1,2,3,4,4,5,6]' }
+            ],
+            constraints: ['k == lists.length', '0 <= k <= 10^4'],
+            templates: {
+                javascript: `/**\n * Definition for singly-linked list.\n * function ListNode(val, next) {\n *     this.val = (val===undefined ? 0 : val)\n *     this.next = (next===undefined ? null : next)\n * }\n */\n/**\n * @param {ListNode[]} lists\n * @return {ListNode}\n */\nvar mergeKLists = function(lists) {\n    \n};`,
+                python: `class Solution:\n    def mergeKLists(self, lists: List[Optional[ListNode]]) -> Optional[ListNode]:\n        pass`,
+                java: `class Solution {\n    public ListNode mergeKLists(ListNode[] lists) {\n        return null;\n    }\n}`
+            }
+        },
+        {
+            id: 24,
+            title: '两两交换链表中的节点',
+            titleEn: 'Swap Nodes in Pairs',
+            titleSlug: 'swap-nodes-in-pairs',
+            difficulty: 'medium',
+            status: 'unsolved',
+            tags: ['递归', '链表'],
+            acceptance: '71.7%',
+            description: `<p>给你一个链表，两两交换其中相邻的节点，并返回交换后链表的头节点。你必须在不修改节点内部的值的情况下完成本题（即，只能进行节点交换）。</p>`,
+            examples: [
+                { input: 'head = [1,2,3,4]', output: '[2,1,4,3]' }
+            ],
+            constraints: ['链表中节点的数目在范围 [0, 100] 内'],
+            templates: {
+                javascript: `/**\n * Definition for singly-linked list.\n * function ListNode(val, next) {\n *     this.val = (val===undefined ? 0 : val)\n *     this.next = (next===undefined ? null : next)\n * }\n */\n/**\n * @param {ListNode} head\n * @return {ListNode}\n */\nvar swapPairs = function(head) {\n    \n};`,
+                python: `class Solution:\n    def swapPairs(self, head: Optional[ListNode]) -> Optional[ListNode]:\n        pass`,
+                java: `class Solution {\n    public ListNode swapPairs(ListNode head) {\n        return null;\n    }\n}`
+            }
+        },
+        {
+            id: 25,
+            title: 'K 个一组翻转链表',
+            titleEn: 'Reverse Nodes in k-Group',
+            titleSlug: 'reverse-nodes-in-k-group',
+            difficulty: 'hard',
+            status: 'unsolved',
+            tags: ['递归', '链表'],
+            acceptance: '67.9%',
+            description: `<p>给你链表的头节点 <code>head</code> ，每 <code>k</code> 个节点一组进行翻转，请你返回修改后的链表。</p>
+            <p>k 是一个正整数，它的值小于或等于链表的长度。如果节点总数不是 k 的整数倍，那么请将最后剩余的节点保持原有顺序。</p>`,
+            examples: [
+                { input: 'head = [1,2,3,4,5], k = 2', output: '[2,1,4,3,5]' }
+            ],
+            constraints: ['链表中的节点数目为 n', '1 <= k <= n <= 5000'],
+            templates: {
+                javascript: `/**\n * Definition for singly-linked list.\n * function ListNode(val, next) {\n *     this.val = (val===undefined ? 0 : val)\n *     this.next = (next===undefined ? null : next)\n * }\n */\n/**\n * @param {ListNode} head\n * @param {number} k\n * @return {ListNode}\n */\nvar reverseKGroup = function(head, k) {\n    \n};`,
+                python: `class Solution:\n    def reverseKGroup(self, head: Optional[ListNode], k: int) -> Optional[ListNode]:\n        pass`,
+                java: `class Solution {\n    public ListNode reverseKGroup(ListNode head, int k) {\n        return null;\n    }\n}`
             }
         }
     ];
@@ -558,11 +1098,14 @@ function updateEditorCode() {
     
     if (!leetCodeState.editor) return;
 
+    let code = '';
     if (problem && problem.templates && problem.templates[lang]) {
-        leetCodeState.editor.setValue(problem.templates[lang].replace(/\\n/g, '\n'));
+        code = problem.templates[lang].replace(/\\n/g, '\n');
     } else {
-        leetCodeState.editor.setValue(LanguageConfig.getTemplate(lang));
+        code = LanguageConfig.getTemplate(lang);
     }
+    
+    leetCodeState.editor.setValue(code);
 }
 
 function changeLanguage(langId) {
@@ -570,8 +1113,12 @@ function changeLanguage(langId) {
     
     leetCodeState.currentLanguage = langId;
     
-    const monacoLang = LanguageConfig.getMonacoLanguage(langId);
-    monaco.editor.setModelLanguage(leetCodeState.editor.getModel(), monacoLang);
+    // 根据编辑器类型切换语言
+    if (leetCodeState.editorType === 'monaco' && typeof monaco !== 'undefined') {
+        const monacoLang = LanguageConfig.getMonacoLanguage(langId);
+        monaco.editor.setModelLanguage(leetCodeState.editor.getModel(), monacoLang);
+    }
+    // 备用编辑器不切换语法高亮，只需更新代码模板
     
     updateEditorCode();
 }

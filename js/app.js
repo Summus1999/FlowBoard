@@ -6,10 +6,110 @@
 // 模拟数据
 // ========================================
 
-// 账户密码数据
-const passwordData = [
+// 账户密码数据（国内常用账号）
+let passwordData = [
     {
         id: 1,
+        platform: '微信',
+        username: 'wxid_******',
+        password: '********',
+        category: 'social',
+        icon: 'fab fa-weixin',
+        color: 'linear-gradient(135deg, #07C160, #05a350)',
+        strength: 'strong'
+    },
+    {
+        id: 2,
+        platform: '支付宝',
+        username: '138****8888',
+        password: '********',
+        category: 'finance',
+        icon: 'fas fa-wallet',
+        color: 'linear-gradient(135deg, #1677FF, #0958d9)',
+        strength: 'strong'
+    },
+    {
+        id: 3,
+        platform: 'LeetCode 中国',
+        username: 'coder@example.com',
+        password: '********',
+        category: 'work',
+        icon: 'fas fa-code',
+        color: 'linear-gradient(135deg, #FFA116, #e5900f)',
+        strength: 'medium'
+    },
+    {
+        id: 4,
+        platform: 'QQ',
+        username: '123456789',
+        password: '********',
+        category: 'social',
+        icon: 'fab fa-qq',
+        color: 'linear-gradient(135deg, #12B7F5, #0ea5d9)',
+        strength: 'medium'
+    },
+    {
+        id: 5,
+        platform: '微博',
+        username: 'weibo_user',
+        password: '********',
+        category: 'social',
+        icon: 'fab fa-weibo',
+        color: 'linear-gradient(135deg, #E6162D, #c41227)',
+        strength: 'medium'
+    },
+    {
+        id: 6,
+        platform: '淘宝',
+        username: 'tb_user_123',
+        password: '********',
+        category: 'finance',
+        icon: 'fas fa-shopping-cart',
+        color: 'linear-gradient(135deg, #FF5000, #e64800)',
+        strength: 'strong'
+    },
+    {
+        id: 7,
+        platform: '京东',
+        username: 'jd_user@qq.com',
+        password: '********',
+        category: 'finance',
+        icon: 'fas fa-dog',
+        color: 'linear-gradient(135deg, #E4393C, #c93033)',
+        strength: 'strong'
+    },
+    {
+        id: 8,
+        platform: 'Bilibili',
+        username: 'bili_user',
+        password: '********',
+        category: 'entertainment',
+        icon: 'fas fa-tv',
+        color: 'linear-gradient(135deg, #FB7299, #e5678e)',
+        strength: 'medium'
+    },
+    {
+        id: 9,
+        platform: '网易云音乐',
+        username: 'music@163.com',
+        password: '********',
+        category: 'entertainment',
+        icon: 'fas fa-music',
+        color: 'linear-gradient(135deg, #C20C0C, #a30a0a)',
+        strength: 'strong'
+    },
+    {
+        id: 10,
+        platform: '百度',
+        username: 'baidu_user',
+        password: '********',
+        category: 'work',
+        icon: 'fas fa-paw',
+        color: 'linear-gradient(135deg, #2932E1, #1f26b8)',
+        strength: 'medium'
+    },
+    {
+        id: 11,
         platform: 'GitHub',
         username: 'developer@example.com',
         password: '********',
@@ -19,74 +119,14 @@ const passwordData = [
         strength: 'strong'
     },
     {
-        id: 2,
-        platform: 'Twitter',
-        username: '@user_handle',
-        password: '********',
-        category: 'social',
-        icon: 'fab fa-twitter',
-        color: 'linear-gradient(135deg, #1da1f2, #0d8bd9)',
-        strength: 'strong'
-    },
-    {
-        id: 3,
-        platform: 'Google',
-        username: 'user@gmail.com',
-        password: '********',
-        category: 'work',
-        icon: 'fab fa-google',
-        color: 'linear-gradient(135deg, #ea4335, #d33b28)',
-        strength: 'strong'
-    },
-    {
-        id: 4,
-        platform: 'Discord',
-        username: 'User#1234',
-        password: '********',
-        category: 'social',
-        icon: 'fab fa-discord',
-        color: 'linear-gradient(135deg, #7289da, #5b6eae)',
-        strength: 'medium'
-    },
-    {
-        id: 5,
-        platform: 'Netflix',
-        username: 'user@email.com',
+        id: 12,
+        platform: '抖音',
+        username: 'douyin_user',
         password: '********',
         category: 'entertainment',
-        icon: 'fas fa-play',
-        color: 'linear-gradient(135deg, #e50914, #b20710)',
+        icon: 'fas fa-music',
+        color: 'linear-gradient(135deg, #000000, #1a1a2e)',
         strength: 'medium'
-    },
-    {
-        id: 6,
-        platform: '支付宝',
-        username: '138****8888',
-        password: '********',
-        category: 'finance',
-        icon: 'fas fa-wallet',
-        color: 'linear-gradient(135deg, #1677ff, #0958d9)',
-        strength: 'strong'
-    },
-    {
-        id: 7,
-        platform: 'Spotify',
-        username: 'music@example.com',
-        password: '********',
-        category: 'entertainment',
-        icon: 'fab fa-spotify',
-        color: 'linear-gradient(135deg, #1db954, #169c45)',
-        strength: 'strong'
-    },
-    {
-        id: 8,
-        platform: 'Slack',
-        username: 'work@company.com',
-        password: '********',
-        category: 'work',
-        icon: 'fab fa-slack',
-        color: 'linear-gradient(135deg, #4a154b, #611f69)',
-        strength: 'strong'
     }
 ];
 
@@ -98,7 +138,8 @@ const newsData = [
         source: '科技日报',
         time: '2小时前',
         category: 'tech',
-        hot: 1250000
+        hot: 1250000,
+        url: 'https://www.thepaper.cn/newsDetail_forward_12345678'
     },
     {
         id: 2,
@@ -106,7 +147,8 @@ const newsData = [
         source: '36氪',
         time: '3小时前',
         category: 'tech',
-        hot: 980000
+        hot: 980000,
+        url: 'https://36kr.com/p/1234567890'
     },
     {
         id: 3,
@@ -114,7 +156,8 @@ const newsData = [
         source: '环球科学',
         time: '5小时前',
         category: 'tech',
-        hot: 870000
+        hot: 870000,
+        url: 'https://www.huanqiu.com/article/12345678'
     },
     {
         id: 4,
@@ -122,7 +165,8 @@ const newsData = [
         source: '汽车之家',
         time: '4小时前',
         category: 'tech',
-        hot: 760000
+        hot: 760000,
+        url: 'https://www.autohome.com.cn/news/202601/1234567.html'
     },
     {
         id: 5,
@@ -130,7 +174,8 @@ const newsData = [
         source: 'IT之家',
         time: '6小时前',
         category: 'tech',
-        hot: 650000
+        hot: 650000,
+        url: 'https://www.ithome.com/0/123/456.htm'
     },
     {
         id: 6,
@@ -138,7 +183,8 @@ const newsData = [
         source: '财经网',
         time: '1小时前',
         category: 'finance',
-        hot: 1100000
+        hot: 1100000,
+        url: 'https://finance.sina.com.cn/jjxw/2026-01-01/doc-12345678'
     },
     {
         id: 7,
@@ -146,7 +192,8 @@ const newsData = [
         source: '区块链日报',
         time: '2小时前',
         category: 'finance',
-        hot: 920000
+        hot: 920000,
+        url: 'https://www.jinse.com/news/blockchain/1234567'
     },
     {
         id: 8,
@@ -154,9 +201,20 @@ const newsData = [
         source: '娱乐周刊',
         time: '8小时前',
         category: 'entertainment',
-        hot: 780000
+        hot: 780000,
+        url: 'https://ent.sina.com.cn/m/c/2026-01-01/doc-12345678'
     }
 ];
+
+// 待办事项数据
+let todoData = [
+    { id: 1, text: '更新项目文档', completed: false, tag: '紧急' },
+    { id: 2, text: '修改账户密码', completed: true, tag: '一般' },
+    { id: 3, text: '查看今日资讯', completed: false, tag: '日常' },
+    { id: 4, text: '备份重要数据', completed: false, tag: '重要' }
+];
+
+let todoIdCounter = 5;
 
 // ========================================
 // DOM 元素
@@ -178,6 +236,8 @@ const modal = document.getElementById('addPasswordModal');
 document.addEventListener('DOMContentLoaded', () => {
     initNavigation();
     renderPasswordCards();
+    updatePasswordCount();
+    renderPasswordPreview();
     renderNewsList();
     initThemeSwitcher();
     initCategoryFilter();
@@ -227,6 +287,11 @@ function showPage(pageName) {
             nav.classList.add('active');
         }
     });
+    
+    // 初始化笔记页面
+    if (pageName === 'notes' && typeof initNotes === 'function') {
+        setTimeout(initNotes, 100);
+    }
 }
 
 // ========================================
@@ -346,14 +411,81 @@ function copyToClipboard(text) {
     showToast('已复制到剪贴板');
 }
 
+// 当前编辑的密码 ID
+let editingPasswordId = null;
+
 function editPassword(id) {
-    showToast('编辑功能开发中...');
+    const item = passwordData.find(p => p.id === id);
+    if (!item) {
+        showToast('账户不存在');
+        return;
+    }
+    
+    // 设置编辑模式
+    editingPasswordId = id;
+    
+    // 填充表单数据
+    document.getElementById('platformName').value = item.platform;
+    document.getElementById('username').value = item.username;
+    document.getElementById('password').value = item.password === '********' ? '' : item.password;
+    
+    // 设置分类选中状态
+    document.querySelectorAll('.cat-option').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.value === item.category) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // 更新模态框标题
+    const modalTitle = document.querySelector('#addPasswordModal .modal-header h3');
+    if (modalTitle) {
+        modalTitle.innerHTML = '<i class="fas fa-edit"></i> 编辑账户';
+    }
+    
+    // 显示模态框
+    modal.classList.add('active');
 }
 
 function deletePassword(id) {
     if (confirm('确定要删除这个账户吗？')) {
-        showToast('已删除');
+        const index = passwordData.findIndex(p => p.id === id);
+        if (index > -1) {
+            passwordData.splice(index, 1);
+            renderPasswordCards();
+            updatePasswordCount();
+            showToast('账户已删除');
+        }
     }
+}
+
+// 更新密码数量统计
+function updatePasswordCount() {
+    const countEl = document.getElementById('passwordCount');
+    if (countEl) {
+        countEl.textContent = passwordData.length;
+    }
+}
+
+// 渲染首页密码预览列表
+function renderPasswordPreview() {
+    const previewList = document.getElementById('passwordPreviewList');
+    if (!previewList) return;
+    
+    // 取前3个密码显示
+    const previewData = passwordData.slice(0, 3);
+    
+    previewList.innerHTML = previewData.map(item => `
+        <div class="pwd-item">
+            <div class="pwd-icon" style="background: ${item.color}">
+                <i class="${item.icon}"></i>
+            </div>
+            <div class="pwd-info">
+                <span class="pwd-name">${item.platform}</span>
+                <span class="pwd-strength ${item.strength}">${getStrengthText(item.strength).replace('密码', '')}</span>
+            </div>
+        </div>
+    `).join('');
 }
 
 // ========================================
@@ -475,13 +607,38 @@ function openAddPasswordModal() {
     modal.classList.add('active');
 }
 
+function openAddPasswordModal() {
+    // 重置编辑状态
+    editingPasswordId = null;
+    
+    // 清空表单
+    document.getElementById('platformName').value = '';
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+    
+    // 重置分类为第一个
+    document.querySelectorAll('.cat-option').forEach((btn, index) => {
+        btn.classList.remove('active');
+        if (index === 0) btn.classList.add('active');
+    });
+    
+    // 更新模态框标题
+    const modalTitle = document.querySelector('#addPasswordModal .modal-header h3');
+    if (modalTitle) {
+        modalTitle.innerHTML = '<i class="fas fa-plus-circle"></i> 添加账户';
+    }
+    
+    modal.classList.add('active');
+}
+
 function closeAddPasswordModal() {
     modal.classList.remove('active');
+    editingPasswordId = null;
 }
 
 function savePassword() {
-    const platform = document.getElementById('platformName').value;
-    const username = document.getElementById('username').value;
+    const platform = document.getElementById('platformName').value.trim();
+    const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
     
     if (!platform || !username || !password) {
@@ -489,7 +646,59 @@ function savePassword() {
         return;
     }
     
-    showToast('账户添加成功');
+    // 获取选中的分类
+    const activeCat = document.querySelector('.cat-option.active');
+    const category = activeCat ? activeCat.dataset.value : 'social';
+    
+    // 计算密码强度
+    const strength = checkPasswordStrength(password);
+    
+    if (editingPasswordId) {
+        // 编辑模式
+        const index = passwordData.findIndex(p => p.id === editingPasswordId);
+        if (index > -1) {
+            passwordData[index] = {
+                ...passwordData[index],
+                platform,
+                username,
+                password,
+                category,
+                strength
+            };
+            showToast('账户已更新');
+        }
+    } else {
+        // 添加模式
+        const newId = Math.max(...passwordData.map(p => p.id), 0) + 1;
+        const iconMap = {
+            social: 'fas fa-share-alt',
+            work: 'fas fa-briefcase',
+            finance: 'fas fa-credit-card',
+            entertainment: 'fas fa-gamepad'
+        };
+        const colorMap = {
+            social: 'linear-gradient(135deg, #07C160, #05a350)',
+            work: 'linear-gradient(135deg, #1677FF, #0958d9)',
+            finance: 'linear-gradient(135deg, #FF5000, #e64800)',
+            entertainment: 'linear-gradient(135deg, #FB7299, #e5678e)'
+        };
+        
+        passwordData.push({
+            id: newId,
+            platform,
+            username,
+            password,
+            category,
+            icon: iconMap[category] || 'fas fa-lock',
+            color: colorMap[category] || 'linear-gradient(135deg, #667eea, #764ba2)',
+            strength
+        });
+        showToast('账户添加成功');
+    }
+    
+    // 刷新显示
+    renderPasswordCards();
+    updatePasswordCount();
     closeAddPasswordModal();
     
     // 清空表单
@@ -624,5 +833,298 @@ setInterval(() => {
         }
     }
 }, 30000);
+
+// ========================================
+// 热榜中心点击跳转
+// ========================================
+
+function initNewsClickHandler() {
+    // 为热榜中心的新闻项添加点击事件
+    const newsItems = document.querySelectorAll('.news-item');
+    newsItems.forEach((item, index) => {
+        item.style.cursor = 'pointer';
+        item.addEventListener('click', () => {
+            const news = newsData[index];
+            if (news && news.url) {
+                // 在默认浏览器中打开链接
+                if (window.electronAPI && window.electronAPI.openExternal) {
+                    window.electronAPI.openExternal(news.url);
+                } else {
+                    window.open(news.url, '_blank');
+                }
+            } else {
+                showToast('暂无该新闻的链接');
+            }
+        });
+    });
+    
+    // 资讯详情页面的新闻项
+    const newsDetailItems = document.querySelectorAll('.news-item-detailed');
+    newsDetailItems.forEach((item, index) => {
+        item.style.cursor = 'pointer';
+        item.addEventListener('click', () => {
+            const news = newsData[index];
+            if (news && news.url) {
+                if (window.electronAPI && window.electronAPI.openExternal) {
+                    window.electronAPI.openExternal(news.url);
+                } else {
+                    window.open(news.url, '_blank');
+                }
+            }
+        });
+    });
+}
+
+// ========================================
+// 待办事项功能
+// ========================================
+
+function initTodoList() {
+    renderTodoList();
+    updateTaskCount();
+}
+
+function renderTodoList() {
+    const todoList = document.querySelector('.todo-list');
+    if (!todoList) return;
+    
+    // 清空列表
+    todoList.innerHTML = '';
+    
+    // 添加每个待办事项
+    todoData.forEach(todo => {
+        const todoItem = createTodoElement(todo);
+        todoList.appendChild(todoItem);
+    });
+    
+    // 添加"新增待办"按钮
+    const addButton = document.createElement('button');
+    addButton.className = 'btn-primary';
+    addButton.style.cssText = 'width: 100%; margin-top: 12px; padding: 10px;';
+    addButton.innerHTML = '<i class="fas fa-plus"></i> 添加待办';
+    addButton.addEventListener('click', showAddTodoModal);
+    todoList.appendChild(addButton);
+}
+
+function createTodoElement(todo) {
+    const item = document.createElement('div');
+    item.className = 'todo-item';
+    item.dataset.id = todo.id;
+    
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'todo-check';
+    checkbox.checked = todo.completed;
+    checkbox.addEventListener('change', () => toggleTodo(todo.id));
+    
+    const label = document.createElement('label');
+    label.className = 'todo-text' + (todo.completed ? ' completed' : '');
+    label.textContent = todo.text;
+    
+    const tag = document.createElement('span');
+    tag.className = 'todo-tag' + (todo.tag === '紧急' ? ' urgent' : '');
+    tag.textContent = todo.tag;
+    
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn-icon';
+    deleteBtn.style.cssText = 'margin-left: auto; width: 28px; height: 28px;';
+    deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+    deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteTodo(todo.id);
+    });
+    
+    item.appendChild(checkbox);
+    item.appendChild(label);
+    item.appendChild(tag);
+    item.appendChild(deleteBtn);
+    
+    return item;
+}
+
+function toggleTodo(id) {
+    const todo = todoData.find(t => t.id === id);
+    if (todo) {
+        todo.completed = !todo.completed;
+        renderTodoList();
+        updateTaskCount();
+    }
+}
+
+function deleteTodo(id) {
+    if (confirm('确定要删除这个待办事项吗？')) {
+        todoData = todoData.filter(t => t.id !== id);
+        renderTodoList();
+        updateTaskCount();
+        showToast('已删除');
+    }
+}
+
+function showAddTodoModal() {
+    const text = prompt('请输入待办事项：');
+    if (text && text.trim()) {
+        const tag = prompt('请输入标签（紧急/重要/一般/日常）：', '一般') || '一般';
+        const newTodo = {
+            id: todoIdCounter++,
+            text: text.trim(),
+            completed: false,
+            tag: tag
+        };
+        todoData.push(newTodo);
+        renderTodoList();
+        updateTaskCount();
+        showToast('已添加');
+    }
+}
+
+function updateTaskCount() {
+    // 统计未完成的待办事项数量
+    const uncompletedCount = todoData.filter(t => !t.completed).length;
+    const taskCountEl = document.getElementById('taskCount');
+    if (taskCountEl) {
+        taskCountEl.textContent = uncompletedCount;
+    }
+}
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', () => {
+    // 延迟初始化热榜点击和待办功能
+    setTimeout(() => {
+        initNewsClickHandler();
+        initTodoList();
+    }, 500);
+    
+    // 加载用户配置
+    loadUserProfile();
+});
+
+// ========================================
+// 底部按钮交互
+// ========================================
+
+// 回到主页
+function goToHome() {
+    showPage('dashboard');
+}
+
+// 从底部按钮打开设置
+function openSettingsFromFooter() {
+    showPage('settings');
+}
+
+// ========================================
+// 个人设置
+// ========================================
+
+function openProfileModal() {
+    document.getElementById('profileModal').classList.add('active');
+}
+
+function closeProfileModal() {
+    document.getElementById('profileModal').classList.remove('active');
+}
+
+function saveProfile() {
+    const name = document.getElementById('profileNameInput').value.trim();
+    const role = document.getElementById('profileRoleInput').value.trim();
+    
+    if (!name) {
+        showToast('请输入显示名称');
+        return;
+    }
+    
+    // 保存到 localStorage
+    const profile = {
+        name: name,
+        role: role || 'PRO MEMBER',
+        avatar: localStorage.getItem('user_avatar') || null
+    };
+    localStorage.setItem('user_profile', JSON.stringify(profile));
+    
+    // 更新显示
+    updateUserCardDisplay(profile);
+    
+    showToast('个人设置已保存');
+    closeProfileModal();
+}
+
+function changeAvatar() {
+    document.getElementById('avatarInput').click();
+}
+
+function handleAvatarChange(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // 检查文件类型
+    if (!file.type.startsWith('image/')) {
+        showToast('请选择图片文件');
+        return;
+    }
+    
+    // 检查文件大小（最大 2MB）
+    if (file.size > 2 * 1024 * 1024) {
+        showToast('图片大小不能超过 2MB');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const avatarData = e.target.result;
+        localStorage.setItem('user_avatar', avatarData);
+        
+        // 更新预览
+        const avatarDisplay = document.getElementById('profileAvatarDisplay');
+        avatarDisplay.innerHTML = `<img src="${avatarData}" alt="头像">`;
+        
+        showToast('头像已更新');
+    };
+    reader.readAsDataURL(file);
+}
+
+function loadUserProfile() {
+    const stored = localStorage.getItem('user_profile');
+    if (stored) {
+        try {
+            const profile = JSON.parse(stored);
+            document.getElementById('profileNameInput').value = profile.name || '个人用户';
+            document.getElementById('profileRoleInput').value = profile.role || 'PRO MEMBER';
+            updateUserCardDisplay(profile);
+        } catch (e) {
+            console.error('加载用户配置失败:', e);
+        }
+    }
+    
+    // 加载头像
+    const avatar = localStorage.getItem('user_avatar');
+    if (avatar) {
+        const avatarDisplay = document.getElementById('profileAvatarDisplay');
+        if (avatarDisplay) {
+            avatarDisplay.innerHTML = `<img src="${avatar}" alt="头像">`;
+        }
+    }
+}
+
+function updateUserCardDisplay(profile) {
+    // 更新侧边栏用户卡片
+    const userNameEl = document.querySelector('.user-name');
+    const userRoleEl = document.querySelector('.user-role');
+    const userAvatarEl = document.querySelector('.user-avatar');
+    
+    if (userNameEl) userNameEl.textContent = profile.name;
+    if (userRoleEl) userRoleEl.textContent = profile.role;
+    
+    // 更新头像
+    const avatar = localStorage.getItem('user_avatar');
+    if (avatar && userAvatarEl) {
+        userAvatarEl.innerHTML = `<img src="${avatar}" alt="头像">`;
+    }
+    
+    // 同时更新个人设置模态框中的头像
+    const profileAvatarDisplay = document.getElementById('profileAvatarDisplay');
+    if (profileAvatarDisplay && avatar) {
+        profileAvatarDisplay.innerHTML = `<img src="${avatar}" alt="头像">`;
+    }
+}
 
 console.log('FlowBoard 已加载完成 🚀');

@@ -116,15 +116,23 @@ class LeetCodeAPI {
 
     /**
      * 获取所有题目列表
+     * @param {number} limit - 获取题目数量，默认100道
+     * @param {number} skip - 跳过数量，用于分页
      */
-    async getAllProblems() {
-        const cacheKey = 'all_problems';
+    async getAllProblems(limit = 100, skip = 0) {
+        const cacheKey = `all_problems_${limit}_${skip}`;
         const cached = this.getCache(cacheKey);
         if (cached) return cached;
 
+        // 使用新版 GraphQL API，支持分页
         const query = `
-            query problemsetQuestionList {
-                problemsetQuestionList: questionList {
+            query problemsetQuestionList($limit: Int, $skip: Int) {
+                problemsetQuestionList(
+                    categorySlug: ""
+                    limit: $limit
+                    skip: $skip
+                    filters: {}
+                ) {
                     total: totalNum
                     questions: data {
                         acRate
@@ -149,10 +157,10 @@ class LeetCodeAPI {
         `;
 
         try {
-            const data = await this.graphqlQuery(query);
+            const data = await this.graphqlQuery(query, { limit, skip });
             const problems = data.problemsetQuestionList.questions.map(q => ({
                 id: parseInt(q.frontendQuestionId),
-                title: q.title,
+                title: q.translatedTitle || q.title,
                 titleSlug: q.titleSlug,
                 titleEn: q.titleSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
                 difficulty: q.difficulty.toLowerCase(),
@@ -170,6 +178,26 @@ class LeetCodeAPI {
             console.error('Failed to fetch problems:', error);
             return null;
         }
+    }
+    
+    /**
+     * 获取大量题目（自动分页）
+     * @param {number} total - 需要获取的总数量
+     */
+    async getManyProblems(total = 200) {
+        const batchSize = 100;
+        let allProblems = [];
+        
+        for (let skip = 0; skip < total; skip += batchSize) {
+            const batch = await this.getAllProblems(Math.min(batchSize, total - skip), skip);
+            if (batch && batch.length > 0) {
+                allProblems = allProblems.concat(batch);
+            } else {
+                break; // 没有更多数据了
+            }
+        }
+        
+        return allProblems;
     }
 
     /**
