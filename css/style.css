@@ -302,6 +302,7 @@ body {
 .main-content {
     flex: 1 1 0%;
     min-width: 0;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -311,6 +312,7 @@ body {
 /* 顶部统计栏 */
 .stats-header {
     height: var(--header-height);
+    flex-shrink: 0;
     padding: 20px 24px;
     display: flex;
     gap: 20px;
@@ -379,32 +381,53 @@ body {
    ======================================== */
 .page-content {
     flex: 1;
+    min-height: 0;
     overflow: hidden;
     position: relative;
 }
 
 .page {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
     height: 100%;
+    min-height: 0;
     padding: 0 24px 24px;
     overflow-y: auto;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+    overflow-x: hidden;
+    display: none;
 }
 
 .page.active {
-    opacity: 1;
-    visibility: visible;
+    display: block;
+}
+
+/* Stage-B layout contract for tool pages */
+.page#page-notes.active,
+.page#page-calendar.active,
+.page#page-growth.active,
+.page#page-interview.active,
+.page#page-github.active,
+.page#page-leetcode.active,
+.page#page-apps.active,
+.page#page-submissions.active {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+#page-notes .page-header,
+#page-calendar .page-header,
+#page-growth .page-header,
+#page-interview .page-header,
+#page-github .page-header,
+#page-leetcode .page-header,
+#page-apps .page-header,
+#page-submissions .page-header {
+    flex-shrink: 0;
 }
 
 /* 内容网格布局 */
 .content-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 20px;
     height: 100%;
 }
@@ -418,6 +441,35 @@ body {
     padding: 20px;
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* Dashboard: keep three cards stable without overlap */
+#page-dashboard .content-grid {
+    min-height: 0;
+}
+
+#page-dashboard .content-card {
+    height: 100%;
+    overflow: hidden;
+}
+
+#page-dashboard .card-header {
+    flex-shrink: 0;
+}
+
+#page-dashboard .password-preview {
+    flex: 1;
+    min-height: 0;
+}
+
+#page-dashboard .password-list-short,
+#page-dashboard .news-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
 }
 
 .card-header {
@@ -1963,7 +2015,9 @@ textarea:focus {
 
 /* 主页待办列表滚动样式 */
 #dashboardTodoList {
-    max-height: 280px;
+    flex: 1;
+    min-height: 0;
+    max-height: none;
     overflow-y: auto;
     padding-right: 4px;
 }
@@ -2479,7 +2533,7 @@ textarea:focus {
 .settings-card {
     position: relative;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: hidden;
 }
 
 /* 页面标题动画 */
