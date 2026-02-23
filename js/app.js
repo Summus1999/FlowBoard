@@ -215,7 +215,7 @@ const newsData = [
     },
     {
         id: 7,
-        title: '比特币突破10万美元大关：创历史新高',
+        title: '比特币突码10万美元大关：创历史新高',
         source: '区块链日报',
         time: '2小时前',
         category: 'finance',
@@ -230,6 +230,82 @@ const newsData = [
         category: 'entertainment',
         hot: 780000,
         url: 'https://ent.sina.com.cn/m/c/2026-01-01/doc-12345678'
+    },
+    // 微博热搜
+    {
+        id: 101,
+        title: '#张学友新电影官宣# 将于春节档上映',
+        source: '微博热搜',
+        time: '30分钟前',
+        category: 'entertainment',
+        hot: 2500000,
+        url: 'https://s.weibo.com/weibo?q=%23张学友新电影%23'
+    },
+    {
+        id: 102,
+        title: '#国产芯片新突破# 光刻机技术取得重大进展',
+        source: '微博热搜',
+        time: '1小时前',
+        category: 'tech',
+        hot: 1800000,
+        url: 'https://s.weibo.com/weibo?q=%23国产芯片%23'
+    },
+    {
+        id: 103,
+        title: '#考研成绩公布# 各高校开始陆续发布复试线',
+        source: '微博热搜',
+        time: '2小时前',
+        category: 'social',
+        hot: 1650000,
+        url: 'https://s.weibo.com/weibo?q=%23考研成绩%23'
+    },
+    // 知乎热榜
+    {
+        id: 201,
+        title: '如何评价国产大模型的开源路线？',
+        source: '知乎热榜',
+        time: '3小时前',
+        category: 'ai',
+        hot: 890000,
+        url: 'https://www.zhihu.com/question/123456789'
+    },
+    {
+        id: 202,
+        title: '2026年有哪些值得关注的科技趋势？',
+        source: '知乎热榜',
+        time: '5小时前',
+        category: 'tech',
+        hot: 750000,
+        url: 'https://www.zhihu.com/question/234567890'
+    },
+    // 抖音热榜
+    {
+        id: 301,
+        title: '《第二十条》电影片段火爆全网',
+        source: '抖音热榜',
+        time: '1小时前',
+        category: 'entertainment',
+        hot: 3200000,
+        url: 'https://www.douyin.com/hot'
+    },
+    // 今日头条
+    {
+        id: 401,
+        title: '多地发布新能源车补贴新政：最高补贴5万元',
+        source: '今日头条',
+        time: '2小时前',
+        category: 'finance',
+        hot: 1100000,
+        url: 'https://www.toutiao.com/article/123456'
+    },
+    {
+        id: 402,
+        title: '教育部：2026年高考新政策实施细则发布',
+        source: '今日头条',
+        time: '4小时前',
+        category: 'social',
+        hot: 950000,
+        url: 'https://www.toutiao.com/article/234567'
     }
 ];
 
@@ -349,6 +425,19 @@ function showPage(pageName) {
             nav.classList.add('active');
         }
     });
+    
+    // 切换到主页时，强制重绘 SVG 圆环
+    if (pageName === 'dashboard') {
+        setTimeout(() => {
+            const scoreRing = document.querySelector('.score-ring svg');
+            if (scoreRing) {
+                // 强制重绘
+                scoreRing.style.display = 'none';
+                scoreRing.offsetHeight; // 触发 reflow
+                scoreRing.style.display = '';
+            }
+        }, 50);
+    }
     
     // 初始化笔记页面
     if (pageName === 'notes' && typeof initNotes === 'function') {
@@ -577,17 +666,15 @@ function renderPasswordPreview() {
 function renderNewsList() {
     if (!newsList) return;
     
-    newsList.innerHTML = newsData.slice(0, 6).map(item => `
-        <div class="news-item-detailed">
-            <div class="news-thumb">
-                <i class="fas fa-newspaper"></i>
-            </div>
-            <div class="news-detail-content">
-                <h4 class="news-detail-title">${item.title}</h4>
-                <div class="news-detail-meta">
-                    <span><i class="fas fa-source"></i> ${item.source}</span>
-                    <span><i class="fas fa-clock"></i> ${item.time}</span>
-                    <span><i class="fas fa-fire"></i> ${formatHot(item.hot)}</span>
+    newsList.innerHTML = newsData.slice(0, 8).map((item, index) => `
+        <div class="news-item-simple" onclick="openNewsUrl('${item.url}')">
+            <span class="news-rank ${index < 3 ? 'top' : ''}">${index + 1}</span>
+            <div class="news-simple-content">
+                <h4 class="news-simple-title">${item.title}</h4>
+                <div class="news-simple-meta">
+                    <span class="news-source">${item.source}</span>
+                    <span class="news-time">${item.time}</span>
+                    <span class="news-hot"><i class="fas fa-fire"></i> ${formatHot(item.hot)}</span>
                 </div>
             </div>
         </div>
@@ -624,8 +711,8 @@ function filterNews(category) {
         filtered = newsData.filter(item => item.category === category);
     }
     
-    // 只显示前6条
-    const displayData = filtered.slice(0, 6);
+    // 显示前8条
+    const displayData = filtered.slice(0, 8);
     
     if (displayData.length === 0) {
         newsList.innerHTML = `
@@ -637,17 +724,15 @@ function filterNews(category) {
         return;
     }
     
-    newsList.innerHTML = displayData.map(item => `
-        <div class="news-item-detailed" onclick="openNewsUrl('${item.url}')">
-            <div class="news-thumb">
-                <i class="fas fa-newspaper"></i>
-            </div>
-            <div class="news-detail-content">
-                <h4 class="news-detail-title">${item.title}</h4>
-                <div class="news-detail-meta">
-                    <span><i class="fas fa-source"></i> ${item.source}</span>
-                    <span><i class="fas fa-clock"></i> ${item.time}</span>
-                    <span><i class="fas fa-fire"></i> ${formatHot(item.hot)}</span>
+    newsList.innerHTML = displayData.map((item, index) => `
+        <div class="news-item-simple" onclick="openNewsUrl('${item.url}')">
+            <span class="news-rank ${index < 3 ? 'top' : ''}">${index + 1}</span>
+            <div class="news-simple-content">
+                <h4 class="news-simple-title">${item.title}</h4>
+                <div class="news-simple-meta">
+                    <span class="news-source">${item.source}</span>
+                    <span class="news-time">${item.time}</span>
+                    <span class="news-hot"><i class="fas fa-fire"></i> ${formatHot(item.hot)}</span>
                 </div>
             </div>
         </div>

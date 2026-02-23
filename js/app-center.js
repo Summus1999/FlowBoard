@@ -26,15 +26,16 @@ const iconOptions = [
     { icon: 'fas fa-paint-brush', name: '设计', color: '#d946ef' },
     { icon: 'fas fa-file-alt', name: '文档', color: '#14b8a6' },
     { icon: 'fas fa-cog', name: '工具', color: '#78716c' },
+    { icon: 'fas fa-robot', name: 'AI应用', color: '#10a37f' },
+    { icon: 'fas fa-brain', name: 'AI智能', color: '#7c3aed' },
+    { icon: 'fas fa-sparkles', name: 'AI助手', color: '#f59e0b' },
     { icon: 'fab fa-chrome', name: 'Chrome', color: '#4285f4' },
     { icon: 'fab fa-firefox', name: 'Firefox', color: '#ff7139' },
     { icon: 'fab fa-edge', name: 'Edge', color: '#0078d7' },
     { icon: 'fab fa-weixin', name: '微信', color: '#07c160' },
     { icon: 'fab fa-qq', name: 'QQ', color: '#12b7f5' },
     { icon: 'fab fa-github', name: 'GitHub', color: '#333' },
-    { icon: 'fab fa-steam', name: 'Steam', color: '#1b2838' },
-    { icon: 'fab fa-spotify', name: 'Spotify', color: '#1db954' },
-    { icon: 'fab fa-discord', name: 'Discord', color: '#5865f2' }
+    { icon: 'fab fa-steam', name: 'Steam', color: '#1b2838' }
 ];
 
 // 当前编辑的应用ID
