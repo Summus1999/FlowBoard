@@ -108,6 +108,7 @@
 - **Markdown**: marked.js
 - **代码高亮**: highlight.js
 - **桌面端**: Electron 28
+- AI Agent/RAG 框架: LangGraph + LangChain + LangSmith + LlamaIndex（可选，文档 ingestion/index 管线）
 - **打包工具**: electron-builder
 
 ## 🚀 GitHub Actions 自动构建（推荐）

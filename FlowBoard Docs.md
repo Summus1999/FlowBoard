@@ -552,6 +552,7 @@ FlowBoard
 | 编辑器 | Monaco Editor (VS Code 内核) |
 | Markdown | marked.js |
 | 代码高亮 | highlight.js |
+| AI Agent/RAG 框架 | LangGraph + LangChain + LangSmith + LlamaIndex（可选，文档 ingestion/index 管线） |
 
 ### 文件结构
 
