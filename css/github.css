@@ -1,0 +1,293 @@
+/* ========================================
+   GitHub 项目跟踪页面样式
+   ======================================== */
+
+.github-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: calc(100vh - 180px);
+    min-height: 500px;
+}
+
+/* 头部操作栏 */
+.github-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.github-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 4px 4px 4px 12px;
+}
+
+.github-input-group i {
+    color: var(--text-muted);
+    font-size: 18px;
+}
+
+.github-input-group input {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 14px;
+    outline: none;
+    width: 200px;
+    padding: 8px;
+}
+
+.github-input-group input::placeholder {
+    color: var(--text-muted);
+}
+
+.github-input-group button {
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+/* 统计卡片 */
+.github-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.github-stat-card {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: var(--transition);
+}
+
+.github-stat-card:hover {
+    background: var(--card-hover);
+    transform: translateY(-2px);
+}
+
+.github-stat-card > i {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #333, #24292e);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+}
+
+.github-stat-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.github-stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.github-stat-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* 仓库列表 */
+.github-repos {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.github-repo-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.github-repo-card {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 24px;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.github-repo-card:hover {
+    background: var(--card-hover);
+    border-color: var(--accent-color);
+    transform: translateX(4px);
+}
+
+.github-repo-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, #333, #24292e);
+}
+
+.github-repo-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.github-repo-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.github-repo-name i {
+    color: var(--text-muted);
+}
+
+.github-repo-visibility {
+    padding: 4px 10px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.github-repo-description {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 16px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.github-repo-meta {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.github-repo-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.github-repo-stat i {
+    color: var(--text-muted);
+}
+
+.github-repo-language {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.language-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.github-repo-update {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--accent-color);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.github-repo-update i {
+    font-size: 11px;
+}
+
+/* 空状态 */
+.github-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+
+.github-empty i {
+    font-size: 64px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.github-empty p {
+    font-size: 15px;
+}
+
+/* 加载状态 */
+.github-loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+}
+
+.github-loading i {
+    font-size: 32px;
+    margin-bottom: 16px;
+}
+
+/* 错误状态 */
+.github-error {
+    text-align: center;
+    padding: 40px 20px;
+    color: #ef4444;
+}
+
+.github-error i {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+/* 响应式适配 */
+@media (max-width: 900px) {
+    .github-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .github-header-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .github-input-group {
+        width: 100%;
+    }
+    
+    .github-input-group input {
+        flex: 1;
+    }
+}

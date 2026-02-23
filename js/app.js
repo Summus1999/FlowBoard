@@ -137,7 +137,7 @@ const newsData = [
         title: 'OpenAI发布GPT-5新功能：多模态能力大幅提升',
         source: '科技日报',
         time: '2小时前',
-        category: 'tech',
+        category: 'ai',
         hot: 1250000,
         url: 'https://www.thepaper.cn/newsDetail_forward_12345678'
     },
@@ -173,9 +173,36 @@ const newsData = [
         title: '微软Copilot重大更新：集成更多Office功能',
         source: 'IT之家',
         time: '6小时前',
-        category: 'tech',
+        category: 'ai',
         hot: 650000,
         url: 'https://www.ithome.com/0/123/456.htm'
+    },
+    {
+        id: 51,
+        title: '谷歌Gemini 2.0发布：性能超越GPT-4',
+        source: 'AI前线',
+        time: '1小时前',
+        category: 'ai',
+        hot: 1100000,
+        url: 'https://www.aifront.com/news/123456'
+    },
+    {
+        id: 52,
+        title: 'Anthropic Claude 4即将发布：推理能力大幅提升',
+        source: '机器之心',
+        time: '3小时前',
+        category: 'ai',
+        hot: 890000,
+        url: 'https://www.jiqizhixin.com/article/123456'
+    },
+    {
+        id: 53,
+        title: 'Midjourney V7发布：图像生成质量再创新高',
+        source: '数字艺术家',
+        time: '5小时前',
+        category: 'ai',
+        hot: 720000,
+        url: 'https://www.digitalart.com/news/123456'
     },
     {
         id: 6,
@@ -296,6 +323,21 @@ function showPage(pageName) {
     // 初始化日程页面
     if (pageName === 'calendar' && typeof initCalendar === 'function') {
         setTimeout(initCalendar, 100);
+    }
+    
+    // 初始化 GitHub 页面
+    if (pageName === 'github' && typeof initGithub === 'function') {
+        setTimeout(initGithub, 100);
+    }
+    
+    // 初始化个人提升页面
+    if (pageName === 'growth' && typeof initGrowth === 'function') {
+        setTimeout(initGrowth, 100);
+    }
+    
+    // 初始化面试追踪页面
+    if (pageName === 'interview' && typeof initInterview === 'function') {
+        setTimeout(initInterview, 100);
     }
 }
 
@@ -525,13 +567,64 @@ function formatHot(hot) {
 }
 
 function initTabSwitcher() {
-    tabBtns.forEach(btn => {
+    const filterBtns = document.querySelectorAll('.news-filters .filter-btn');
+    
+    filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            tabBtns.forEach(b => b.classList.remove('active'));
+            filterBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            // 这里可以添加切换资讯分类的逻辑
+            
+            const filter = btn.dataset.filter;
+            filterNews(filter);
         });
     });
+}
+
+function filterNews(category) {
+    const newsList = document.getElementById('newsList');
+    if (!newsList) return;
+    
+    let filtered = newsData;
+    if (category && category !== 'all') {
+        filtered = newsData.filter(item => item.category === category);
+    }
+    
+    // 只显示前6条
+    const displayData = filtered.slice(0, 6);
+    
+    if (displayData.length === 0) {
+        newsList.innerHTML = `
+            <div class="news-empty">
+                <i class="fas fa-newspaper"></i>
+                <p>暂无该分类的资讯</p>
+            </div>
+        `;
+        return;
+    }
+    
+    newsList.innerHTML = displayData.map(item => `
+        <div class="news-item-detailed" onclick="openNewsUrl('${item.url}')">
+            <div class="news-thumb">
+                <i class="fas fa-newspaper"></i>
+            </div>
+            <div class="news-detail-content">
+                <h4 class="news-detail-title">${item.title}</h4>
+                <div class="news-detail-meta">
+                    <span><i class="fas fa-source"></i> ${item.source}</span>
+                    <span><i class="fas fa-clock"></i> ${item.time}</span>
+                    <span><i class="fas fa-fire"></i> ${formatHot(item.hot)}</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function openNewsUrl(url) {
+    if (window.electronAPI && window.electronAPI.openExternal) {
+        window.electronAPI.openExternal(url);
+    } else {
+        window.open(url, '_blank');
+    }
 }
 
 // ========================================

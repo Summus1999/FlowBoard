@@ -1,0 +1,302 @@
+/* ========================================
+   个人提升计划页面样式
+   ======================================== */
+
+.growth-container {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 20px;
+    height: calc(100vh - 180px);
+    min-height: 500px;
+}
+
+.growth-header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+/* 侧边栏 */
+.growth-sidebar {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.growth-sidebar h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* 统计 */
+.growth-stats {
+    margin-bottom: 24px;
+}
+
+.growth-stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.growth-stat-item:last-child {
+    border-bottom: none;
+}
+
+.growth-stat-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.growth-stat-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--accent-color);
+}
+
+/* 技能进度条 */
+.growth-skills {
+    margin-bottom: 24px;
+}
+
+.skill-item {
+    margin-bottom: 16px;
+}
+
+.skill-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.skill-header span:first-child {
+    color: var(--text-secondary);
+}
+
+.skill-percent {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+.skill-bar {
+    height: 6px;
+    background: var(--bg-primary);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.skill-progress {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-color), var(--accent-secondary));
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+/* 提醒列表 */
+.growth-reminders {
+    margin-bottom: 24px;
+}
+
+.reminder-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.reminder-item i {
+    color: var(--accent-color);
+}
+
+/* 主内容区 */
+.growth-main {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.growth-plan-viewer {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+}
+
+/* 空状态 */
+.growth-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+
+.growth-empty i {
+    font-size: 64px;
+    margin-bottom: 24px;
+    opacity: 0.5;
+}
+
+.growth-empty h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+}
+
+.growth-empty p {
+    font-size: 14px;
+    margin-bottom: 24px;
+}
+
+.growth-template-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.growth-template-buttons button {
+    padding: 12px 20px;
+}
+
+/* Markdown 内容渲染 */
+.growth-content {
+    line-height: 1.8;
+}
+
+.growth-content h1,
+.growth-content h2,
+.growth-content h3 {
+    color: var(--text-primary);
+    margin: 24px 0 16px;
+}
+
+.growth-content h1 {
+    font-size: 24px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+}
+
+.growth-content h2 {
+    font-size: 20px;
+}
+
+.growth-content h3 {
+    font-size: 16px;
+}
+
+.growth-content p {
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+
+.growth-content ul,
+.growth-content ol {
+    margin-bottom: 16px;
+    padding-left: 24px;
+    color: var(--text-secondary);
+}
+
+.growth-content li {
+    margin-bottom: 8px;
+}
+
+.growth-content code {
+    background: var(--bg-primary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Consolas', monospace;
+    font-size: 13px;
+}
+
+.growth-content pre {
+    background: var(--bg-primary);
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 16px 0;
+}
+
+/* 模态框样式 */
+.growth-modal .modal-content,
+.interview-settings-modal .modal-content {
+    max-width: 450px;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.toggle-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.toggle-label span {
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.input-with-button {
+    display: flex;
+    gap: 8px;
+}
+
+.input-with-button input {
+    flex: 1;
+}
+
+.form-hint {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* 响应式适配 */
+@media (max-width: 900px) {
+    .growth-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+    }
+    
+    .growth-sidebar {
+        max-height: 200px;
+    }
+}

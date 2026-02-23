@@ -14,6 +14,9 @@
     <link rel="stylesheet" href="css/submissions.css">
     <link rel="stylesheet" href="css/notes.css">
     <link rel="stylesheet" href="css/calendar.css">
+    <link rel="stylesheet" href="css/github.css">
+    <link rel="stylesheet" href="css/growth.css">
+    <link rel="stylesheet" href="css/interview.css">
     <!-- Monaco Editor -->
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"></script>
 </head>
@@ -55,9 +58,21 @@
                         <i class="fas fa-calendar-alt"></i>
                         <span>日程管理</span>
                     </a>
+                    <a href="#" class="nav-item" data-page="growth">
+                        <i class="fas fa-chart-line"></i>
+                        <span>个人提升</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="interview">
+                        <i class="fas fa-microphone"></i>
+                        <span>面试追踪</span>
+                    </a>
                     <a href="#" class="nav-item" data-page="leetcode">
                         <i class="fas fa-code"></i>
                         <span>LeetCode</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="github">
+                        <i class="fab fa-github"></i>
+                        <span>GitHub</span>
                     </a>
                     <a href="#" class="nav-item" data-page="submissions">
                         <i class="fas fa-history"></i>
@@ -318,11 +333,14 @@
                     <div class="page-header">
                         <h2><i class="fas fa-newspaper"></i> 实时资讯</h2>
                         <div class="news-filters">
-                            <button class="filter-btn active">全部</button>
-                            <button class="filter-btn">科技</button>
-                            <button class="filter-btn">财经</button>
-                            <button class="filter-btn">娱乐</button>
-                            <button class="filter-btn">体育</button>
+                            <button class="filter-btn active" data-filter="all">全部</button>
+                            <button class="filter-btn" data-filter="ai">
+                                <i class="fas fa-robot"></i> AI
+                            </button>
+                            <button class="filter-btn" data-filter="tech">科技</button>
+                            <button class="filter-btn" data-filter="finance">财经</button>
+                            <button class="filter-btn" data-filter="entertainment">娱乐</button>
+                            <button class="filter-btn" data-filter="sports">体育</button>
                         </div>
                     </div>
                     <div class="news-grid">
@@ -528,6 +546,165 @@
                             </div>
                             <div class="events-list" id="eventsList">
                                 <!-- 日程列表将通过 JS 生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 个人提升计划页面 -->
+                <div class="page" id="page-growth">
+                    <div class="page-header">
+                        <h2><i class="fas fa-chart-line"></i> 个人提升计划</h2>
+                        <div class="growth-header-actions">
+                            <button class="btn-secondary" onclick="document.getElementById('planFileInput').click()">
+                                <i class="fas fa-file-import"></i> 导入计划
+                            </button>
+                            <input type="file" id="planFileInput" accept=".md,.pdf,.txt" style="display: none;" onchange="handlePlanFileImport(event)">
+                            <button class="btn-primary" onclick="openGrowthReminderModal()">
+                                <i class="fas fa-bell"></i> 提醒设置
+                            </button>
+                        </div>
+                    </div>
+                    <div class="growth-container">
+                        <div class="growth-sidebar">
+                            <div class="growth-stats">
+                                <h3>学习统计</h3>
+                                <div class="growth-stat-item">
+                                    <span class="growth-stat-label">本周学习</span>
+                                    <span class="growth-stat-value" id="growthWeekHours">0 小时</span>
+                                </div>
+                                <div class="growth-stat-item">
+                                    <span class="growth-stat-label">本月学习</span>
+                                    <span class="growth-stat-value" id="growthMonthHours">0 小时</span>
+                                </div>
+                                <div class="growth-stat-item">
+                                    <span class="growth-stat-label">连续打卡</span>
+                                    <span class="growth-stat-value" id="growthStreak">0 天</span>
+                                </div>
+                            </div>
+                            <div class="growth-skills">
+                                <h3>技能提升</h3>
+                                <div class="skill-item">
+                                    <div class="skill-header">
+                                        <span>前端开发</span>
+                                        <span class="skill-percent">75%</span>
+                                    </div>
+                                    <div class="skill-bar">
+                                        <div class="skill-progress" style="width: 75%"></div>
+                                    </div>
+                                </div>
+                                <div class="skill-item">
+                                    <div class="skill-header">
+                                        <span>算法</span>
+                                        <span class="skill-percent">60%</span>
+                                    </div>
+                                    <div class="skill-bar">
+                                        <div class="skill-progress" style="width: 60%"></div>
+                                    </div>
+                                </div>
+                                <div class="skill-item">
+                                    <div class="skill-header">
+                                        <span>系统设计</span>
+                                        <span class="skill-percent">40%</span>
+                                    </div>
+                                    <div class="skill-bar">
+                                        <div class="skill-progress" style="width: 40%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="growth-reminders">
+                                <h3>今日提醒</h3>
+                                <div class="reminder-list" id="growthReminderList">
+                                    <div class="reminder-item">
+                                        <i class="fas fa-clock"></i>
+                                        <span>14:00 - 阅读技术文章</span>
+                                    </div>
+                                    <div class="reminder-item">
+                                        <i class="fas fa-clock"></i>
+                                        <span>20:00 - 刷 LeetCode</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="growth-main">
+                            <div class="growth-plan-viewer" id="growthPlanViewer">
+                                <div class="growth-empty">
+                                    <i class="fas fa-rocket"></i>
+                                    <h3>开始你的个人提升计划</h3>
+                                    <p>导入 Markdown 或 PDF 格式的学习计划</p>
+                                    <div class="growth-template-buttons">
+                                        <button class="btn-secondary" onclick="loadGrowthTemplate('frontend')">
+                                            <i class="fas fa-code"></i> 前端进阶
+                                        </button>
+                                        <button class="btn-secondary" onclick="loadGrowthTemplate('algorithm')">
+                                            <i class="fas fa-project-diagram"></i> 算法训练
+                                        </button>
+                                        <button class="btn-secondary" onclick="loadGrowthTemplate('system')">
+                                            <i class="fas fa-sitemap"></i> 系统设计
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 面试追踪页面 -->
+                <div class="page" id="page-interview">
+                    <div class="page-header">
+                        <h2><i class="fas fa-microphone"></i> 面试追踪</h2>
+                        <div class="interview-header-actions">
+                            <button class="btn-secondary" onclick="openInterviewSettingsModal()">
+                                <i class="fas fa-cog"></i> 录音设置
+                            </button>
+                            <button class="btn-record" id="recordBtn" onclick="toggleRecording()">
+                                <i class="fas fa-circle"></i> 开始录音
+                            </button>
+                        </div>
+                    </div>
+                    <div class="interview-container">
+                        <div class="interview-sidebar">
+                            <div class="interview-recording-status" id="recordingStatus">
+                                <div class="status-indicator"></div>
+                                <span>准备就绪</span>
+                                <div class="recording-timer" id="recordingTimer">00:00</div>
+                            </div>
+                            <div class="interview-history">
+                                <h3>录音记录</h3>
+                                <div class="interview-list" id="interviewList">
+                                    <!-- 录音列表将通过 JS 生成 -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="interview-main">
+                            <div class="interview-notes">
+                                <h3>面试笔记</h3>
+                                <textarea id="interviewNotes" placeholder="记录面试要点、问题和回答..."></textarea>
+                            </div>
+                            <div class="interview-checklist">
+                                <h3>面试 checklist</h3>
+                                <div class="checklist-items">
+                                    <label class="checklist-item">
+                                        <input type="checkbox">
+                                        <span>自我介绍准备</span>
+                                    </label>
+                                    <label class="checklist-item">
+                                        <input type="checkbox">
+                                        <span>项目经验梳理</span>
+                                    </label>
+                                    <label class="checklist-item">
+                                        <input type="checkbox">
+                                        <span>技术知识点复习</span>
+                                    </label>
+                                    <label class="checklist-item">
+                                        <input type="checkbox">
+                                        <span>提问准备</span>
+                                    </label>
+                                    <label class="checklist-item">
+                                        <input type="checkbox">
+                                        <span>代码演示准备</span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -869,6 +1046,56 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- GitHub 项目跟踪页面 -->
+                <div class="page" id="page-github">
+                    <div class="page-header">
+                        <h2><i class="fab fa-github"></i> GitHub 项目跟踪</h2>
+                        <div class="github-header-actions">
+                            <div class="github-input-group">
+                                <i class="fab fa-github"></i>
+                                <input type="text" id="githubUsername" placeholder="输入 GitHub 用户名" value="">
+                                <button class="btn-primary" onclick="loadGithubRepos()">
+                                    <i class="fas fa-search"></i> 查询
+                                </button>
+                            </div>
+                            <a href="https://github.com" target="_blank" class="btn-secondary" title="访问 GitHub 官网">
+                                <i class="fas fa-external-link-alt"></i> 访问 GitHub
+                            </a>
+                        </div>
+                    </div>
+                    <div class="github-container">
+                        <div class="github-stats" id="githubStats">
+                            <div class="github-stat-card">
+                                <i class="fas fa-book"></i>
+                                <div class="github-stat-info">
+                                    <span class="github-stat-value" id="githubRepoCount">-</span>
+                                    <span class="github-stat-label">公开仓库</span>
+                                </div>
+                            </div>
+                            <div class="github-stat-card">
+                                <i class="fas fa-users"></i>
+                                <div class="github-stat-info">
+                                    <span class="github-stat-value" id="githubFollowers">-</span>
+                                    <span class="github-stat-label">关注者</span>
+                                </div>
+                            </div>
+                            <div class="github-stat-card">
+                                <i class="fas fa-star"></i>
+                                <div class="github-stat-info">
+                                    <span class="github-stat-value" id="githubStars">-</span>
+                                    <span class="github-stat-label">获得星标</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="github-repos" id="githubRepos">
+                            <div class="github-empty">
+                                <i class="fab fa-github"></i>
+                                <p>输入 GitHub 用户名查看最近更新的项目</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -1081,6 +1308,127 @@
         </div>
     </div>
 
+    <!-- 个人提升提醒设置模态框 -->
+    <div class="modal growth-modal" id="growthReminderModal">
+        <div class="modal-overlay" onclick="closeGrowthReminderModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-bell"></i> 提醒设置</h3>
+                <button class="close-btn" onclick="closeGrowthReminderModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>提醒时间</label>
+                    <input type="time" id="growthReminderTime" value="14:00">
+                </div>
+                <div class="form-group">
+                    <label>提醒内容</label>
+                    <input type="text" id="growthReminderContent" placeholder="例如：学习时间到了！" value="该学习新技术了！">
+                </div>
+                <div class="form-group">
+                    <label>重复周期</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" checked> 周一
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" checked> 周二
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" checked> 周三
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" checked> 周四
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" checked> 周五
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox"> 周六
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox"> 周日
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="toggle-label">
+                        <span>启用桌面通知</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked id="growthNotificationToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeGrowthReminderModal()">取消</button>
+                <button class="btn-primary" onclick="saveGrowthReminder()">
+                    <i class="fas fa-save"></i> 保存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 面试录音设置模态框 -->
+    <div class="modal interview-settings-modal" id="interviewSettingsModal">
+        <div class="modal-overlay" onclick="closeInterviewSettingsModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-cog"></i> 录音设置</h3>
+                <button class="close-btn" onclick="closeInterviewSettingsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>录音文件存储路径</label>
+                    <div class="input-with-button">
+                        <input type="text" id="interviewStoragePath" placeholder="选择存储路径..." readonly>
+                        <button class="btn-secondary" onclick="selectInterviewStoragePath()">
+                            <i class="fas fa-folder-open"></i> 浏览
+                        </button>
+                    </div>
+                    <small class="form-hint">录音文件将以 MP3 格式保存到此目录</small>
+                </div>
+                <div class="form-group">
+                    <label>录音质量</label>
+                    <select id="interviewAudioQuality">
+                        <option value="high">高质量 (320kbps)</option>
+                        <option value="medium" selected>标准 (128kbps)</option>
+                        <option value="low">节省空间 (64kbps)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="toggle-label">
+                        <span>自动保存录音</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked id="interviewAutoSaveToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="toggle-label">
+                        <span>录音时自动暂停音乐</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked id="interviewPauseMusicToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeInterviewSettingsModal()">取消</button>
+                <button class="btn-primary" onclick="saveInterviewSettings()">
+                    <i class="fas fa-save"></i> 保存
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/languages.js"></script>
     <script src="js/leetcode-api.js"></script>
     <script src="js/submission-history.js"></script>
@@ -1089,6 +1437,9 @@
     <script src="js/submissions-page.js"></script>
     <script src="js/notes.js"></script>
     <script src="js/calendar.js"></script>
+    <script src="js/github.js"></script>
+    <script src="js/growth.js"></script>
+    <script src="js/interview.js"></script>
     <script>
         // Electron 环境检测
         window.isElectron = typeof process !== 'undefined' && process.versions && process.versions.electron;
