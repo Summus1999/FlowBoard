@@ -47,8 +47,4 @@ tmp/
 build/*
 !build/installer.nsh
 
-# 资源文件（保留 SVG 源文件）
-assets/*.png
-assets/*.icns
-assets/*.ico
-!assets/icon.svg
+# 资源文件（保留 SVG 和图标文件）
