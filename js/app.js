@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 延迟初始化 LeetCode，确保 DOM 完全加载
     setTimeout(() => {
         initLeetCode();
-        initSubmissionsPage();
+        initAppCenter();
     }, 100);
 });
 
@@ -695,6 +695,90 @@ function initSettings() {
             e.target.nextElementSibling.textContent = radius;
         });
     }
+    
+    // 初始化开机启动设置
+    initAutoLaunchSettings();
+}
+
+// ========================================
+// 开机启动设置
+// ========================================
+
+async function initAutoLaunchSettings() {
+    // 检查是否在Electron环境中
+    if (!window.electronAPI || !window.electronAPI.getAutoLaunchStatus) {
+        console.log('非Electron环境，跳过开机启动设置');
+        disableAutoLaunchSettings('仅在桌面应用中可用');
+        return;
+    }
+    
+    // 获取开机启动状态
+    try {
+        const status = await window.electronAPI.getAutoLaunchStatus();
+        console.log('开机启动状态:', status);
+        
+        if (status.success) {
+            const toggleAutoLaunch = document.getElementById('toggleAutoLaunch');
+            if (toggleAutoLaunch) {
+                toggleAutoLaunch.checked = status.enabled;
+                toggleAutoLaunch.addEventListener('change', async (e) => {
+                    const result = await window.electronAPI.setAutoLaunch(e.target.checked);
+                    if (result.success) {
+                        showToast(e.target.checked ? '已设置开机自动启动' : '已取消开机自动启动');
+                    } else {
+                        showToast('设置失败: ' + (result.error || '未知错误'));
+                        toggleAutoLaunch.checked = !e.target.checked; // 恢复原状态
+                    }
+                });
+            }
+            
+            // 如果平台不支持，显示提示
+            if (status.notSupported) {
+                disableAutoLaunchSettings('当前平台暂不支持');
+            }
+        } else {
+            disableAutoLaunchSettings('无法获取状态');
+        }
+    } catch (error) {
+        console.error('初始化开机启动设置失败:', error);
+        disableAutoLaunchSettings('初始化失败');
+    }
+    
+    // 启动时最小化设置
+    const toggleMinimizeOnLaunch = document.getElementById('toggleMinimizeOnLaunch');
+    if (toggleMinimizeOnLaunch) {
+        const savedMinimizeOnLaunch = localStorage.getItem('minimizeOnLaunch');
+        toggleMinimizeOnLaunch.checked = savedMinimizeOnLaunch === 'true';
+        toggleMinimizeOnLaunch.addEventListener('change', (e) => {
+            localStorage.setItem('minimizeOnLaunch', e.target.checked);
+            showToast(e.target.checked ? '启动时将自动最小化' : '启动时正常显示窗口');
+        });
+    }
+    
+    // 关闭时最小化设置
+    const toggleMinimizeOnClose = document.getElementById('toggleMinimizeOnClose');
+    if (toggleMinimizeOnClose) {
+        const savedMinimizeOnClose = localStorage.getItem('minimizeOnClose');
+        toggleMinimizeOnClose.checked = savedMinimizeOnClose !== 'false'; // 默认开启
+        toggleMinimizeOnClose.addEventListener('change', (e) => {
+            localStorage.setItem('minimizeOnClose', e.target.checked);
+            showToast(e.target.checked ? '关闭时最小化到托盘' : '关闭时退出应用');
+        });
+    }
+}
+
+function disableAutoLaunchSettings(reason) {
+    const settingItem = document.getElementById('autoLaunchSetting');
+    if (settingItem) {
+        settingItem.classList.add('disabled');
+        settingItem.style.opacity = '0.5';
+        settingItem.style.pointerEvents = 'none';
+        
+        const descEl = settingItem.querySelector('.setting-desc');
+        if (descEl) {
+            descEl.textContent += ` (${reason})`;
+        }
+    }
 }
 
 // ========================================
@@ -994,7 +1078,11 @@ function initTodoList() {
 }
 
 function renderTodoList() {
-    const todoList = document.querySelector('.todo-list');
+    // 只针对独立的待办事项页面，不针对主页的待办卡片
+    const todoPage = document.getElementById('page-todo');
+    if (!todoPage) return; // 如果没有待办事项页面，直接返回
+    
+    const todoList = todoPage.querySelector('.todo-list');
     if (!todoList) return;
     
     // 清空列表

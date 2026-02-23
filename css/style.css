@@ -1845,3 +1845,518 @@ textarea:focus {
 #dashboardTodoList::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.5);
 }
+
+
+/* ========================================
+   UI美化增强样式 - 动画与特效
+   ======================================== */
+
+/* 全局动画关键帧 */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+}
+
+@keyframes glow {
+    0%, 100% {
+        box-shadow: 0 0 5px var(--accent-color), 0 0 10px var(--accent-color), 0 0 15px var(--accent-color);
+    }
+    50% {
+        box-shadow: 0 0 10px var(--accent-color), 0 0 20px var(--accent-color), 0 0 30px var(--accent-color);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+/* 页面切换动画增强 */
+.page {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page.active {
+    animation: fadeInUp 0.4s ease;
+}
+
+/* 统计卡片动画效果 */
+.stat-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.stat-card:hover::before {
+    left: 100%;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 24px var(--shadow-color), 0 0 20px rgba(59, 130, 246, 0.15);
+}
+
+.stat-icon {
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-icon::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.stat-card:hover .stat-icon::after {
+    opacity: 1;
+}
+
+/* 内容卡片动画 */
+.content-card {
+    animation: fadeInUp 0.5s ease;
+    animation-fill-mode: both;
+}
+
+.content-card:nth-child(1) { animation-delay: 0.1s; }
+.content-card:nth-child(2) { animation-delay: 0.2s; }
+.content-card:nth-child(3) { animation-delay: 0.3s; }
+
+/* 密码卡片3D悬停效果 */
+.password-card {
+    transform-style: preserve-3d;
+    perspective: 1000px;
+}
+
+.password-card:hover {
+    transform: translateY(-6px) rotateX(2deg);
+    box-shadow: 
+        0 20px 40px var(--shadow-color),
+        0 0 30px rgba(59, 130, 246, 0.1);
+}
+
+/* 按钮发光效果 */
+.btn-primary {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+}
+
+.btn-primary:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-primary:hover {
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4), 0 0 20px rgba(59, 130, 246, 0.2);
+}
+
+/* 导航项动画 */
+.nav-item {
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 3px;
+    background: var(--accent-color);
+    transform: scaleY(0);
+    transition: transform 0.3s ease;
+}
+
+.nav-item:hover::before,
+.nav-item.active::before {
+    transform: scaleY(1);
+}
+
+.nav-item.active {
+    animation: pulse 0.3s ease;
+}
+
+/* 侧边栏用户卡片发光 */
+.user-avatar {
+    position: relative;
+}
+
+.user-avatar::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, var(--accent-color), var(--accent-secondary), var(--accent-color));
+    background-size: 200% 200%;
+    z-index: -1;
+    animation: shimmer 3s linear infinite;
+    opacity: 0.5;
+}
+
+/* 主题卡片选择效果 */
+.theme-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px var(--shadow-color);
+}
+
+.theme-card.active {
+    animation: pulse 0.4s ease;
+}
+
+/* 开关滑动动画增强 */
+.toggle-slider {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    animation: glow 1.5s ease-in-out infinite;
+}
+
+/* 设置项悬停效果 */
+.setting-item {
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 0 -8px;
+}
+
+.setting-item:hover {
+    background: var(--card-bg);
+}
+
+/* 新闻项悬停效果 */
+.news-item, .news-item-detailed {
+    position: relative;
+    overflow: hidden;
+}
+
+.news-item::after,
+.news-item-detailed::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent-color), var(--accent-secondary));
+    transition: width 0.3s ease;
+}
+
+.news-item:hover::after,
+.news-item-detailed:hover::after {
+    width: 100%;
+}
+
+/* 待办事项动画 */
+.todo-item {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.todo-item:hover {
+    transform: translateX(4px);
+    background: var(--card-hover);
+}
+
+.todo-check:checked {
+    animation: bounce 0.3s ease;
+}
+
+/* 加载动画 */
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--accent-color);
+    border-radius: 50%;
+    animation: rotate 1s linear infinite;
+}
+
+/* 模态框进入动画增强 */
+.modal.active .modal-content {
+    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 输入框焦点效果 */
+.input-with-icon input:focus,
+textarea:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* 分类按钮动画 */
+.cat-btn, .cat-option {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cat-btn:hover,
+.cat-option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+/* 话题标签动画 */
+.topic-tag {
+    transition: all 0.3s ease;
+}
+
+.topic-tag:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* RSS源项动画 */
+.rss-item {
+    transition: all 0.3s ease;
+    padding: 8px;
+    border-radius: 8px;
+}
+
+.rss-item:hover {
+    background: var(--card-bg);
+    transform: translateX(4px);
+}
+
+/* 操作按钮动画 */
+.pwd-action-btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pwd-action-btn:hover {
+    transform: scale(1.1);
+}
+
+/* 底部图标按钮动画 */
+.icon-btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.icon-btn:hover {
+    transform: translateY(-2px) scale(1.1);
+}
+
+/* Logo发光效果 */
+.logo i {
+    animation: glow 2s ease-in-out infinite;
+}
+
+/* 安全评分圆环动画 */
+.score-ring .ring-progress {
+    transition: stroke-dashoffset 1.5s ease;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--accent-color), var(--accent-secondary));
+    border-radius: 3px;
+}
+
+/* 响应式动画优化 */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* 玻璃态效果增强 */
+.glass-effect {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 渐变文字效果 */
+.gradient-text {
+    background: linear-gradient(135deg, var(--accent-color), var(--accent-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* 霓虹边框效果 */
+.neon-border {
+    border: 1px solid var(--accent-color);
+    box-shadow: 
+        0 0 5px var(--accent-color),
+        inset 0 0 5px var(--accent-color);
+}
+
+/* 悬浮提示增强 */
+.footer-actions .icon-btn:hover::after {
+    animation: fadeInUp 0.2s ease;
+}
+
+/* 卡片玻璃反光效果 */
+.content-card::after,
+.password-card::after,
+.settings-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+    transform: skewX(-25deg);
+    transition: left 0.7s ease;
+    pointer-events: none;
+}
+
+.content-card:hover::after,
+.password-card:hover::after,
+.settings-card:hover::after {
+    left: 150%;
+}
+
+.content-card,
+.password-card,
+.settings-card {
+    position: relative;
+    overflow: hidden;
+}
+
+/* 页面标题动画 */
+.page-header h2 {
+    position: relative;
+}
+
+.page-header h2::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent-color), var(--accent-secondary));
+    transition: width 0.5s ease;
+}
+
+.page-header:hover h2::after {
+    width: 100%;
+}

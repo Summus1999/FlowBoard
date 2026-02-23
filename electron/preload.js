@@ -38,5 +38,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // 移除事件监听
     removeAllListeners: (channel) => {
         ipcRenderer.removeAllListeners(channel);
-    }
+    },
+    
+    // 开机启动设置
+    setAutoLaunch: (enable) => ipcRenderer.invoke('set-auto-launch', enable),
+    getAutoLaunchStatus: () => ipcRenderer.invoke('get-auto-launch-status'),
+    
+    // 应用中心
+    launchApp: (appId, appConfig) => ipcRenderer.invoke('launch-app', appId, appConfig),
+    checkAppsAvailability: (appConfigs) => ipcRenderer.invoke('check-apps-availability', appConfigs)
 });

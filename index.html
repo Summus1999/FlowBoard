@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="css/github.css">
     <link rel="stylesheet" href="css/growth.css">
     <link rel="stylesheet" href="css/interview.css">
+    <link rel="stylesheet" href="css/apps.css">
     <!-- Monaco Editor -->
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"></script>
 </head>
@@ -29,7 +30,7 @@
                     <i class="fas fa-layer-group"></i>
                     <span>FlowBoard</span>
                 </div>
-                <p class="tagline">EXPLORE OS</p>
+                <p class="tagline">Explore everything</p>
             </div>
             
             <nav class="sidebar-nav">
@@ -46,10 +47,6 @@
                 
                 <div class="nav-section">
                     <p class="section-title">工具</p>
-                    <a href="#" class="nav-item" data-page="todo">
-                        <i class="fas fa-check-circle"></i>
-                        <span>待办事项</span>
-                    </a>
                     <a href="#" class="nav-item" data-page="notes">
                         <i class="fas fa-sticky-note"></i>
                         <span>笔记记录</span>
@@ -74,9 +71,9 @@
                         <i class="fab fa-github"></i>
                         <span>GitHub</span>
                     </a>
-                    <a href="#" class="nav-item" data-page="submissions">
-                        <i class="fas fa-history"></i>
-                        <span>提交记录</span>
+                    <a href="#" class="nav-item" data-page="apps">
+                        <i class="fas fa-th-large"></i>
+                        <span>应用中心</span>
                     </a>
                 </div>
             </nav>
@@ -831,72 +828,273 @@
                                 </label>
                             </div>
                         </div>
+                        
+                        <!-- 开机启动设置 -->
+                        <div class="settings-card">
+                            <h3><i class="fas fa-power-off"></i> 系统设置</h3>
+                            <div class="setting-item" id="autoLaunchSetting">
+                                <div class="setting-info">
+                                    <span class="setting-name">开机自动启动</span>
+                                    <span class="setting-desc">系统启动时自动运行 FlowBoard</span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="toggleAutoLaunch">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-name">启动时最小化</span>
+                                    <span class="setting-desc">启动后自动最小化到托盘</span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="toggleMinimizeOnLaunch">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-name">关闭时最小化</span>
+                                    <span class="setting-desc">点击关闭按钮时最小化到托盘而不是退出</span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="toggleMinimizeOnClose" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 提交记录页面 -->
-                <div class="page" id="page-submissions">
+                <!-- 应用中心页面 -->
+                <div class="page" id="page-apps">
                     <div class="page-header">
-                        <h2><i class="fas fa-history"></i> 提交记录</h2>
-                        <div class="submission-actions">
-                            <button class="btn-secondary" onclick="exportSubmissions()">
-                                <i class="fas fa-download"></i> 导出
-                            </button>
-                            <button class="btn-secondary" onclick="showSubmissionStats()">
-                                <i class="fas fa-chart-bar"></i> 统计
-                            </button>
-                        </div>
+                        <h2><i class="fas fa-th-large"></i> 应用中心</h2>
+                        <p style="color: var(--text-secondary); font-size: 13px;">快速启动本地应用程序</p>
                     </div>
-                    <div class="submissions-container">
-                        <div class="submissions-filters">
-                            <div class="search-box">
-                                <i class="fas fa-search"></i>
-                                <input type="text" placeholder="搜索题目或代码..." id="submissionSearch">
-                            </div>
-                            <div class="filter-group">
-                                <select id="submissionLanguageFilter">
-                                    <option value="">所有语言</option>
-                                </select>
-                                <select id="submissionStatusFilter">
-                                    <option value="">所有状态</option>
-                                    <option value="accepted">通过</option>
-                                    <option value="wrong_answer">解答错误</option>
-                                    <option value="time_limit_exceeded">超时</option>
-                                    <option value="memory_limit_exceeded">内存超限</option>
-                                    <option value="runtime_error">运行错误</option>
-                                    <option value="compile_error">编译错误</option>
-                                </select>
-                                <select id="submissionSortBy">
-                                    <option value="timestamp">按时间</option>
-                                    <option value="runtime">按执行用时</option>
-                                    <option value="memory">按内存消耗</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="submissions-stats-cards">
-                            <div class="stat-card-mini">
-                                <i class="fas fa-check-circle success"></i>
-                                <span class="stat-value" id="statAccepted">0</span>
-                                <span class="stat-label">通过</span>
-                            </div>
-                            <div class="stat-card-mini">
-                                <i class="fas fa-times-circle error"></i>
-                                <span class="stat-value" id="statWrong">0</span>
-                                <span class="stat-label">错误</span>
-                            </div>
-                            <div class="stat-card-mini">
-                                <i class="fas fa-star favorite"></i>
-                                <span class="stat-value" id="statFavorites">0</span>
-                                <span class="stat-label">收藏</span>
-                            </div>
-                            <div class="stat-card-mini">
-                                <i class="fas fa-fire"></i>
-                                <span class="stat-value" id="statStreak">0</span>
-                                <span class="stat-label">连续打卡</span>
+                    <div class="apps-container">
+                        <!-- 社交应用 -->
+                        <div class="apps-category">
+                            <h3><i class="fas fa-comments"></i> 社交应用</h3>
+                            <div class="apps-grid">
+                                <div class="app-card" onclick="launchApp('wechat')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #07C160, #05a350);">
+                                        <i class="fab fa-weixin"></i>
+                                    </div>
+                                    <span class="app-name">微信</span>
+                                    <span class="app-desc">电脑版微信</span>
+                                </div>
+                                <div class="app-card" onclick="launchApp('qq')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #12B7F5, #0ea5d9);">
+                                        <i class="fab fa-qq"></i>
+                                    </div>
+                                    <span class="app-name">QQ</span>
+                                    <span class="app-desc">腾讯QQ</span>
+                                </div>
+                                <div class="app-card" onclick="launchApp('tim')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #0066FF, #0052cc);">
+                                        <i class="fas fa-briefcase"></i>
+                                    </div>
+                                    <span class="app-name">TIM</span>
+                                    <span class="app-desc">办公版QQ</span>
+                                </div>
+                                <div class="app-card" onclick="launchApp('dingtalk')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #0089FF, #0066cc);">
+                                        <i class="fas fa-dingding"></i>
+                                    </div>
+                                    <span class="app-name">钉钉</span>
+                                    <span class="app-desc">阿里巴巴钉钉</span>
+                                </div>
+                                <div class="app-card" onclick="launchApp('feishu')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #00D6B9, #00b096);">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </div>
+                                    <span class="app-name">飞书</span>
+                                    <span class="app-desc">字节跳动飞书</span>
+                                </div>
                             </div>
                         </div>
-                        <div class="submissions-list" id="submissionsList">
-                            <!-- 提交记录将通过 JS 动态生成 -->
+                        
+                        <!-- 开发工具 -->
+                        <div class="apps-category">
+                            <h3><i class="fas fa-code"></i> 开发工具</h3>
+                            <div class="apps-grid">
+                                <div class="app-card" onclick="launchApp('vscode')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #007ACC, #005f99);">
+                                        <i class="fas fa-code"></i>
+                                    </div>
+                                    <span class="app-name">VS Code</span>
+                                    <span class="app-desc">代码编辑器</span>
+                                </div>
+                                <div class="app-card" onclick="launchApp('idea')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #FE315D, #cc1a3d);">
+                                        <i class="fas fa-coffee"></i>
+                                    </div>
+                                    <span class="app-name">IntelliJ IDEA</span>
+                                    <span class="app-desc">Java IDE</span>
+                                </div>
+                                <div class="app-card" onclick="launchApp('webstorm')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #00CDD7, #009da6);">
+                                        <i class="fab fa-js"></i>
+                                    </div>
+                                    <span class="app-name">WebStorm</span>
+                                    <span class="app-desc">前端IDE</span>
+                                </div>
+                                <div class="app-card" onclick="launchApp('datagrip')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #22D88F, #1aad73);">
+                                        <i class="fas fa-database"></i>
+                                    </div>
+                                    <span class="app-name">DataGrip</span>
+                                    <span class="app-desc">数据库工具</span>
+                                </div>
+                                <div class="app-card" onclick="launchApp('postman')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #FF6C37, #e55a2b);">
+                                        <i class="fas fa-rocket"></i>
+                                    </div>
+                                    <span class="app-name">Postman</span>
+                                    <span class="app-desc">API测试工具</span>
+                                </div>
+                                <div class="app-card" onclick="launchApp('gitbash')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #F05032, #d43d20);">
+                                        <i class="fab fa-git-alt"></i>
+                                    </div>
+                                    <span class="app-name">Git Bash</span>
+                                    <span class="app-desc">Git命令行</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 浏览器 -->
+                        <div class="apps-category">
+                            <h3><i class="fas fa-globe"></i> 浏览器</h3>
+                            <div class="apps-grid">
+                                <div class="app-card" onclick="launchApp('chrome')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #4285F4, #3367D6);">
+                                        <i class="fab fa-chrome"></i>
+                                    </div>
+                                    <span class="app-name">Chrome</span>
+                                    <span class="app-desc">谷歌浏览器</span>
+                                </div>
+                                <div class="app-card" onclick="launchApp('edge')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #0078D7, #005a9e);">
+                                        <i class="fab fa-edge"></i>
+                                    </div>
+                                    <span class="app-name">Edge</span>
+                                    <span class="app-desc">微软浏览器</span>
+                                </div>
+                                <div class="app-card" onclick="launchApp('firefox')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #FF7139, #e55a2b);">
+                                        <i class="fab fa-firefox"></i>
+                                    </div>
+                                    <span class="app-name">Firefox</span>
+                                    <span class="app-desc">火狐浏览器</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 媒体娱乐 -->
+                        <div class="apps-category">
+                            <h3><i class="fas fa-music"></i> 媒体娱乐</h3>
+                            <div class="apps-grid">
+                                <div class="app-card" onclick="launchApp('netease_music')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #C20C0C, #a30a0a);">
+                                        <i class="fas fa-music"></i>
+                                    </div>
+                                    <span class="app-name">网易云音乐</span>
+                                    <span class="app-desc">音乐播放器</span>
+                                </div>
+                                <div class="app-card" onclick="launchApp('qq_music')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #31C27C, #25a063);">
+                                        <i class="fas fa-music"></i>
+                                    </div>
+                                    <span class="app-name">QQ音乐</span>
+                                    <span class="app-desc">腾讯音乐</span>
+                                </div>
+                                <div class="app-card" onclick="launchApp('bilibili')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #FB7299, #e5678e);">
+                                        <i class="fas fa-tv"></i>
+                                    </div>
+                                    <span class="app-name">哔哩哔哩</span>
+                                    <span class="app-desc">视频平台</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 办公效率 -->
+                        <div class="apps-category">
+                            <h3><i class="fas fa-briefcase"></i> 办公效率</h3>
+                            <div class="apps-grid">
+                                <div class="app-card" onclick="launchApp('wps')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #FF6A00, #cc5500);">
+                                        <i class="fas fa-file-word"></i>
+                                    </div>
+                                    <span class="app-name">WPS Office</span>
+                                    <span class="app-desc">办公软件</span>
+                                </div>
+                                <div class="app-card" onclick="launchApp('typora')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #333333, #1a1a1a);">
+                                        <i class="fab fa-markdown"></i>
+                                    </div>
+                                    <span class="app-name">Typora</span>
+                                    <span class="app-desc">Markdown编辑器</span>
+                                </div>
+                                <div class="app-card" onclick="launchApp('notion')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #000000, #333333);">
+                                        <i class="fas fa-sticky-note"></i>
+                                    </div>
+                                    <span class="app-name">Notion</span>
+                                    <span class="app-desc">笔记工具</span>
+                                </div>
+                                <div class="app-card" onclick="launchApp('xmind')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #FF4B4B, #e53e3e);">
+                                        <i class="fas fa-project-diagram"></i>
+                                    </div>
+                                    <span class="app-name">XMind</span>
+                                    <span class="app-desc">思维导图</span>
+                                </div>
+                                <div class="app-card" onclick="launchApp('snipaste')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #5F5F5F, #4a4a4a);">
+                                        <i class="fas fa-cut"></i>
+                                    </div>
+                                    <span class="app-name">Snipaste</span>
+                                    <span class="app-desc">截图工具</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 系统工具 -->
+                        <div class="apps-category">
+                            <h3><i class="fas fa-cog"></i> 系统工具</h3>
+                            <div class="apps-grid">
+                                <div class="app-card" onclick="launchApp('cmd')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #1F1F1F, #0a0a0a);">
+                                        <i class="fas fa-terminal"></i>
+                                    </div>
+                                    <span class="app-name">命令提示符</span>
+                                    <span class="app-desc">CMD终端</span>
+                                </div>
+                                <div class="app-card" onclick="launchApp('powershell')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #012456, #001a3d);">
+                                        <i class="fas fa-terminal"></i>
+                                    </div>
+                                    <span class="app-name">PowerShell</span>
+                                    <span class="app-desc">高级终端</span>
+                                </div>
+                                <div class="app-card" onclick="launchApp('explorer')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #0078D7, #005a9e);">
+                                        <i class="fas fa-folder-open"></i>
+                                    </div>
+                                    <span class="app-name">文件资源管理器</span>
+                                    <span class="app-desc">Windows资源管理</span>
+                                </div>
+                                <div class="app-card" onclick="launchApp('taskmgr')">
+                                    <div class="app-icon" style="background: linear-gradient(135deg, #0078D7, #005a9e);">
+                                        <i class="fas fa-tasks"></i>
+                                    </div>
+                                    <span class="app-name">任务管理器</span>
+                                    <span class="app-desc">系统进程管理</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -917,9 +1115,9 @@
                             <button class="btn-primary" id="leetcodeLoginBtn" onclick="toggleLeetCodeLogin()">
                                 <i class="fas fa-sign-in-alt"></i> 登录
                             </button>
-                            <a href="https://leetcode.cn" target="_blank" class="btn-secondary leetcode-link-btn" title="访问 LeetCode 官网">
-                                <i class="fas fa-external-link-alt"></i>
-                            </a>
+                            <button class="btn-leetcode-official" onclick="openLeetCodeOfficial()">
+                                官网
+                            </button>
                         </div>
                     </div>
                     <div class="leetcode-container">
@@ -1052,16 +1250,16 @@
                     <div class="page-header">
                         <h2><i class="fab fa-github"></i> GitHub 项目跟踪</h2>
                         <div class="github-header-actions">
-                            <div class="github-input-group">
-                                <i class="fab fa-github"></i>
-                                <input type="text" id="githubUsername" placeholder="输入 GitHub 用户名" value="">
-                                <button class="btn-primary" onclick="loadGithubRepos()">
-                                    <i class="fas fa-search"></i> 查询
-                                </button>
+                            <div class="github-login-status" id="githubLoginStatus">
+                                <i class="fas fa-circle"></i>
+                                <span>未登录</span>
                             </div>
-                            <a href="https://github.com" target="_blank" class="btn-secondary" title="访问 GitHub 官网">
-                                <i class="fas fa-external-link-alt"></i> 访问 GitHub
-                            </a>
+                            <button class="btn-primary" id="githubLoginBtn" onclick="showGithubLoginModal()">
+                                <i class="fas fa-sign-in-alt"></i> 登录
+                            </button>
+                            <button class="btn-secondary" onclick="openGithubOfficial()">
+                                官网
+                            </button>
                         </div>
                     </div>
                     <div class="github-container">
@@ -1430,11 +1628,11 @@
     </div>
 
     <script src="js/languages.js"></script>
+    <script src="js/code-snippets.js"></script>
     <script src="js/leetcode-api.js"></script>
-    <script src="js/submission-history.js"></script>
+    <script src="js/app-center.js"></script>
     <script src="js/app.js"></script>
     <script src="js/leetcode.js"></script>
-    <script src="js/submissions-page.js"></script>
     <script src="js/notes.js"></script>
     <script src="js/calendar.js"></script>
     <script src="js/github.js"></script>

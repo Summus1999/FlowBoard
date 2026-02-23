@@ -1,0 +1,224 @@
+/* ========================================
+   应用中心样式
+   ======================================== */
+
+.apps-container {
+    padding: 0 24px 24px;
+    overflow-y: auto;
+    height: calc(100% - 80px);
+}
+
+.apps-category {
+    margin-bottom: 32px;
+}
+
+.apps-category h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.apps-category h3 i {
+    color: var(--accent-color);
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--card-bg);
+    border-radius: 6px;
+}
+
+.apps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 16px;
+}
+
+.app-card {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 20px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: center;
+}
+
+.app-card:hover {
+    background: var(--card-hover);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 24px var(--shadow-color), 0 0 20px rgba(59, 130, 246, 0.1);
+    border-color: var(--accent-color);
+}
+
+.app-card:active {
+    transform: translateY(-2px) scale(0.98);
+}
+
+.app-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.app-card:hover .app-icon {
+    transform: scale(1.1);
+}
+
+.app-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.app-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* 应用可用性状态 */
+.app-available {
+    position: relative;
+}
+
+.app-available::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    background: #22c55e;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--bg-primary);
+}
+
+.app-unavailable {
+    filter: grayscale(0.5);
+}
+
+/* ========================================
+   LeetCode 官网按钮样式
+   ======================================== */
+
+.btn-leetcode-official {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, var(--accent-color), var(--accent-secondary));
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.btn-leetcode-official:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4), 0 0 20px rgba(59, 130, 246, 0.2);
+    filter: brightness(1.1);
+}
+
+.btn-leetcode-official:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+/* ========================================
+   GitHub 登录状态样式
+   ======================================== */
+
+.github-login-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.github-login-status i {
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+.github-login-status.logged-in {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.3);
+    color: #22c55e;
+}
+
+.github-login-status.logged-in i {
+    color: #22c55e;
+}
+
+.github-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* GitHub 登录模态框样式 */
+.github-login-modal .modal-content {
+    max-width: 420px;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .apps-grid {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 12px;
+    }
+    
+    .app-card {
+        padding: 16px 8px;
+    }
+    
+    .app-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+    
+    .app-name {
+        font-size: 12px;
+    }
+    
+    .app-desc {
+        font-size: 10px;
+    }
+    
+    .github-header-actions {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+}

@@ -253,8 +253,38 @@ function initMonacoEditor() {
                 matchBrackets: 'always',
                 autoIndent: 'full',
                 formatOnPaste: true,
-                formatOnType: true
+                formatOnType: true,
+                // 智能提示配置
+                quickSuggestions: {
+                    other: true,
+                    comments: true,
+                    strings: true
+                },
+                suggestOnTriggerCharacters: true,
+                acceptSuggestionOnCommitCharacter: true,
+                acceptSuggestionOnEnter: 'on',
+                snippetSuggestions: 'top',
+                suggestSelection: 'first',
+                wordBasedSuggestions: 'allDocuments',
+                parameterHints: {
+                    enabled: true,
+                    cycle: true
+                },
+                hover: {
+                    enabled: true,
+                    delay: 300
+                },
+                goToDefinition: true,
+                contextmenu: true,
+                multiCursorModifier: 'altCmd',
+                find: {
+                    autoFindInSelection: 'never',
+                    seedSearchStringFromSelection: 'always'
+                }
             });
+            
+            // 启用更强大的IntelliSense
+            monaco.editor.setTheme('leetcode-dark');
 
             // 添加快捷键
             leetCodeState.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function() {
@@ -268,6 +298,11 @@ function initMonacoEditor() {
             // 标记 Monaco 已加载
             leetCodeState.editorType = 'monaco';
             console.log('Monaco Editor 初始化完成');
+            
+            // 初始化代码智能提示
+            if (typeof CodeIntelliSense !== 'undefined') {
+                CodeIntelliSense.init();
+            }
             
             // 如果有当前题目，更新编辑器内容
             if (leetCodeState.currentProblem) {
@@ -1117,6 +1152,11 @@ function changeLanguage(langId) {
     if (leetCodeState.editorType === 'monaco' && typeof monaco !== 'undefined') {
         const monacoLang = LanguageConfig.getMonacoLanguage(langId);
         monaco.editor.setModelLanguage(leetCodeState.editor.getModel(), monacoLang);
+        
+        // 为新语言注册代码提示
+        if (typeof CodeIntelliSense !== 'undefined') {
+            CodeIntelliSense.registerLanguage(langId);
+        }
     }
     // 备用编辑器不切换语法高亮，只需更新代码模板
     
@@ -1391,6 +1431,15 @@ function clearConsole() {
 // ========================================
 // 登录和收藏
 // ========================================
+
+function openLeetCodeOfficial() {
+    const url = 'https://leetcode.cn';
+    if (window.electronAPI && window.electronAPI.openExternal) {
+        window.electronAPI.openExternal(url);
+    } else {
+        window.open(url, '_blank');
+    }
+}
 
 async function toggleLeetCodeLogin() {
     if (leetCodeState.isLoggedIn) {

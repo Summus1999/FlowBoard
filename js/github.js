@@ -9,9 +9,23 @@
 
 let githubState = {
     username: localStorage.getItem('github_username') || '',
+    token: localStorage.getItem('github_token') || '',
     repos: [],
-    isLoading: false
+    isLoading: false,
+    isLoggedIn: false
 };
+
+// 检查登录状态
+function checkGithubLoginStatus() {
+    const savedUsername = localStorage.getItem('github_username');
+    const savedToken = localStorage.getItem('github_token');
+    
+    githubState.isLoggedIn = !!(savedUsername);
+    githubState.username = savedUsername || '';
+    githubState.token = savedToken || '';
+    
+    updateGithubLoginUI();
+}
 
 // 编程语言颜色映射
 const languageColors = {
@@ -40,11 +54,160 @@ const languageColors = {
 // ========================================
 
 function initGithub() {
+    checkGithubLoginStatus();
+    
     // 加载保存的用户名
     const savedUsername = localStorage.getItem('github_username');
     if (savedUsername) {
-        document.getElementById('githubUsername').value = savedUsername;
+        const usernameInput = document.getElementById('githubUsername');
+        if (usernameInput) usernameInput.value = savedUsername;
+        // 自动加载最近更新的2个仓库
         loadGithubRepos();
+    }
+}
+
+// ========================================
+// 登录/登出功能
+// ========================================
+
+function toggleGithubLogin() {
+    if (githubState.isLoggedIn) {
+        // 登出
+        logoutGithub();
+    } else {
+        // 显示登录模态框
+        showGithubLoginModal();
+    }
+}
+
+function showGithubLoginModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal github-login-modal active';
+    modal.id = 'githubLoginModal';
+    modal.innerHTML = `
+        <div class="modal-overlay" onclick="closeGithubLoginModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fab fa-github"></i> 登录 GitHub</h3>
+                <button class="close-btn" onclick="closeGithubLoginModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>GitHub 用户名</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-user"></i>
+                        <input type="text" placeholder="输入你的 GitHub 用户名" id="githubLoginUsername">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Personal Access Token (可选)</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-key"></i>
+                        <input type="password" placeholder="用于访问私有仓库" id="githubLoginToken">
+                    </div>
+                    <small style="color: var(--text-muted); font-size: 11px;">
+                        <i class="fas fa-info-circle"></i> 
+                        Token 只需 public_repo 权限即可访问公开仓库
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeGithubLoginModal()">取消</button>
+                <button class="btn-primary" onclick="loginGithub()">
+                    <i class="fas fa-sign-in-alt"></i> 登录
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function closeGithubLoginModal() {
+    const modal = document.getElementById('githubLoginModal');
+    if (modal) modal.remove();
+}
+
+async function loginGithub() {
+    const username = document.getElementById('githubLoginUsername')?.value.trim();
+    const token = document.getElementById('githubLoginToken')?.value.trim();
+    
+    if (!username) {
+        showToast('请输入 GitHub 用户名');
+        return;
+    }
+    
+    // 保存登录信息
+    localStorage.setItem('github_username', username);
+    if (token) {
+        localStorage.setItem('github_token', token);
+    }
+    
+    githubState.username = username;
+    githubState.token = token;
+    githubState.isLoggedIn = true;
+    
+    // 更新UI
+    const usernameInput = document.getElementById('githubUsername');
+    if (usernameInput) usernameInput.value = username;
+    
+    updateGithubLoginUI();
+    closeGithubLoginModal();
+    
+    showToast('GitHub 登录成功');
+    
+    // 自动加载最近更新的2个仓库
+    await loadGithubRepos();
+}
+
+function logoutGithub() {
+    if (confirm('确定要退出 GitHub 登录吗？')) {
+        localStorage.removeItem('github_username');
+        localStorage.removeItem('github_token');
+        
+        githubState.username = '';
+        githubState.token = '';
+        githubState.isLoggedIn = false;
+        githubState.repos = [];
+        
+        const usernameInput = document.getElementById('githubUsername');
+        if (usernameInput) usernameInput.value = '';
+        
+        updateGithubLoginUI();
+        renderGithubRepos([]);
+        
+        // 重置统计
+        document.getElementById('githubRepoCount').textContent = '-';
+        document.getElementById('githubFollowers').textContent = '-';
+        document.getElementById('githubStars').textContent = '-';
+        
+        showToast('已退出 GitHub 登录');
+    }
+}
+
+function updateGithubLoginUI() {
+    const loginBtn = document.getElementById('githubLoginBtn');
+    const loginStatus = document.getElementById('githubLoginStatus');
+    
+    if (loginBtn) {
+        if (githubState.isLoggedIn) {
+            loginBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> 退出';
+            loginBtn.onclick = logoutGithub;
+        } else {
+            loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> 登录';
+            loginBtn.onclick = showGithubLoginModal;
+        }
+    }
+    
+    if (loginStatus) {
+        if (githubState.isLoggedIn) {
+            loginStatus.innerHTML = `<i class="fas fa-check-circle"></i> <span>已登录: ${githubState.username}</span>`;
+            loginStatus.className = 'github-login-status logged-in';
+        } else {
+            loginStatus.innerHTML = '<i class="fas fa-circle"></i> <span>未登录</span>';
+            loginStatus.className = 'github-login-status';
+        }
     }
 }
 
@@ -236,6 +399,15 @@ function createRepoCard(repo) {
 // ========================================
 
 function openRepo(url) {
+    if (window.electronAPI && window.electronAPI.openExternal) {
+        window.electronAPI.openExternal(url);
+    } else {
+        window.open(url, '_blank');
+    }
+}
+
+function openGithubOfficial() {
+    const url = 'https://github.com';
     if (window.electronAPI && window.electronAPI.openExternal) {
         window.electronAPI.openExternal(url);
     } else {

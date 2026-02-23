@@ -4,6 +4,7 @@
  */
 
 const { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage, dialog, shell } = require('electron');
+const os = require('os');
 const path = require('path');
 const fs = require('fs');
 
@@ -334,6 +335,165 @@ ipcMain.handle('save-file', async (event, options) => {
         return result;
     }
     return { canceled: true };
+});
+
+// ====================
+// 开机启动设置
+// ====================
+
+// 设置开机启动
+ipcMain.handle('set-auto-launch', async (event, enable) => {
+    try {
+        // Windows 和 macOS 支持开机启动
+        if (process.platform === 'linux') {
+            return { success: false, error: 'Linux 平台暂不支持开机启动设置' };
+        }
+        
+        app.setLoginItemSettings({
+            openAtLogin: enable,
+            openAsHidden: false,
+            path: app.getPath('exe')
+        });
+        
+        // 验证设置
+        const settings = app.getLoginItemSettings();
+        console.log(`开机启动设置已${enable ? '启用' : '禁用'}:`, settings);
+        
+        return { 
+            success: true, 
+            enabled: settings.openAtLogin,
+            platform: process.platform
+        };
+    } catch (error) {
+        console.error('设置开机启动失败:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// 获取开机启动状态
+ipcMain.handle('get-auto-launch-status', async () => {
+    try {
+        if (process.platform === 'linux') {
+            return { 
+                success: true, 
+                enabled: false, 
+                platform: process.platform,
+                notSupported: true 
+            };
+        }
+        
+        const settings = app.getLoginItemSettings();
+        return { 
+            success: true, 
+            enabled: settings.openAtLogin,
+            platform: process.platform
+        };
+    } catch (error) {
+        console.error('获取开机启动状态失败:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// ====================
+// 应用中心 - 启动本地应用
+// ====================
+
+const { exec, spawn } = require('child_process');
+const os = require('os');
+
+// 检查文件是否存在
+function fileExists(filePath) {
+    try {
+        fs.accessSync(filePath, fs.constants.F_OK);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+// 查找可执行文件
+function findExecutable(paths) {
+    for (const path of paths) {
+        if (path && fileExists(path)) {
+            return path;
+        }
+    }
+    return null;
+}
+
+// 启动应用
+ipcMain.handle('launch-app', async (event, appId, appConfig) => {
+    try {
+        // 首先尝试直接路径
+        const exePath = findExecutable(appConfig.paths);
+        
+        if (exePath) {
+            // 使用 spawn 启动应用
+            const child = spawn('"' + exePath + '"', [], {
+                detached: true,
+                shell: true,
+                windowsHide: false
+            });
+            
+            child.unref();
+            
+            return { 
+                success: true, 
+                method: 'direct',
+                path: exePath 
+            };
+        }
+        
+        // 如果直接路径失败，尝试使用命令
+        if (appConfig.command) {
+            return new Promise((resolve) => {
+                exec(appConfig.command, (error, stdout, stderr) => {
+                    if (error) {
+                        console.error(`启动应用失败: ${error}`);
+                        resolve({ 
+                            success: false, 
+                            error: '应用未安装或路径不正确' 
+                        });
+                    } else {
+                        resolve({ 
+                            success: true, 
+                            method: 'command',
+                            command: appConfig.command 
+                        });
+                    }
+                });
+            });
+        }
+        
+        return { 
+            success: false, 
+            error: '未找到应用程序' 
+        };
+        
+    } catch (error) {
+        console.error('启动应用失败:', error);
+        return { 
+            success: false, 
+            error: error.message 
+        };
+    }
+});
+
+// 检查应用可用性
+ipcMain.handle('check-apps-availability', async (event, appConfigs) => {
+    const available = [];
+    const unavailable = [];
+    
+    for (const [appId, config] of Object.entries(appConfigs)) {
+        const exePath = findExecutable(config.paths);
+        if (exePath) {
+            available.push(appId);
+        } else {
+            unavailable.push(appId);
+        }
+    }
+    
+    return { available, unavailable };
 });
 
 // ====================
