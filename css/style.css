@@ -399,6 +399,25 @@ body {
     display: block;
 }
 
+/* Stage-B layout contract for tool pages */
+.page#page-notes.active,
+.page#page-calendar.active,
+.page#page-growth.active,
+.page#page-interview.active,
+.page#page-github.active {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+#page-notes .page-header,
+#page-calendar .page-header,
+#page-growth .page-header,
+#page-interview .page-header,
+#page-github .page-header {
+    flex-shrink: 0;
+}
+
 /* 内容网格布局 */
 .content-grid {
     display: grid;

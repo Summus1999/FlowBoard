@@ -6,8 +6,8 @@
     display: grid;
     grid-template-columns: 300px 1fr;
     gap: 20px;
-    height: calc(100vh - 180px);
-    min-height: 500px;
+    flex: 1;
+    min-height: 0;
 }
 
 .interview-header-actions {
@@ -61,6 +61,7 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
+    min-height: 0;
 }
 
 /* 录音状态 */
@@ -71,6 +72,7 @@
     border-radius: var(--border-radius);
     padding: 24px;
     text-align: center;
+    flex-shrink: 0;
 }
 
 .status-indicator {
@@ -136,6 +138,7 @@
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     flex: 1;
+    min-height: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -151,6 +154,7 @@
 
 .interview-list {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     padding: 12px;
 }
@@ -211,6 +215,7 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
+    min-height: 0;
 }
 
 .interview-notes,
