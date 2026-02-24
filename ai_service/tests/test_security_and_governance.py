@@ -3,13 +3,28 @@ Security and governance tests for phase 7-10 capabilities.
 """
 
 import re
+import sys
+import importlib.util
+from pathlib import Path
 
 import pytest
 
 from app.core.request_context import normalize_request_id, normalize_trace_id
 from app.security.input_filter import validate_user_input
 from app.security.output_auditor import audit_output
-from app.services.prompt_version_manager import PromptVersionManager
+
+
+def _load_prompt_manager_class():
+    module_path = Path(__file__).resolve().parents[1] / "app/services/prompt_version_manager.py"
+    spec = importlib.util.spec_from_file_location("prompt_version_manager_local", module_path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module.PromptVersionManager
+
+
+PromptVersionManager = _load_prompt_manager_class()
 
 
 TRACE_PATTERN = re.compile(r"^[0-9a-f-]{36}$")

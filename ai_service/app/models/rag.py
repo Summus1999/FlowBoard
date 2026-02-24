@@ -6,9 +6,10 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from sqlalchemy import String, Text, ForeignKey, Integer, Numeric, DateTime, Index
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR, VECTOR
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
+from pgvector.sqlalchemy import Vector
 
 from app.models.base import Base
 
@@ -132,7 +133,7 @@ class RAGChunk(Base):
     
     # 向量嵌入 - 维度由配置决定
     embedding: Mapped[Optional[list]] = mapped_column(
-        VECTOR(1024),  # 使用配置的VECTOR_DIMENSION
+        Vector(1024),  # 使用配置的VECTOR_DIMENSION
         nullable=True,
     )
     

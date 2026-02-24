@@ -161,7 +161,7 @@ class Task(Base):
     todo_id: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
     
     # 额外元数据
-    metadata: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    meta_info: Mapped[Optional[dict]] = mapped_column("metadata", JSONB, nullable=True)
     
     # 关系
     plan: Mapped["Plan"] = relationship("Plan", back_populates="tasks")
