@@ -382,8 +382,8 @@ class IndexVersionManager:
     
     async def cleanup_old_versions(
         self,
-        keep_count: int = None,
         db: AsyncSession,
+        keep_count: int = None,
     ):
         """清理旧版本"""
         keep_count = keep_count or settings.INDEX_VERSION_RETENTION

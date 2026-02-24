@@ -21,6 +21,26 @@ def add_trace_info(
     return event_dict
 
 
+def redact_secret_fields(
+    logger: WrappedLogger,
+    method_name: str,
+    event_dict: EventDict,
+) -> EventDict:
+    """Redact high-risk secret fields in structured logs."""
+    secret_keys = {
+        "api_key",
+        "token",
+        "secret",
+        "authorization",
+        "x-api-key",
+    }
+    for key in list(event_dict.keys()):
+        lowered = key.lower()
+        if lowered in secret_keys or lowered.endswith("_api_key") or lowered.endswith("_token"):
+            event_dict[key] = "[REDACTED]"
+    return event_dict
+
+
 def setup_logging(debug: bool = False) -> None:
     """配置结构化日志"""
     
@@ -38,6 +58,7 @@ def setup_logging(debug: bool = False) -> None:
             structlog.processors.add_log_level,
             structlog.processors.TimeStamper(fmt="iso"),
             add_trace_info,
+            redact_secret_fields,
             structlog.processors.dict_tracebacks,
             structlog.processors.JSONRenderer() if not debug else structlog.dev.ConsoleRenderer(),
         ],

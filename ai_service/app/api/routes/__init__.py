@@ -15,6 +15,7 @@ from app.api.routes import (
     memory,
     calendar,
     notifications,
+    metrics,
 )
 
 api_router = APIRouter()
@@ -31,3 +32,4 @@ api_router.include_router(review.router, prefix="/review", tags=["review"])
 api_router.include_router(memory.router, prefix="/memory", tags=["memory"])
 api_router.include_router(calendar.router, prefix="/calendar", tags=["calendar"])
 api_router.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
+api_router.include_router(metrics.router, prefix="/metrics", tags=["metrics"])

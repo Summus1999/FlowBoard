@@ -12,6 +12,7 @@ from enum import Enum
 
 from app.core.logging import get_logger
 from app.core.exceptions import ToolExecutionException
+from app.security.tool_guard import validate_tool_arguments
 
 logger = get_logger(__name__)
 
@@ -261,6 +262,15 @@ class ToolIntegrationService:
         reminders: List[int] = None,
     ) -> ToolResult:
         """创建日历事件"""
+        validate_tool_arguments(
+            "calendar.create_event",
+            {
+                "title": title,
+                "start_time": start_time.isoformat(),
+                "end_time": end_time.isoformat(),
+            },
+            user_confirmed=True,
+        )
         adapter = self.get_adapter(ToolType.CALENDAR)
         if not adapter:
             raise ToolExecutionException("日历适配器未配置")
@@ -283,6 +293,11 @@ class ToolIntegrationService:
         priority: int = 1,
     ) -> ToolResult:
         """创建待办事项"""
+        validate_tool_arguments(
+            "todo.create",
+            {"title": title},
+            user_confirmed=True,
+        )
         adapter = self.get_adapter(ToolType.TODO)
         if not adapter:
             raise ToolExecutionException("待办适配器未配置")

@@ -16,6 +16,8 @@ from app.services.evaluation_service import (
     get_qa_evaluator,
     EvaluationDataset,
 )
+from app.services.evaluation_pipeline import get_offline_evaluation_pipeline
+from app.services.prompt_version_manager import get_prompt_version_manager
 from app.services.retrieval_service import get_retrieval_service
 
 logger = get_logger(__name__)
@@ -227,6 +229,86 @@ async def run_batch_evaluation(
             }
             for e in examples
         ],
+    }
+
+
+@router.post("/offline/run")
+async def run_offline_evaluation(
+    category: Optional[str] = None,
+    max_examples: int = Query(30, ge=1, le=100),
+    trace_id: str = Depends(get_trace_id),
+    request_id: str = Depends(get_request_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Run offline evaluation pipeline with persisted report."""
+    pipeline = get_offline_evaluation_pipeline()
+    result = await pipeline.run(
+        db=db,
+        category=category,
+        max_examples=max_examples,
+    )
+    return {
+        "trace_id": trace_id,
+        "request_id": request_id,
+        **result,
+    }
+
+
+@router.get("/prompts/{prompt_name}/versions")
+async def list_prompt_versions(
+    prompt_name: str,
+    trace_id: str = Depends(get_trace_id),
+    request_id: str = Depends(get_request_id),
+):
+    manager = get_prompt_version_manager()
+    return {
+        "trace_id": trace_id,
+        "request_id": request_id,
+        "prompt_name": prompt_name,
+        "active_version": manager.get_active_version(prompt_name),
+        "versions": manager.list_versions(prompt_name),
+    }
+
+
+@router.post("/prompts/{prompt_name}/register")
+async def register_prompt_version(
+    prompt_name: str,
+    content: str,
+    version: Optional[str] = None,
+    activate: bool = True,
+    trace_id: str = Depends(get_trace_id),
+    request_id: str = Depends(get_request_id),
+):
+    manager = get_prompt_version_manager()
+    resolved_version = manager.register_prompt(
+        prompt_name=prompt_name,
+        content=content,
+        version=version,
+        activate=activate,
+    )
+    return {
+        "trace_id": trace_id,
+        "request_id": request_id,
+        "prompt_name": prompt_name,
+        "version": resolved_version,
+        "active_version": manager.get_active_version(prompt_name),
+    }
+
+
+@router.post("/prompts/{prompt_name}/activate")
+async def activate_prompt_version(
+    prompt_name: str,
+    version: str,
+    trace_id: str = Depends(get_trace_id),
+    request_id: str = Depends(get_request_id),
+):
+    manager = get_prompt_version_manager()
+    manager.activate_prompt(prompt_name=prompt_name, version=version)
+    return {
+        "trace_id": trace_id,
+        "request_id": request_id,
+        "prompt_name": prompt_name,
+        "active_version": manager.get_active_version(prompt_name),
     }
 
 

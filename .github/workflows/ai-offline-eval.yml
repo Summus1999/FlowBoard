@@ -1,0 +1,31 @@
+name: AI Offline Evaluation
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *"
+
+jobs:
+  offline-eval:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ai_service
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Static compile check
+        run: python -m compileall app
+
+      - name: Run AI governance tests
+        run: pytest tests/test_security_and_governance.py -q

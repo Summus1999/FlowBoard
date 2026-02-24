@@ -91,6 +91,8 @@ class Settings(BaseSettings):
     RAG_TOP_K: int = 8
     RAG_RERANK_TOP_K: int = 5
     RAG_CONFIDENCE_THRESHOLD: float = 0.9
+    RAG_RETRIEVAL_TIMEOUT_MS: int = 1800
+    RAG_DEGRADE_ON_TIMEOUT: bool = True
     
     # 文档目录配置
     DOCS_BASE_PATH: str = "./docs"
@@ -99,6 +101,48 @@ class Settings(BaseSettings):
     # 安全配置
     SECRET_KEY: str = Field(default="change-me-in-production", description="用于签名等")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7天
+    SECURITY_SOURCE_WHITELIST: List[str] = Field(default_factory=list)
+
+    # Idempotency配置
+    IDEMPOTENCY_TTL_SECONDS: int = 24 * 60 * 60
+    IDEMPOTENCY_ENFORCE_POST: bool = True
+    IDEMPOTENCY_EXEMPT_POST_PATHS: List[str] = Field(
+        default_factory=lambda: [
+            "/api/v1/chat/stream",
+            "/api/v1/chat/evaluate-confidence",
+            "/api/v1/chat/evaluate-answer",
+            "/api/v1/chat/rag-query",
+            "/api/v1/rag/search",
+            "/api/v1/eval/retrieval/evaluate",
+            "/api/v1/eval/qa/evaluate",
+            "/api/v1/eval/run-batch",
+            "/api/v1/eval/offline/run",
+        ]
+    )
+
+    # Prompt和评测配置
+    PROMPT_REGISTRY_PATH: str = "data/prompt_versions.json"
+    EVAL_REPORT_DIR: str = "data/eval_reports"
+
+    @property
+    def PROJECT_NAME(self) -> str:
+        return self.APP_NAME
+
+    @property
+    def VERSION(self) -> str:
+        return self.APP_VERSION
+
+    @property
+    def API_V1_STR(self) -> str:
+        return self.API_PREFIX
+
+    @property
+    def HOST(self) -> str:
+        return self.API_HOST
+
+    @property
+    def PORT(self) -> int:
+        return self.API_PORT
     
     def get_database_url(self) -> str:
         """获取数据库连接URL"""

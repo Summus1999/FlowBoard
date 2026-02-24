@@ -14,7 +14,8 @@ from langchain_openai import ChatOpenAI
 
 from app.core.config import settings
 from app.core.logging import get_logger
-from app.core.exceptions import ModelException
+from app.core.exceptions import BudgetExceededException, ModelException
+from app.core.request_context import get_request_context
 
 logger = get_logger(__name__)
 
@@ -129,6 +130,57 @@ class ModelGateway:
             return fallback
         
         raise ModelException("没有可用的模型提供商")
+
+    def _apply_budget_policy(self, model_profile: ModelProfile) -> ModelProfile:
+        """Downgrade profile near budget and block when hard limit exceeded."""
+        monthly_total = self._cost_stats["monthly_total"]
+        budget = settings.MONTHLY_BUDGET_RMB
+        if monthly_total >= budget:
+            raise BudgetExceededException("monthly budget exceeded")
+
+        warn_threshold = budget * settings.COST_WARNING_THRESHOLD
+        if (
+            monthly_total >= warn_threshold
+            and model_profile in {ModelProfile.HIGH_QUALITY, ModelProfile.BALANCED}
+        ):
+            logger.warning(
+                "model_gateway.profile_downgraded",
+                from_profile=model_profile.value,
+                to_profile=ModelProfile.COST_EFFECTIVE.value,
+                monthly_cost=monthly_total,
+                budget=budget,
+            )
+            return ModelProfile.COST_EFFECTIVE
+        return model_profile
+
+    def _build_run_metadata(
+        self,
+        model_profile: ModelProfile,
+        route: Optional[str] = None,
+        session_id: Optional[str] = None,
+        is_replay: bool = False,
+        retry_attempt: int = 0,
+        idempotency_key: Optional[str] = None,
+        user_id: Optional[str] = None,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Build standard run metadata for observability."""
+        ctx = get_request_context()
+        metadata = {
+            "trace_id": getattr(ctx, "trace_id", None),
+            "request_id": getattr(ctx, "request_id", None),
+            "session_id": session_id or getattr(ctx, "session_id", None),
+            "retry_attempt": retry_attempt if retry_attempt else getattr(ctx, "retry_attempt", 0),
+            "is_replay": is_replay if is_replay else getattr(ctx, "is_replay", False),
+            "idempotency_key": idempotency_key or getattr(ctx, "idempotency_key", None),
+            "user_id": user_id or getattr(ctx, "user_id", None),
+            "route": route or getattr(ctx, "route", None),
+            "model_profile": model_profile.value,
+            "component": "model_gateway",
+        }
+        if extra:
+            metadata.update(extra)
+        return metadata
     
     async def generate(
         self,
@@ -138,6 +190,9 @@ class ModelGateway:
         temperature: Optional[float] = None,
         tools: Optional[List[Dict]] = None,
         timeout_ms: Optional[int] = None,
+        route: Optional[str] = None,
+        session_id: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> ModelResponse:
         """
         生成文本响应
@@ -154,11 +209,12 @@ class ModelGateway:
             ModelResponse: 模型响应
         """
         start_time = time.time()
+        effective_profile = self._apply_budget_policy(model_profile)
         selected_provider = self._select_provider(provider)
         client = self._clients[selected_provider]
         
         # 根据profile选择模型
-        model_name = self._get_model_for_profile(model_profile, selected_provider)
+        model_name = self._get_model_for_profile(effective_profile, selected_provider)
         
         try:
             # 构建调用参数
@@ -170,8 +226,21 @@ class ModelGateway:
             if tools:
                 kwargs["tools"] = tools
             
-            # 调用模型
-            response = await client.ainvoke(messages, **kwargs)
+            run_metadata = self._build_run_metadata(
+                model_profile=effective_profile,
+                route=route,
+                session_id=session_id,
+                extra=metadata,
+            )
+            try:
+                response = await client.ainvoke(
+                    messages,
+                    config={"metadata": run_metadata},
+                    **kwargs,
+                )
+            except TypeError:
+                # Backward compatibility for clients not supporting config kwarg.
+                response = await client.ainvoke(messages, **kwargs)
             
             latency_ms = (time.time() - start_time) * 1000
             
@@ -190,6 +259,7 @@ class ModelGateway:
                 "model_gateway.generate_success",
                 provider=selected_provider.value,
                 model=model_name,
+                model_profile=effective_profile.value,
                 latency_ms=latency_ms,
                 token_usage=token_usage,
                 cost=cost,
@@ -219,6 +289,9 @@ class ModelGateway:
         model_profile: ModelProfile = ModelProfile.BALANCED,
         provider: Optional[ModelProvider] = None,
         temperature: Optional[float] = None,
+        route: Optional[str] = None,
+        session_id: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> AsyncIterator[StreamingDelta]:
         """
         流式生成文本响应
@@ -233,12 +306,33 @@ class ModelGateway:
             StreamingDelta: 流式响应片段
         """
         start_time = time.time()
+        effective_profile = self._apply_budget_policy(model_profile)
         selected_provider = self._select_provider(provider)
         client = self._clients[selected_provider]
-        model_name = self._get_model_for_profile(model_profile, selected_provider)
+        model_name = self._get_model_for_profile(effective_profile, selected_provider)
         
         try:
-            async for chunk in client.astream(messages, model=model_name, temperature=temperature):
+            run_metadata = self._build_run_metadata(
+                model_profile=effective_profile,
+                route=route,
+                session_id=session_id,
+                extra=metadata,
+            )
+            try:
+                stream_iter = client.astream(
+                    messages,
+                    model=model_name,
+                    temperature=temperature,
+                    config={"metadata": run_metadata},
+                )
+            except TypeError:
+                stream_iter = client.astream(
+                    messages,
+                    model=model_name,
+                    temperature=temperature,
+                )
+
+            async for chunk in stream_iter:
                 content = chunk.content if hasattr(chunk, 'content') else str(chunk)
                 yield StreamingDelta(content=content, is_finish=False)
             
@@ -370,6 +464,12 @@ class ModelGateway:
         if self._cost_stats["monthly_total"] > settings.MONTHLY_BUDGET_RMB * settings.COST_WARNING_THRESHOLD:
             logger.warning(
                 "model_gateway.budget_warning",
+                monthly_cost=self._cost_stats["monthly_total"],
+                budget=settings.MONTHLY_BUDGET_RMB,
+            )
+        if self._cost_stats["monthly_total"] >= settings.MONTHLY_BUDGET_RMB:
+            logger.warning(
+                "model_gateway.budget_exhausted",
                 monthly_cost=self._cost_stats["monthly_total"],
                 budget=settings.MONTHLY_BUDGET_RMB,
             )

@@ -174,9 +174,9 @@ class RetrievalEvaluator:
     
     async def generate_evaluation_report(
         self,
+        db: AsyncSession,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
-        db: AsyncSession,
     ) -> Dict[str, Any]:
         """生成评估报告"""
         # 查询检索日志

@@ -8,7 +8,7 @@ from typing import Optional
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
-from sqlalchemy import select
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
@@ -202,7 +202,7 @@ async def confirm_plan(
         
         return PlanConfirmResponse(
             trace_id=trace_id,
-            request_id=request.request_id,
+            request_id=request_id,
             plan_id=plan_id,
             status=PlanStatus.CANCELLED.value,
             executed=False,

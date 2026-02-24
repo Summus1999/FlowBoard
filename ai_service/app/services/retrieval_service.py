@@ -3,15 +3,18 @@
 混合检索：稀疏检索（BM25）+ 稠密检索（向量）
 """
 
+import asyncio
 import time
 from dataclasses import dataclass
 from typing import List, Optional, Dict, Any, Tuple
+from uuid import uuid4
 
 from sqlalchemy import select, text, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.postgresql import array
 
 from app.core.config import settings
+from app.core.exceptions import RetrievalTimeoutException
 from app.core.logging import get_logger
 from app.models.rag import RAGChunk, RAGIndexVersion, RetrievalLog, RAGDocVersion, RAGDocument
 from app.services.model_gateway import get_model_gateway
@@ -75,50 +78,58 @@ class RetrievalService:
         logger.info("retrieval.start", query=query[:50], top_k=top_k)
         
         try:
-            # 1. 查询归一化
-            normalized_query = self._normalize_query(query)
-            
-            # 2. 获取当前激活的索引版本
-            index_version = await self._get_active_index_version(db)
-            
-            # 3. 并行执行稀疏和稠密检索
-            sparse_results = await self._sparse_search(normalized_query, top_k * 2, db)
-            dense_results = await self._dense_search(normalized_query, top_k * 2, db)
-            
-            # 4. RRF融合
-            fused_results = self._rrf_fusion(sparse_results, dense_results, k=60)
-            
-            # 5. 取Top-K进行重排序
-            candidates = fused_results[:self.rerank_top_k]
-            
-            # 6. 重排序
-            reranked = await self._rerank(query, candidates)
-            
-            # 7. 格式化结果
-            results = await self._format_results(reranked[:top_k], db)
-            
-            # 8. 记录检索日志
-            latency_ms = (time.time() - start_time) * 1000
-            await self._log_retrieval(
-                query=query,
-                normalized_query=normalized_query,
-                results=results,
-                latency_ms=latency_ms,
-                session_id=session_id,
-                trace_id=trace_id,
-                index_version_id=index_version.id if index_version else None,
-                db=db,
-            )
-            
-            logger.info(
-                "retrieval.completed",
+            timeout_sec = max(settings.RAG_RETRIEVAL_TIMEOUT_MS / 1000.0, 0.1)
+            async with asyncio.timeout(timeout_sec):
+                # 1. 查询归一化
+                normalized_query = self._normalize_query(query)
+
+                # 2. 获取当前激活的索引版本
+                index_version = await self._get_active_index_version(db)
+
+                # 3. 并行执行稀疏和稠密检索
+                sparse_results = await self._sparse_search(normalized_query, top_k * 2, db)
+                dense_results = await self._dense_search(normalized_query, top_k * 2, db)
+
+                # 4. RRF融合
+                fused_results = self._rrf_fusion(sparse_results, dense_results, k=60)
+
+                # 5. 取Top-K进行重排序
+                candidates = fused_results[: self.rerank_top_k]
+
+                # 6. 重排序
+                reranked = await self._rerank(query, candidates)
+
+                # 7. 格式化结果
+                results = await self._format_results(reranked[:top_k], db)
+
+                # 8. 记录检索日志
+                latency_ms = (time.time() - start_time) * 1000
+                await self._log_retrieval(
+                    query=query,
+                    normalized_query=normalized_query,
+                    results=results,
+                    latency_ms=latency_ms,
+                    session_id=session_id,
+                    trace_id=trace_id,
+                    index_version_id=index_version.id if index_version else None,
+                    db=db,
+                )
+
+                logger.info(
+                    "retrieval.completed",
+                    query=query[:50],
+                    result_count=len(results),
+                    latency_ms=round(latency_ms, 2),
+                )
+
+                return results
+        except TimeoutError as exc:
+            logger.warning(
+                "retrieval.timeout",
                 query=query[:50],
-                result_count=len(results),
-                latency_ms=round(latency_ms, 2),
+                timeout_ms=settings.RAG_RETRIEVAL_TIMEOUT_MS,
             )
-            
-            return results
-            
+            raise RetrievalTimeoutException("retrieval timeout") from exc
         except Exception as e:
             logger.error("retrieval.failed", query=query[:50], error=str(e))
             raise

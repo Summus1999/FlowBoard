@@ -27,6 +27,8 @@ from app.models.rag import RAGDocument, RAGDocVersion, RAGChunk, RAGIndexVersion
 from app.services.rag_worker import get_rag_worker
 from app.services.indexing_service import get_indexing_service, get_version_manager
 from app.services.retrieval_service import get_retrieval_service
+from app.security.input_filter import validate_user_input
+from app.security.retrieval_isolation import enforce_source_whitelist
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -52,6 +54,7 @@ async def add_source(
         
         if not os.path.isdir(request.path):
             raise HTTPException(status_code=400, detail="路径不是目录")
+        enforce_source_whitelist(request.path)
         
         # 创建文档记录
         source_id = str(uuid4())
@@ -100,7 +103,7 @@ async def add_source(
         raise HTTPException(status_code=400, detail="不支持的source_type")
 
 
-@router.post("/index-jobs", response_model=RAGIndexIndexResponse)
+@router.post("/index-jobs", response_model=RAGIndexResponse)
 async def create_index_job(
     request: RAGIndexRequest,
     background_tasks: BackgroundTasks,
@@ -302,6 +305,7 @@ async def search_documents(
     
     混合检索：稀疏检索 + 稠密检索 + RRF融合
     """
+    validate_user_input(query)
     retrieval_service = get_retrieval_service()
     
     results = await retrieval_service.retrieve(
