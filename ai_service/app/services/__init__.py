@@ -94,6 +94,28 @@ from app.services.tool_integration import (
     get_tool_service,
     get_scheduler_agent,
 )
+from app.services.decomposer_service import (
+    DecomposerAgent,
+    ResumableTaskManager,
+    TaskBatchService,
+    TaskStateMachine,
+    TaskComplexity,
+    SubTask,
+    DecomposedTask,
+    TaskCheckpoint,
+    get_decomposer_agent,
+    get_resumable_task_manager,
+    get_task_batch_service,
+)
+from app.services.task_visualization import (
+    TaskVisualizationService,
+    TaskViewType,
+    GanttTask,
+    KanbanColumn,
+    DependencyNode,
+    DependencyEdge,
+    get_task_visualization_service,
+)
 
 __all__ = [
     "ModelGateway",
@@ -165,4 +187,22 @@ __all__ = [
     "ToolAction",
     "get_tool_service",
     "get_scheduler_agent",
+    "DecomposerAgent",
+    "ResumableTaskManager",
+    "TaskBatchService",
+    "TaskStateMachine",
+    "TaskComplexity",
+    "SubTask",
+    "DecomposedTask",
+    "TaskCheckpoint",
+    "get_decomposer_agent",
+    "get_resumable_task_manager",
+    "get_task_batch_service",
+    "TaskVisualizationService",
+    "TaskViewType",
+    "GanttTask",
+    "KanbanColumn",
+    "DependencyNode",
+    "DependencyEdge",
+    "get_task_visualization_service",
 ]

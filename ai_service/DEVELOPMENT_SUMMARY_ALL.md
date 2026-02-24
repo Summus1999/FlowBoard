@@ -1,12 +1,12 @@
-# FlowBoard AI Service - 开发总结（第1-4期）
+# FlowBoard AI Service - 开发总结（第1-6期）
 
 ## 项目概述
 
-本文档汇总了 FlowBoard AI Service 第1-4期的完整开发内容，包括基础底座、RAG接入、检索与引用完善、Agent规划与确认四大阶段。
+本文档汇总了 FlowBoard AI Service 第1-6期的完整开发内容，涵盖基础底座、RAG接入、检索与引用完善、Agent规划与确认、任务拆解与恢复、复盘与记忆体系六大阶段。
 
 **开发周期**: 2026-02-24  
-**当前版本**: v0.4.0  
-**总代码量**: ~12000行
+**当前版本**: v0.6.0  
+**总代码量**: ~17500行
 
 ---
 
@@ -99,26 +99,13 @@ PLAN -> USER_CONFIRM -> EXECUTION -> MEMORY_WRITE -> END
 
 **文件**: `app/models/`
 
-核心模型：
-- `Session/Message`: 会话和消息
-- `ShortTermMemory/LongTermMemory`: 三层记忆体系
-- `Plan/PlanVersion/Task`: 计划版本管理
-- `RAGDocument/RAGChunk/RAGIndexVersion`: RAG数据模型
-
-### 1.6 API端点（第1期）
-
-```
-POST   /chat/stream              # 流式聊天
-POST   /chat/evaluate-confidence # 置信度评估
-POST   /sessions                 # 创建会话
-GET    /sessions/{id}            # 获取会话
-POST   /plans/propose            # 生成计划提案
-POST   /plans/{id}/confirm       # 确认/拒绝计划
-POST   /plans/{id}/rollback      # 回滚计划版本
-POST   /rag/sources              # 添加文档源
-POST   /rag/index-jobs           # 触发索引任务
-GET    /health                   # 健康检查
-```
+核心实体：
+- **Session**: 用户会话
+- **Message**: 对话消息
+- **Plan**: 学习计划
+- **Task**: 学习任务
+- **RagDocument/Chunk**: RAG文档和分块
+- **Memory**: 短期/长期记忆
 
 ---
 
@@ -129,74 +116,24 @@ GET    /health                   # 健康检查
 **文件**: `app/services/document_parser.py`
 
 支持格式：
-| 格式 | 库 | 特性 |
-|------|-----|------|
-| PDF | pypdf | 元数据提取、分页 |
-| DOCX | python-docx | 段落、表格提取 |
-| TXT/MD | 原生 | 编码自动检测、FrontMatter解析 |
+| 格式 | 状态 | 说明 |
+|------|------|------|
+| PDF | ✅ | PyPDF提取文本 |
+| DOCX | ✅ | python-docx提取 |
+| TXT | ✅ | 自动编码检测 |
+| MD | ✅ | Markdown保留格式 |
 
-编码检测：
-```python
-# 自动检测GBK/GB18030/UTF-8等
-encoding = detector.detect(raw_data)
-```
-
-### 2.2 文本处理服务
+### 2.2 文本处理
 
 **文件**: `app/services/text_processor.py`
 
 处理流程：
 ```
 原始文本
-    ↓
-TextCleaner 清洗
-    - 去除页眉页脚
-    - 去除页码
-    - 规范化空白
-    - 标准化标点
-    ↓
-TextChunker 分块
-    - 按段落边界
-    - 章节感知
-    - 滑动窗口重叠
-    ↓
-QualityFilter 过滤
-    - 长度检查
-    - 有效字符比例
-    - 重复率检测
-    ↓
-高质量文本块
-```
-
-### 2.3 目录监控服务
-
-**文件**: `app/services/directory_watcher.py`
-
-特性：
-- 文件快照：(path, size, mtime, hash)
-- 增量同步检测
-- 变更事件队列
-- 多目录管理
-
-```python
-watcher = DirectoryWatcher(watch_path="/docs")
-watcher.add_callback(on_file_change)
-await watcher.start()
-```
-
-### 2.4 索引服务
-
-**文件**: `app/services/indexing_service.py`
-
-文档处理流水线：
-```
-文档文件
-    ↓ 解析
-ParsedDocument
     ↓ 清洗
 清洗后文本
-    ↓ 分块
-TextChunk列表
+    ↓ 分块 (Semantic/Sentence/Fixed)
+文本块
     ↓ 向量化
 带Embedding的Chunk
     ↓ 存储
@@ -208,7 +145,7 @@ PostgreSQL/pgvector
 - 原子切换激活版本
 - 自动清理旧版本（保留最近5个）
 
-### 2.5 检索服务（基础版）
+### 2.3 检索服务（基础版）
 
 **文件**: `app/services/retrieval_service.py`
 
@@ -226,7 +163,7 @@ SELECT 1 - (embedding <=> query_embedding)
 ORDER BY embedding <=> query_embedding
 ```
 
-### 2.6 RAG工作器
+### 2.4 RAG工作器
 
 **文件**: `app/services/rag_worker.py`
 
@@ -341,18 +278,239 @@ ALTER TEXT SEARCH CONFIGURATION chinese ADD MAPPING FOR n,v,a,i,e,l WITH simple;
 | Completeness | 完整性 | > 0.7 |
 | Conciseness | 简洁性 | > 0.7 |
 
-### 3.6 新增API端点（第3期）
+---
 
+## 第4期：Agent规划与确认
+
+### 4.1 Planner Agent
+
+**文件**: `app/services/planner_service.py`
+
+功能：
+- **目标分析**: LLM分析学习目标，提取技能、难度、前置知识
+- **模板库**: 后端/前端/数据科学三大模板
+- **里程碑生成**: 根据模板或自定义生成
+- **任务分解**: 自动拆解具体学习任务
+- **时间计算**: 总时长和每周投入计算
+- **风险评估**: 识别潜在风险
+
+计划提案结构：
 ```
-POST   /chat/rag-query            # 完整RAG查询（非流式）
-POST   /chat/evaluate-answer      # 评估回答质量
-GET    /eval/retrieval/metrics    # 获取检索指标
-POST   /eval/retrieval/evaluate   # 评估单次检索
-POST   /eval/qa/evaluate         # 评估问答质量
-GET    /eval/dataset             # 获取评测数据集
-POST   /eval/dataset/add         # 添加评测样例
-POST   /eval/run-batch           # 批量评测
+PlanProposal
+├── title: 计划标题
+├── overview: 目标概述
+├── goals: [LearningGoal]
+├── milestones: [Milestone]
+├── tasks: [LearningTask]
+├── total_duration_days
+├── total_hours
+├── weekly_schedule
+├── risk_assessment
+└── alternatives
 ```
+
+### 4.2 确认服务
+
+**文件**: `app/services/plan_confirmation.py`
+
+人类在环确认机制：
+- 30分钟犹豫期（可撤销）
+- 10分钟紧急窗口（限制5次/天）
+- 5分钟立即撤销（仅限敏感操作）
+
+确认流程：
+```
+生成提案 -> 展示给用户 -> 等待确认 -> 执行/取消
+```
+
+### 4.3 版本管理
+
+**文件**: `app/services/plan_version_service.py`
+
+功能：
+- 多版本存储
+- 版本对比（diff）
+- 回滚到历史版本
+- 保留最近10个版本
+
+### 4.4 工具联动
+
+**文件**: `app/services/calendar_service.py`, `app/services/todo_service.py`
+
+日历集成：
+- 同步到Google/Outlook/Apple日历
+- 学习时间块安排
+
+待办集成：
+- 生成待办清单
+- 支持多平台同步
+
+---
+
+## 第5期：任务拆解与恢复
+
+### 5.1 增强型Decomposer Agent
+
+**文件**: `app/services/decomposer_service.py`
+
+复杂度分析：
+| 复杂度 | 预估时长 | 子任务数 | 策略 |
+|--------|----------|----------|------|
+| Simple | ≤2h | 1 | 直接执行 |
+| Medium | 2-16h | ≤10 | 顺序分解 |
+| Complex | 16-40h | ≤20 | 并行分解 |
+
+功能：
+- **复杂度分析**: LLM评估任务难度、技能要求、不确定性
+- **子任务生成**: 按复杂度策略生成子任务
+- **依赖分析**: 识别子任务间的依赖关系
+- **时间估算**: 基于复杂度估算各子任务时长
+- **批量处理**: 支持批量任务分解，带二次确认
+
+### 5.2 任务状态机
+
+**文件**: `app/services/task_state_machine.py`
+
+状态流转：
+```
+pending → in_progress → completed
+   ↓          ↓           ↓
+cancelled  blocked     failed
+   └──── recovery_check ──┘
+```
+
+恢复机制：
+- **Checkpoint**: 任务执行检查点保存
+- **Resume**: 从检查点恢复执行
+- **Retry**: 失败任务重试策略
+
+### 5.3 批量操作与确认
+
+**文件**: `app/services/batch_service.py`
+
+安全措施：
+- 数量阈值检查（默认5个）
+- 敏感操作二次确认
+- 操作预览和摘要
+
+### 5.4 任务可视化
+
+**文件**: `app/services/visualization_service.py`
+
+支持视图：
+- **甘特图**: 时间线视图
+- **看板**: Kanban状态视图
+- **依赖图**: 任务依赖关系图
+
+---
+
+## 第6期：复盘与记忆体系
+
+### 6.1 面试录音转写服务
+
+**文件**: `app/services/audio_transcription.py`
+
+功能：
+- **格式支持**: mp3, wav, m4a, flac
+- **语音转写**: Whisper模型转写
+- **说话人分离**: 支持多说话人识别
+- **复盘生成**: 自动提取Q&A、编程题、沟通表现
+
+输出结构：
+```python
+InterviewReview
+├── qa_analysis: Q&A表现分析
+├── coding_analysis: 编程题表现
+├── communication: 沟通能力评估
+└── suggestions: 改进建议
+```
+
+### 6.2 进度复盘Agent
+
+**文件**: `app/services/review_agent.py`
+
+复盘周期：
+- **DAILY**: 日复盘
+- **WEEKLY**: 周复盘（默认）
+- **MONTHLY**: 月复盘
+- **MILESTONE**: 里程碑复盘
+
+分析维度：
+| 维度 | 说明 |
+|------|------|
+| 完成率 | 任务完成情况 |
+| 学习时长 | 累计学习时间 |
+| 连续天数 | 学习连续天数 |
+| 一致性 | 学习节奏稳定性 |
+| 时间分布 | 各类别时间占比 |
+| 生产力 | 高效时段分析 |
+
+复盘内容：
+- 数据摘要和学习概况
+- 成就识别
+- 挑战和障碍分析
+- 洞察发现
+- 改进建议
+- 下周目标
+
+### 6.3 三层记忆体系
+
+**文件**: `app/services/memory_service.py`
+
+架构：
+```
+┌─────────────────────────────────────────┐
+│          UnifiedMemoryService           │
+├──────────────┬──────────────┬───────────┤
+│ 短期记忆      │  长期记忆    │ 任务记忆   │
+│ ShortTerm    │  LongTerm   │  Task     │
+├──────────────┼──────────────┼───────────┤
+│ 会话级       │  用户级      │ 执行级    │
+│ 最近N轮      │  偏好/画像   │ 检查点    │
+│ TTL: 24h     │  持久化      │ 历史日志  │
+└──────────────┴──────────────┴───────────┘
+```
+
+**短期记忆 (ShortTerm)**:
+- 会话级别的对话摘要
+- 关键约束条件提取
+- TTL过期自动清理
+
+**长期记忆 (LongTerm)**:
+- 学习目标偏好
+- 语言风格偏好
+- 学习节奏习惯
+- 领域兴趣画像
+- 异步从短期记忆提炼
+
+**任务记忆 (TaskMemory)**:
+- 任务执行历史
+- Checkpoint状态
+- 遇到的问题和解决方案
+
+### 6.4 日历服务
+
+**文件**: `app/services/calendar_service.py`
+
+功能：
+- 日历事件CRUD
+- 外部日历同步 (Google/Outlook/Apple)
+- 时间冲突检测
+- 可用时段查询
+
+### 6.5 通知服务
+
+**文件**: `app/services/notification_service.py`
+
+通知类型：
+- TASK_REMINDER: 任务提醒
+- PLAN_UPDATE: 计划更新
+- REVIEW_READY: 复盘就绪
+- CONFIRMATION_REQUIRED: 需要确认
+- SYSTEM: 系统通知
+- ACHIEVEMENT: 成就通知
+
+渠道：应用内、邮件、推送、短信
 
 ---
 
@@ -369,7 +527,13 @@ ai_service/
 │   │       ├── chat.py            # 聊天/RAG接口
 │   │       ├── session.py         # 会话管理
 │   │       ├── plan.py            # 学习计划
+│   │       ├── task.py            # 任务管理
 │   │       ├── rag.py             # 文档索引
+│   │       ├── decomposer.py      # 任务分解
+│   │       ├── review.py          # 进度复盘
+│   │       ├── memory.py          # 记忆管理
+│   │       ├── calendar.py        # 日历同步
+│   │       ├── notifications.py   # 通知服务
 │   │       ├── evaluation.py      # 评估接口
 │   │       └── health.py          # 健康检查
 │   ├── core/
@@ -401,6 +565,15 @@ ai_service/
 │   │   ├── rag_chain.py           # LCEL检索链
 │   │   ├── rag_worker.py          # RAG工作器
 │   │   ├── session_service.py     # 会话服务
+│   │   ├── planner_service.py     # 规划服务
+│   │   ├── plan_confirmation.py   # 计划确认
+│   │   ├── decomposer_service.py  # 任务分解
+│   │   ├── task_state_machine.py  # 任务状态机
+│   │   ├── audio_transcription.py # 音频转写
+│   │   ├── review_agent.py        # 复盘Agent
+│   │   ├── memory_service.py      # 记忆服务
+│   │   ├── calendar_service.py    # 日历服务
+│   │   ├── notification_service.py # 通知服务
 │   │   └── evaluation_service.py  # 评估服务
 │   └── utils/
 │       ├── text.py                # 文本工具
@@ -497,83 +670,164 @@ curl -X POST http://localhost:8000/api/v1/chat/rag-query \
   -H "Content-Type: application/json" \
   -d '{
     "query": "Python基础语法",
-    "top_k": 5,
-    "include_citations": true
+    "session_id": "xxx",
+    "top_k": 5
   }'
 ```
 
-### 添加文档源
+### 生成学习计划
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/rag/sources \
+curl -X POST http://localhost:8000/api/v1/planning/generate \
   -H "Content-Type: application/json" \
   -d '{
-    "source_type": "local_dir",
-    "path": "/path/to/docs",
-    "auto_sync": true
+    "user_id": "user_001",
+    "goal": "学习Python后端开发",
+    "duration_weeks": 12
   }'
 ```
 
-### 评估检索
+### 生成进度复盘
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/eval/retrieval/evaluate \
-  -d '{"query": "Python基础语法"}'
+curl -X POST http://localhost:8000/api/v1/review/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "user_001",
+    "plan_id": "plan_001",
+    "period": "weekly"
+  }'
+```
+
+### 获取记忆上下文
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/memory/context?user_id=user_001&session_id=session_001&query=Python学习"
 ```
 
 ---
 
-## 技术亮点
+## 功能完成度总览
 
-1. **模块化设计**: 各服务可独立使用，便于测试和维护
-2. **LCEL风格**: 链式调用清晰，支持流式处理
-3. **多重回退**: 检索失败自动降级，保证可用性
-4. **完整评估**: 检索和问答质量可量化评估
-5. **中文优化**: 支持中文全文检索
-
----
-
-## 各期验收对照
-
-| 规划功能 | 第1期 | 第2期 | 第3期 | 第4期 |
-|----------|-------|-------|-------|-------|
-| FastAPI骨架 | ✅ | - | - | - |
-| LangGraph编排 | ✅ | - | - | - |
-| Model Gateway | ✅ | - | - | - |
-| PostgreSQL+pgvector | ✅ | - | - | - |
-| 会话API | ✅ | - | - | - |
-| 文档解析 | - | ✅ | - | - |
-| 文本清洗分块 | - | ✅ | - | - |
-| 增量同步 | - | ✅ | - | - |
-| 索引版本管理 | - | ✅ | - | - |
-| 混合检索 | - | ✅ | ✅ | - |
-| LCEL检索链 | - | - | ✅ | - |
-| Rerank | - | - | ✅ | - |
-| 可解释引用 | - | - | ✅ | - |
-| 中文检索 | - | - | ✅ | - |
-| 质量评估 | - | - | ✅ | - |
-| Planner Agent | - | - | - | ✅ |
-| 计划确认流程 | - | - | - | ✅ |
-| 版本回滚 | - | - | - | ✅ |
-| 工具联动 | - | - | - | ✅ |
-
----
-
-## 后续规划
-
-### 第5期：任务拆解与恢复
-- Decomposer Agent增强
-- 可恢复任务状态机
-- 删除/批量修改二次确认
-
-### 第6期：复盘与记忆体系
-- 面试录音转写
-- 进度复盘Agent
-- 三层记忆体系完善
+| 功能 | 第1期 | 第2期 | 第3期 | 第4期 | 第5期 | 第6期 |
+|------|-------|-------|-------|-------|-------|-------|
+| FastAPI基础 | ✅ | - | - | - | - | - |
+| Model Gateway | ✅ | - | - | - | - | - |
+| LangGraph工作流 | ✅ | - | - | - | - | - |
+| 数据库模型 | ✅ | - | - | - | - | - |
+| 文档解析 | - | ✅ | - | - | - | - |
+| 文本处理 | - | ✅ | - | - | - | - |
+| 目录监控 | - | ✅ | - | - | - | - |
+| 基础检索 | - | ✅ | - | - | - | - |
+| LCEL检索链 | - | - | ✅ | - | - | - |
+| Rerank | - | - | ✅ | - | - | - |
+| 可解释引用 | - | - | ✅ | - | - | - |
+| 中文检索 | - | - | ✅ | - | - | - |
+| 质量评估 | - | - | ✅ | - | - | - |
+| Planner Agent | - | - | - | ✅ | - | - |
+| 计划确认流程 | - | - | - | ✅ | - | - |
+| 版本回滚 | - | - | - | ✅ | - | - |
+| 工具联动 | - | - | - | ✅ | - | - |
+| Decomposer Agent | - | - | - | - | ✅ | - |
+| 任务状态机 | - | - | - | - | ✅ | - |
+| 任务拆解 | - | - | - | - | ✅ | - |
+| 批量操作确认 | - | - | - | - | ✅ | - |
+| 任务可视化 | - | - | - | - | ✅ | - |
+| Review Agent | - | - | - | - | - | ✅ |
+| 音频转写 | - | - | - | - | - | ✅ |
+| 三层记忆体系 | - | - | - | - | - | ✅ |
+| 日历同步 | - | - | - | - | - | ✅ |
+| 通知服务 | - | - | - | - | - | ✅ |
 
 ---
 
 ## 附录
+
+### 完整API端点列表
+
+```
+# Health
+GET    /health                          # 健康检查
+GET    /ready                           # 就绪检查
+GET    /metrics                         # 服务指标
+
+# Sessions
+POST   /api/v1/sessions                # 创建会话
+GET    /api/v1/sessions/{id}           # 获取会话
+GET    /api/v1/sessions/{id}/messages  # 获取消息列表
+DELETE /api/v1/sessions/{id}           # 删除会话
+
+# Chat
+POST   /api/v1/chat/stream             # 流式聊天
+POST   /api/v1/chat/rag-query          # RAG查询
+POST   /api/v1/chat/evaluate-answer    # 评估回答
+
+# RAG
+POST   /api/v1/rag/index               # 索引文档
+DELETE /api/v1/rag/index/{doc_id}      # 删除文档
+POST   /api/v1/rag/reindex             # 重新索引
+POST   /api/v1/rag/search              # 语义搜索
+POST   /api/v1/rag/hybrid-search       # 混合搜索
+
+# Planning
+POST   /api/v1/planning/generate       # 生成计划
+POST   /api/v1/planning/confirm        # 确认计划
+POST   /api/v1/planning/reject         # 拒绝计划
+POST   /api/v1/planning/{id}/rollback  # 版本回滚
+POST   /api/v1/planning/{id}/calendar-sync  # 日历同步
+
+# Tasks
+GET    /api/v1/tasks                   # 任务列表
+POST   /api/v1/tasks                   # 创建任务
+GET    /api/v1/tasks/{id}              # 任务详情
+PUT    /api/v1/tasks/{id}              # 更新任务
+DELETE /api/v1/tasks/{id}              # 删除任务
+POST   /api/v1/tasks/{id}/decompose    # 任务分解
+POST   /api/v1/tasks/{id}/checkpoint   # 保存检查点
+POST   /api/v1/tasks/{id}/resume       # 恢复任务
+
+# Decomposer
+POST   /api/v1/decomposer/analyze      # 复杂度分析
+POST   /api/v1/decomposer/decompose    # 分解任务
+POST   /api/v1/decomposer/batch        # 批量分解
+POST   /api/v1/decomposer/visualize    # 可视化
+GET    /api/v1/decomposer/strategies   # 分解策略
+
+# Review
+POST   /api/v1/review/generate         # 生成复盘
+GET    /api/v1/review/history          # 复盘历史
+GET    /api/v1/review/should-review    # 检查复盘
+GET    /api/v1/review/metrics          # 进度指标
+
+# Memory
+GET    /api/v1/memory/context          # 记忆上下文
+GET    /api/v1/memory/short-term/{id}  # 短期记忆
+GET    /api/v1/memory/long-term/{id}   # 长期记忆
+GET    /api/v1/memory/user-profile/{id} # 用户画像
+POST   /api/v1/memory/clear-expired    # 清理过期
+
+# Calendar
+GET    /api/v1/calendar/events         # 获取事件
+POST   /api/v1/calendar/events         # 创建事件
+GET    /api/v1/calendar/sync-status    # 同步状态
+POST   /api/v1/calendar/sync           # 同步日历
+GET    /api/v1/calendar/availability   # 可用时段
+
+# Notifications
+GET    /api/v1/notifications/list      # 通知列表
+POST   /api/v1/notifications/mark-read # 标记已读
+POST   /api/v1/notifications/mark-all-read # 全部已读
+GET    /api/v1/notifications/unread-count # 未读数量
+POST   /api/v1/notifications/send      # 发送通知
+
+# Evaluation
+GET    /api/v1/eval/retrieval/metrics  # 检索指标
+POST   /api/v1/eval/retrieval/evaluate # 评估检索
+POST   /api/v1/eval/qa/evaluate        # 评估问答
+GET    /api/v1/eval/dataset            # 评测数据集
+POST   /api/v1/eval/dataset/add        # 添加样例
+POST   /api/v1/eval/run-batch          # 批量评测
+```
 
 ### 依赖清单
 
@@ -595,9 +849,17 @@ pypdf==5.1.0
 python-docx==1.1.0
 chardet==5.2.0
 
+# AI/ML
+openai==1.52.0
+ dashscope==1.20.0  # 阿里云灵积模型服务
+
 # 其他
 httpx==0.27.0
 structlog==24.4.0
+python-multipart==0.0.12
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+alembic==1.14.0
 ```
 
 ### 数据库配置
@@ -609,99 +871,37 @@ CREATE EXTENSION zhparser;  -- 可选，中文检索
 
 -- 向量索引
 CREATE INDEX ON rag_chunks USING hnsw (embedding vector_cosine_ops);
+
+-- 表统计更新
+ANALYZE rag_chunks;
 ```
 
----
-
-**文档版本**: v1.1  
-**最后更新**: 2026-02-24  
-**项目状态**: 第1-4期已完成，等待第5期开发
-
-
----
-
-## 第4期：Agent规划与确认
-
-### 4.1 Planner Agent
-
-**文件**: `app/services/planner_service.py`
-
-功能：
-- **目标分析**: LLM分析学习目标，提取技能、难度、前置知识
-- **模板库**: 后端/前端/数据科学三大模板
-- **里程碑生成**: 根据模板或自定义生成
-- **任务分解**: 自动拆解具体学习任务
-- **时间计算**: 总时长和每周投入计算
-- **风险评估**: 识别潜在风险
-
-计划提案结构：
-```
-PlanProposal
-├── title: 计划标题
-├── overview: 目标概述
-├── goals: [LearningGoal]
-├── milestones: [Milestone]
-├── tasks: [LearningTask]
-├── total_duration_days
-├── total_hours
-├── weekly_schedule
-├── risk_assessment
-└── alternatives
-```
-
-### 4.2 确认服务
-
-**文件**: `app/services/plan_confirmation.py`
-
-人类在环确认机制：
-
-| 确认类型 | 场景 | 撤销窗口 |
-|---------|------|---------|
-| PLAN_CREATION | 创建学习计划 | 30分钟 |
-| PLAN_UPDATE | 更新计划 | 30分钟 |
-| BATCH_TASK_UPDATE | 批量修改任务 | 10分钟 |
-| TASK_DELETE | 删除任务 | 5分钟 |
-
-### 4.3 版本管理
-
-**文件**: `app/services/plan_version_manager.py`
-
-功能：
-- 版本历史追踪
-- 版本对比（新增/删除/修改）
-- 版本回滚
-- 自动清理旧版本
-
-### 4.4 工具集成
-
-**文件**: `app/services/tool_integration.py`
-
-集成工具：
-- Calendar: 创建学习提醒和里程碑截止
-- Todo: 创建学习任务待办
-- Scheduler Agent: 批量执行工具调用
-
-### 4.5 API端点（第4期新增）
-
-```
-GET    /plans/{id}/versions              # 版本历史
-POST   /plans/{id}/rollback              # 版本回滚
-POST   /plans/{id}/versions/{no}/compare # 版本对比
-GET    /plans                            # 计划列表
-```
-
-### 4.6 使用示例
+### 环境变量配置
 
 ```bash
-# 创建学习计划
-curl -X POST http://localhost:8000/api/v1/plans/propose \
-  -d '{"goal": "三个月掌握Python后端", "constraints": ["每周10小时"]}'
+# API Keys
+QWEN_API_KEY=your_qwen_api_key
+KIMI_API_KEY=your_kimi_api_key
 
-# 确认执行
-curl -X POST http://localhost:8000/api/v1/plans/{id}/confirm \
-  -d '{"confirmation_id": "xxx", "confirm": true}'
+# Database
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/flowboard_ai
+REDIS_URL=redis://localhost:6379/0
 
-# 版本回滚
-curl -X POST http://localhost:8000/api/v1/plans/{id}/rollback \
-  -d '{"target_version": 3, "reason": "当前版本过于激进"}'
+# LangSmith (可选)
+LANGCHAIN_TRACING_V2=true
+LANGCHAIN_ENDPOINT=https://api.smith.langchain.com
+LANGCHAIN_API_KEY=your_langsmith_key
+LANGCHAIN_PROJECT=flowboard-ai
+
+# Budget
+MONTHLY_BUDGET_RMB=150
+
+# Security
+SECRET_KEY=your_secret_key_for_jwt
 ```
+
+---
+
+**文档版本**: v1.3 
+**最后更新**: 2026-02-24  
+**项目状态**: 第1-6期已完成 ✅
