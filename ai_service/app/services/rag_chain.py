@@ -17,8 +17,13 @@ from app.core.config import settings
 from app.core.logging import get_logger
 from app.services.retrieval_service import get_retrieval_service, RetrievalResult
 from app.services.model_gateway import get_model_gateway, ModelProfile
+from app.services.prompt_version_manager import get_prompt_version_manager
+from app.security.output_auditor import audit_output
 
 logger = get_logger(__name__)
+LOW_CONFIDENCE_MESSAGE = (
+    "当前答案置信度低于 90%，建议你点击引用核验关键结论，必要时让我继续补充检索。"
+)
 
 
 @dataclass
@@ -234,6 +239,7 @@ class AnswerGenerationRunnable(Runnable[RAGContext, RAGResponse]):
     def __init__(self, stream: bool = False):
         self.stream = stream
         self.model_gateway = get_model_gateway()
+        self.prompt_manager = get_prompt_version_manager()
     
     def invoke(self, input: RAGContext, config: Optional[RunnableConfig] = None) -> RAGResponse:
         raise NotImplementedError("请使用ainvoke")
@@ -243,7 +249,8 @@ class AnswerGenerationRunnable(Runnable[RAGContext, RAGResponse]):
         logger.info("rag_chain.generation_start")
         
         # 构建prompt
-        system_prompt = RAG_SYSTEM_TEMPLATE.format(context=input.context_text)
+        template = self.prompt_manager.get_prompt("rag_system", RAG_SYSTEM_TEMPLATE)
+        system_prompt = template.format(context=input.context_text)
         
         messages = [
             SystemMessage(content=system_prompt),
@@ -261,6 +268,11 @@ class AnswerGenerationRunnable(Runnable[RAGContext, RAGResponse]):
             
             # 确定风险等级
             risk_level, risk_message = self._assess_risk(input.confidence, answer)
+            audit_result = audit_output(answer)
+            if audit_result.blocked:
+                risk_level = "high"
+                risk_message = "输出包含高风险信息，已触发安全审查。"
+                answer = "抱歉，当前内容触发了安全策略，请调整问题后重试。"
             
             logger.info(
                 "rag_chain.generation_complete",
@@ -277,6 +289,8 @@ class AnswerGenerationRunnable(Runnable[RAGContext, RAGResponse]):
                 metadata={
                     "model": response.model,
                     "latency_ms": response.latency_ms,
+                    "prompt_version": self.prompt_manager.get_active_version("rag_system"),
+                    "output_audit_issues": audit_result.issues if audit_result.blocked else [],
                 },
             )
             
@@ -290,7 +304,8 @@ class AnswerGenerationRunnable(Runnable[RAGContext, RAGResponse]):
         config: Optional[RunnableConfig] = None,
     ) -> AsyncIterator[str]:
         """流式生成"""
-        system_prompt = RAG_SYSTEM_TEMPLATE.format(context=input.context_text)
+        template = self.prompt_manager.get_prompt("rag_system", RAG_SYSTEM_TEMPLATE)
+        system_prompt = template.format(context=input.context_text)
         
         messages = [
             SystemMessage(content=system_prompt),
@@ -307,9 +322,9 @@ class AnswerGenerationRunnable(Runnable[RAGContext, RAGResponse]):
     def _assess_risk(self, confidence: float, answer: str) -> tuple:
         """评估风险等级"""
         if confidence < 0.7:
-            return "high", "当前答案置信度较低，建议您核实引用内容或补充更多背景信息"
+            return "high", LOW_CONFIDENCE_MESSAGE
         elif confidence < 0.9:
-            return "medium", "当前答案置信度低于90%，建议您点击引用核验关键结论"
+            return "medium", LOW_CONFIDENCE_MESSAGE
         else:
             return "low", None
 

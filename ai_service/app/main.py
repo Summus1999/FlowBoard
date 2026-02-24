@@ -5,20 +5,26 @@ FlowBoard AI Service - Main Application
 import os
 import sys
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 
 # 添加项目根目录到Python路径
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
 from app.core.database import engine, Base
+from app.core.exceptions import AIErrorCode, AIException
+from app.core.request_context import normalize_request_id, normalize_trace_id
+from app.api.middleware import RequestContextMiddleware, IdempotencyMiddleware
 
 # 设置日志
-setup_logging()
+setup_logging(debug=settings.DEBUG)
 logger = get_logger(__name__)
 
 
@@ -76,6 +82,130 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Middleware order: request context must be available before idempotency.
+app.add_middleware(IdempotencyMiddleware)
+app.add_middleware(RequestContextMiddleware)
+
+
+def _error_payload(request: Request, code: str, message: str, request_id: str, trace_id: str) -> dict:
+    return {
+        "code": code,
+        "message": message,
+        "trace_id": trace_id,
+        "request_id": request_id,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "path": request.url.path,
+    }
+
+
+def _request_identifiers(request: Request) -> tuple[str, str]:
+    trace_id = getattr(request.state, "trace_id", None) or normalize_trace_id(
+        request.headers.get("X-Trace-Id")
+    )
+    request_id = getattr(request.state, "request_id", None) or normalize_request_id(
+        request.headers.get("X-Request-Id")
+    )
+    return trace_id, request_id
+
+
+@app.exception_handler(AIException)
+async def handle_ai_exception(request: Request, exc: AIException):
+    trace_id, request_id = _request_identifiers(request)
+    payload = _error_payload(
+        request=request,
+        code=exc.code,
+        message=exc.message,
+        request_id=request_id,
+        trace_id=trace_id,
+    )
+    if exc.details:
+        payload["details"] = exc.details
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=payload,
+        headers={
+            "X-Trace-Id": trace_id,
+            "X-Request-Id": request_id,
+            "X-Idempotent-Replay": "false",
+        },
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def handle_validation_error(request: Request, exc: RequestValidationError):
+    trace_id, request_id = _request_identifiers(request)
+    return JSONResponse(
+        status_code=400,
+        content={
+            **_error_payload(
+                request=request,
+                code=AIErrorCode.INVALID_PARAMS,
+                message="validation failed",
+                request_id=request_id,
+                trace_id=trace_id,
+            ),
+            "details": exc.errors(),
+        },
+        headers={
+            "X-Trace-Id": trace_id,
+            "X-Request-Id": request_id,
+            "X-Idempotent-Replay": "false",
+        },
+    )
+
+
+@app.exception_handler(HTTPException)
+async def handle_http_exception(request: Request, exc: HTTPException):
+    trace_id, request_id = _request_identifiers(request)
+    code_map = {
+        400: AIErrorCode.INVALID_PARAMS,
+        401: AIErrorCode.UNAUTHORIZED,
+        403: AIErrorCode.FORBIDDEN,
+        404: AIErrorCode.RESOURCE_NOT_FOUND,
+        409: AIErrorCode.VERSION_CONFLICT,
+        429: AIErrorCode.BUDGET_EXCEEDED,
+        500: AIErrorCode.INTERNAL_ERROR,
+        502: AIErrorCode.MODEL_ERROR,
+        504: AIErrorCode.RETRIEVAL_TIMEOUT,
+    }
+    message = str(exc.detail) if exc.detail else "request failed"
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=_error_payload(
+            request=request,
+            code=code_map.get(exc.status_code, AIErrorCode.INTERNAL_ERROR),
+            message=message,
+            request_id=request_id,
+            trace_id=trace_id,
+        ),
+        headers={
+            "X-Trace-Id": trace_id,
+            "X-Request-Id": request_id,
+            "X-Idempotent-Replay": "false",
+        },
+    )
+
+
+@app.exception_handler(Exception)
+async def handle_unexpected_exception(request: Request, exc: Exception):
+    trace_id, request_id = _request_identifiers(request)
+    logger.error("api.unhandled_exception", error=str(exc), path=request.url.path)
+    return JSONResponse(
+        status_code=500,
+        content=_error_payload(
+            request=request,
+            code=AIErrorCode.INTERNAL_ERROR,
+            message="internal server error",
+            request_id=request_id,
+            trace_id=trace_id,
+        ),
+        headers={
+            "X-Trace-Id": trace_id,
+            "X-Request-Id": request_id,
+            "X-Idempotent-Replay": "false",
+        },
+    )
+
 
 # 注册路由
 from app.api.routes import (
@@ -91,6 +221,7 @@ from app.api.routes import (
     notifications,
     health,
     evaluation,
+    metrics,
 )
 
 # API路由注册
@@ -158,6 +289,12 @@ app.include_router(
     evaluation.router,
     prefix=f"{settings.API_V1_STR}/eval",
     tags=["evaluation"],
+)
+
+app.include_router(
+    metrics.router,
+    prefix=f"{settings.API_V1_STR}/metrics",
+    tags=["metrics"],
 )
 
 app.include_router(

@@ -3,16 +3,14 @@ API依赖注入
 FastAPI依赖定义
 """
 
-import re
-from datetime import datetime
 from typing import AsyncGenerator, Optional
-from uuid import uuid4
 
-from fastapi import Header, HTTPException, Request, Depends
+from fastapi import Header, Request, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_db_session
 from app.core.logging import get_logger
+from app.core.request_context import normalize_request_id, normalize_trace_id
 
 logger = get_logger(__name__)
 
@@ -32,16 +30,10 @@ async def get_trace_id(
     
     优先从请求头获取，否则生成新的UUID
     """
-    if x_trace_id:
-        # 验证格式
-        if re.match(r'^[0-9a-f-]{36}$', x_trace_id):
-            return x_trace_id
-        logger.warning("api.invalid_trace_id_format", trace_id=x_trace_id)
-    
-    # 生成新的trace_id
-    new_trace_id = str(uuid4())
-    logger.info("api.generated_trace_id", trace_id=new_trace_id)
-    return new_trace_id
+    trace_id = getattr(request.state, "trace_id", None)
+    if trace_id:
+        return trace_id
+    return normalize_trace_id(x_trace_id)
 
 
 async def get_request_id(
@@ -51,20 +43,18 @@ async def get_request_id(
     """
     获取或生成request_id
     """
-    if x_request_id:
-        return x_request_id
-    
-    # 生成基于时间戳的request_id
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    new_request_id = f"req-{timestamp}-{uuid4().hex[:8]}"
-    return new_request_id
+    request_id = getattr(request.state, "request_id", None)
+    if request_id:
+        return request_id
+    return normalize_request_id(x_request_id)
 
 
 async def get_idempotency_key(
+    request: Request,
     idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
 ) -> Optional[str]:
     """获取幂等性键"""
-    return idempotency_key
+    return idempotency_key or getattr(request.state, "idempotency_key", None)
 
 
 class CommonHeaders:

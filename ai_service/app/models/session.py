@@ -78,7 +78,7 @@ class Message(Base):
     total_tokens: Mapped[int] = mapped_column(Integer, default=0)
     
     # 元数据
-    metadata: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    meta_info: Mapped[Optional[dict]] = mapped_column("metadata", JSONB, nullable=True)
     
     # 关系
     session: Mapped["Session"] = relationship("Session", back_populates="messages")

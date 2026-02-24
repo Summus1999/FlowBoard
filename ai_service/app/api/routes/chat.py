@@ -5,7 +5,7 @@ Chat API路由
 
 import json
 import re
-from typing import AsyncGenerator, Optional
+from typing import AsyncGenerator, List, Optional
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Header
@@ -20,11 +20,14 @@ from app.api.schemas import (
     ConfidenceResponse,
 )
 from app.api.deps import get_db, get_trace_id, get_request_id
+from app.api.sse import sse_event
+from app.core.exceptions import RetrievalTimeoutException
 from app.graph.workflow import get_workflow
 from app.graph.state import GraphState
 from app.services.model_gateway import get_model_gateway, ModelProfile
 from app.services.rag_chain import create_rag_chain, RAGResponse
 from app.services.evaluation_service import get_qa_evaluator
+from app.security.input_filter import validate_user_input
 from app.utils.citation import (
     CitationFormatter,
     format_citation_for_frontend,
@@ -33,6 +36,9 @@ from app.utils.citation import (
 
 logger = get_logger(__name__)
 router = APIRouter()
+LOW_CONFIDENCE_MESSAGE = (
+    "当前答案置信度低于 90%，建议你点击引用核验关键结论，必要时让我继续补充检索。"
+)
 
 
 async def generate_stream_response(
@@ -44,15 +50,14 @@ async def generate_stream_response(
     生成流式响应（基于LangGraph工作流）
     """
     # 首先发送meta事件
-    meta_event = {
-        "event": "meta",
-        "data": {
+    yield sse_event(
+        "meta",
+        {
             "trace_id": trace_id,
             "request_id": request_id,
             "session_id": state["session_id"],
-        }
-    }
-    yield f"data: {json.dumps(meta_event, ensure_ascii=False)}\n\n"
+        },
+    )
     
     try:
         workflow = get_workflow()
@@ -67,54 +72,79 @@ async def generate_stream_response(
         chunk_size = settings.STREAM_CHUNK_SIZE
         for i in range(0, len(output), chunk_size):
             chunk = output[i:i+chunk_size]
-            token_event = {
-                "event": "token",
-                "data": {"text": chunk}
-            }
-            yield f"data: {json.dumps(token_event, ensure_ascii=False)}\n\n"
+            yield sse_event("token", {"text": chunk})
         
         # 发送引用信息
         citations = result.get("citations", [])
         for citation in citations:
-            citation_event = {
-                "event": "citation",
-                "data": citation
-            }
-            yield f"data: {json.dumps(citation_event, ensure_ascii=False)}\n\n"
+            yield sse_event("citation", citation)
         
         # 发送风险提示
         risk_message = result.get("risk_message")
         confidence = result.get("confidence", 1.0)
         if risk_message or confidence < 0.9:
-            risk_event = {
-                "event": "risk",
-                "data": {
+            yield sse_event(
+                "risk",
+                {
                     "confidence": confidence,
-                    "message": risk_message or f"当前答案置信度为{confidence:.0%}，建议核验",
-                }
-            }
-            yield f"data: {json.dumps(risk_event, ensure_ascii=False)}\n\n"
+                    "message": risk_message or LOW_CONFIDENCE_MESSAGE,
+                },
+            )
         
         # 发送结束事件
-        done_event = {
-            "event": "done",
-            "data": {
+        yield sse_event(
+            "done",
+            {
                 "trace_id": trace_id,
                 "request_id": request_id,
-            }
-        }
-        yield f"data: {json.dumps(done_event, ensure_ascii=False)}\n\n"
+            },
+        )
         
     except Exception as e:
         logger.error("chat.stream_error", error=str(e), trace_id=trace_id)
-        error_event = {
-            "event": "error",
-            "data": {
+        yield sse_event(
+            "error",
+            {
                 "code": "AI-5001",
                 "message": str(e),
-            }
-        }
-        yield f"data: {json.dumps(error_event, ensure_ascii=False)}\n\n"
+                "trace_id": trace_id,
+                "request_id": request_id,
+            },
+        )
+
+
+async def _stream_direct_fallback_answer(
+    query: str,
+    trace_id: str,
+    request_id: str,
+    reason: str,
+) -> AsyncGenerator[str, None]:
+    gateway = get_model_gateway()
+    messages = [HumanMessage(content=f"请直接回答用户问题，并明确这是基于非检索模式：{query}")]
+    response = await gateway.generate(
+        messages=messages,
+        model_profile=ModelProfile.COST_EFFECTIVE,
+        temperature=0.3,
+    )
+    if response.content:
+        yield sse_event("token", {"text": response.content})
+    yield sse_event(
+        "risk",
+        {
+            "confidence": 0.0,
+            "message": LOW_CONFIDENCE_MESSAGE,
+            "reason": reason,
+            "no_citation_flag": True,
+        },
+    )
+    yield sse_event(
+        "done",
+        {
+            "trace_id": trace_id,
+            "request_id": request_id,
+            "no_citation_flag": True,
+        },
+    )
 
 
 async def generate_rag_stream(
@@ -128,15 +158,14 @@ async def generate_rag_stream(
     生成RAG流式响应（使用新的RAGChain）
     """
     # 发送meta事件
-    meta_event = {
-        "event": "meta",
-        "data": {
+    yield sse_event(
+        "meta",
+        {
             "trace_id": trace_id,
             "request_id": request_id,
             "session_id": session_id,
-        }
-    }
-    yield f"data: {json.dumps(meta_event, ensure_ascii=False)}\n\n"
+        },
+    )
     
     try:
         # 创建RAG链
@@ -148,28 +177,46 @@ async def generate_rag_stream(
         
         # 流式执行
         async for event in chain.astream(query):
-            if event["type"] == "token":
-                yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
-            elif event["type"] == "citation":
-                yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
-            elif event["type"] == "risk":
-                yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
-            elif event["type"] == "done":
-                # 添加评估信息
-                event["data"]["trace_id"] = trace_id
-                event["data"]["request_id"] = request_id
-                yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
-        
+            event_type = event.get("type")
+            data = event.get("data", {})
+            if event_type == "retrieval":
+                continue
+            if event_type == "risk":
+                data["message"] = data.get("message") or LOW_CONFIDENCE_MESSAGE
+            if event_type == "done":
+                data["trace_id"] = trace_id
+                data["request_id"] = request_id
+            yield sse_event(event_type, data)
+
+    except RetrievalTimeoutException as exc:
+        logger.warning("chat.retrieval_timeout_degraded", trace_id=trace_id, error=str(exc))
+        async for frame in _stream_direct_fallback_answer(
+            query=query,
+            trace_id=trace_id,
+            request_id=request_id,
+            reason="retrieval_timeout",
+        ):
+            yield frame
     except Exception as e:
         logger.error("chat.rag_stream_error", error=str(e), trace_id=trace_id)
-        error_event = {
-            "event": "error",
-            "data": {
-                "code": "AI-5002",
-                "message": f"检索失败: {str(e)}",
-            }
-        }
-        yield f"data: {json.dumps(error_event, ensure_ascii=False)}\n\n"
+        if settings.RAG_DEGRADE_ON_TIMEOUT:
+            async for frame in _stream_direct_fallback_answer(
+                query=query,
+                trace_id=trace_id,
+                request_id=request_id,
+                reason="retrieval_failed",
+            ):
+                yield frame
+        else:
+            yield sse_event(
+                "error",
+                {
+                    "code": "AI-5002",
+                    "message": f"retrieval failed: {str(e)}",
+                    "trace_id": trace_id,
+                    "request_id": request_id,
+                },
+            )
 
 
 @router.post("/stream")
@@ -191,6 +238,7 @@ async def chat_stream(
         request_id=request_id,
         query=request.query[:50],
     )
+    validate_user_input(request.query)
     
     # 创建或获取会话
     effective_session_id = request.session_id or session_id or str(uuid4())
@@ -208,8 +256,6 @@ async def chat_stream(
             ),
             media_type="text/event-stream",
             headers={
-                "X-Trace-Id": trace_id,
-                "X-Request-Id": request_id,
                 "Cache-Control": "no-cache",
                 "Connection": "keep-alive",
             },
@@ -252,8 +298,6 @@ async def chat_stream(
             generate_stream_response(state, trace_id, request_id),
             media_type="text/event-stream",
             headers={
-                "X-Trace-Id": trace_id,
-                "X-Request-Id": request_id,
                 "Cache-Control": "no-cache",
                 "Connection": "keep-alive",
             },
@@ -372,6 +416,7 @@ async def rag_query(
     完整的RAG流程：检索 -> 重排 -> 生成
     """
     logger.info("chat.rag_query", query=query[:50], top_k=top_k)
+    validate_user_input(query)
     
     try:
         # 创建RAG链

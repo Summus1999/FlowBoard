@@ -87,12 +87,14 @@ class PlanProposeRequest(BaseModel):
 class PlanProposeResponse(BaseResponse):
     """计划提案响应"""
     plan_id: str
+    confirmation_id: Optional[str] = None
     proposal: Dict[str, Any]
     requires_confirmation: bool = True
 
 
 class PlanConfirmRequest(BaseModel):
     """计划确认请求"""
+    confirmation_id: str
     confirm: bool
     feedback: Optional[str] = None
 
@@ -102,6 +104,7 @@ class PlanConfirmResponse(BaseResponse):
     plan_id: str
     status: str
     executed: bool
+    message: Optional[str] = None
 
 
 class PlanRollbackRequest(BaseModel):

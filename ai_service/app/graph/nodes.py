@@ -12,9 +12,14 @@ from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from app.core.logging import get_logger
 from app.core.exceptions import AIException
 from app.services.model_gateway import get_model_gateway, ModelProfile
+from app.services.prompt_version_manager import get_prompt_version_manager
 from app.graph.state import GraphState, ProposalSummary
 
 logger = get_logger(__name__)
+prompt_manager = get_prompt_version_manager()
+LOW_CONFIDENCE_MESSAGE = (
+    "当前答案置信度低于 90%，建议你点击引用核验关键结论，必要时让我继续补充检索。"
+)
 
 
 # ===== 系统提示词 =====
@@ -130,7 +135,7 @@ async def planner_agent_node(state: GraphState) -> GraphState:
     gateway = get_model_gateway()
     
     messages = [
-        SystemMessage(content=PLANNER_SYSTEM_PROMPT),
+        SystemMessage(content=prompt_manager.get_prompt("planner_system", PLANNER_SYSTEM_PROMPT)),
         *state["messages"],
         HumanMessage(content=f"请为我制定学习计划：{state['query']}"),
     ]
@@ -186,7 +191,7 @@ async def decomposer_agent_node(state: GraphState) -> GraphState:
     gateway = get_model_gateway()
     
     messages = [
-        SystemMessage(content=DECOMPOSER_SYSTEM_PROMPT),
+        SystemMessage(content=prompt_manager.get_prompt("decomposer_system", DECOMPOSER_SYSTEM_PROMPT)),
         HumanMessage(content=f"请拆解以下任务：{state['query']}"),
     ]
     
@@ -230,7 +235,7 @@ async def rag_qa_agent_node(state: GraphState) -> GraphState:
             context += f"\n[ref-{i}] {citation.get('content', '')}\n"
     
     messages = [
-        SystemMessage(content=RAG_QA_SYSTEM_PROMPT),
+        SystemMessage(content=prompt_manager.get_prompt("rag_qa_system", RAG_QA_SYSTEM_PROMPT)),
         HumanMessage(content=f"基于以下参考资料回答问题：\n\n{context}\n\n问题：{state['query']}"),
     ]
     
@@ -273,7 +278,7 @@ async def reviewer_agent_node(state: GraphState) -> GraphState:
         return state
     
     messages = [
-        SystemMessage(content=REVIEWER_SYSTEM_PROMPT),
+        SystemMessage(content=prompt_manager.get_prompt("reviewer_system", REVIEWER_SYSTEM_PROMPT)),
         HumanMessage(content=f"请审核以下内容：\n\n{state['output']}"),
     ]
     
@@ -291,7 +296,7 @@ async def reviewer_agent_node(state: GraphState) -> GraphState:
         
         # 如果置信度低于阈值，添加风险提示
         if state["confidence"] < 0.9:
-            state["risk_message"] = "当前答案置信度低于90%，建议核验引用内容"
+            state["risk_message"] = LOW_CONFIDENCE_MESSAGE
         
     except Exception as e:
         logger.error("graph.node.reviewer_error", error=str(e))
