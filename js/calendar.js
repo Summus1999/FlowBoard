@@ -18,8 +18,8 @@ let calendarState = {
 // 事件类型配置
 const eventTypes = {
     work: { name: '工作', color: '#1677FF', icon: 'fas fa-briefcase' },
-    personal: { name: '个人', color: '#07C160', icon: 'fas fa-user' },
-    important: { name: '重要', color: '#FF5000', icon: 'fas fa-star' },
+    study: { name: '学习', color: '#07C160', icon: 'fas fa-book-open' },
+    leisure: { name: '休闲', color: '#FF8C00', icon: 'fas fa-coffee' },
     other: { name: '其他', color: '#999', icon: 'fas fa-circle' }
 };
 
@@ -58,7 +58,7 @@ function addSampleEvents() {
             title: '健身运动',
             date: formatDateISO(today),
             time: '18:00',
-            type: 'personal',
+            type: 'study',
             desc: '去健身房锻炼1小时'
         },
         {
@@ -66,7 +66,7 @@ function addSampleEvents() {
             title: '提交月度报告',
             date: formatDateISO(tomorrow),
             time: '17:00',
-            type: 'important',
+            type: 'leisure',
             desc: '记得提交本月的月度工作报告'
         }
     ];
