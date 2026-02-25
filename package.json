@@ -17,6 +17,7 @@
     "postinstall": "electron-builder install-app-deps",
     "create-icons": "node scripts/create-icon.js",
     "create-icons:simple": "node scripts/create-icon-simple.js",
+    "fix:windows-icon": "node scripts/fix-windows-icon.js",
     "create-icons:png": "node scripts/generate-png-icon.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -157,7 +158,8 @@
   },
   "devDependencies": {
     "electron": "^28.0.0",
-    "electron-builder": "^24.9.1"
+    "electron-builder": "^24.9.1",
+    "sharp": "^0.34.5"
   },
   "dependencies": {
     "fast-xml-parser": "^5.4.0"
