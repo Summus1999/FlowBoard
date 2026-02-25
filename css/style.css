@@ -561,14 +561,12 @@ body {
 #page-dashboard .content-card {
     height: 100%;
     overflow: hidden;
-}
-
-/* Windows/Electron compositor workaround for dashboard cards */
-body.env-electron.platform-win32 #page-dashboard .content-card {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     isolation: isolate;
     contain: paint;
+    animation: none;
+    transform: none;
 }
 
 #page-dashboard .card-header {
