@@ -65,6 +65,9 @@
    - 快速启动本地应用（微信/QQ/VS Code/浏览器等）
    - 自定义添加应用
    - 25种预设图标（含 AI 应用专属图标）
+   - 图标 DIY：预设图标 / Emoji / 本地图片上传
+   - 图片图标格式限制：png/jpg/jpeg/webp（不支持 svg）
+   - 桌面端拖拽排序（排序模式），结果自动持久化
    - 应用可用状态检测
 
 9. **面试追踪**
@@ -374,9 +377,39 @@ if (window.electronAPI) {
 | localStorage | `todos` | 待办事项 |
 | localStorage | `flowboard_notes` | 笔记数据 |
 | localStorage | `flowboard_events` | 日程事件 |
+| localStorage | `flowboard_apps` | 应用中心数据（v2，含图标元数据与排序） |
 | localStorage | `github_username` | GitHub 登录信息 |
 | localStorage | `leetcode_submissions` | LeetCode 提交历史 |
 | IndexedDB | `FlowBoardInterviewDB` | 面试录音文件 |
+
+### 应用中心存储结构（flowboard_apps）
+
+```json
+{
+  "version": 2,
+  "apps": [
+    {
+      "id": "app_1740000000000",
+      "name": "VS Code",
+      "path": "C:/Program Files/Microsoft VS Code/Code.exe",
+      "order": 10,
+      "iconMeta": {
+        "mode": "preset",
+        "presetClass": "fas fa-code",
+        "emoji": "",
+        "imageDataUrl": "",
+        "bgColor": "#22c55e",
+        "fgColor": "#ffffff"
+      },
+      "createdAt": "2026-02-25T10:00:00.000Z",
+      "updatedAt": "2026-02-25T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+- `iconMeta.mode` 取值：`preset` / `emoji` / `image`
+- 旧版数组结构会在加载时自动迁移到 v2 对象结构
 
 ## 贡献指南
 
@@ -397,6 +430,11 @@ MIT License - 详见 [LICENSE](LICENSE) 文件
 ---
 
 ## 更新日志
+
+### v1.3 (2026-02-25)
+- 应用中心支持图标 DIY（预设图标 / Emoji / 本地图片上传）
+- 应用中心支持桌面端拖拽排序，并持久化顺序
+- `flowboard_apps` 升级为 v2 结构，兼容旧数据自动迁移
 
 ### v1.2 (2026-02-23)
 - 新增实时天气功能（自动定位、温度显示）

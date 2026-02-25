@@ -413,7 +413,7 @@ FlowBoard
 
 **入口**：侧边栏「应用中心」（原「提交记录」）
 
-**功能概述**：快速启动本地安装的应用程序
+功能概述：快速启动本地安装的应用程序，支持图标 DIY 与桌面端拖拽排序
 
 **应用分类**：
 
@@ -426,11 +426,18 @@ FlowBoard
 | 办公效率 | WPS Office、Typora、Notion、XMind、Snipaste |
 | 系统工具 | 命令提示符、PowerShell、文件资源管理器、任务管理器 |
 
-**自定义应用**：
+自定义应用：
 
-- **添加应用**：点击「添加应用」→ 输入名称 → 选择可执行文件路径 → 选择图标 → 保存
-- **图标选择**：提供 25 种预设图标（含 AI 应用专属图标）
-- **编辑/删除**：支持修改应用信息和删除应用
+- 添加应用：点击「添加应用」→ 输入名称 → 选择可执行文件路径 → 选择图标模式（预设/Emoji/上传图片）→ 保存
+- 图标 DIY：提供 25 种预设图标，支持 Emoji 与本地图片上传
+- 图片限制：仅支持 png/jpg/jpeg/webp，不支持 svg，上传后自动压缩
+- 编辑/删除：支持修改应用信息和删除应用
+
+排序管理：
+
+- 通过页头「排序模式」进入拖拽态
+- 支持桌面端拖拽排序，移动端触屏拖拽不在当前范围
+- 排序结果自动持久化，重启后顺序保持
 
 **图标选项**：
 
@@ -446,6 +453,8 @@ FlowBoard
 2. Electron 环境下自动查找可执行文件
 3. 浏览器环境下尝试使用 URL Scheme 启动
 4. 支持自定义添加本地应用
+5. 排序模式开启后，拖动卡片调整顺序
+6. 排序模式关闭后恢复常规双击启动行为
 
 ---
 
@@ -610,6 +619,7 @@ webPreferences: {
 | `flowboard_notes` | 笔记内容 | JSON Array |
 | `flowboard_events` | 日程事件 | JSON Array |
 | `flowboard_repos` | GitHub 仓库缓存 | JSON Array |
+| `flowboard_apps` | 应用中心配置（图标元数据+排序） | JSON Object (v2) |
 | `user_profile` | 用户配置（名称） | JSON Object |
 | `user_avatar` | 用户头像（Base64） | String |
 | `github_username` | GitHub 用户名 | String |
@@ -623,6 +633,35 @@ webPreferences: {
 | `minimizeOnClose` | 关闭时最小化 | Boolean |
 | `leetcode_submissions` | LeetCode 提交历史 | JSON Array |
 
+### flowboard_apps v2 结构
+
+```json
+{
+  "version": 2,
+  "apps": [
+    {
+      "id": "app_1740000000000",
+      "name": "VS Code",
+      "path": "C:/Program Files/Microsoft VS Code/Code.exe",
+      "order": 10,
+      "iconMeta": {
+        "mode": "preset",
+        "presetClass": "fas fa-code",
+        "emoji": "",
+        "imageDataUrl": "",
+        "bgColor": "#22c55e",
+        "fgColor": "#ffffff"
+      },
+      "createdAt": "2026-02-25T10:00:00.000Z",
+      "updatedAt": "2026-02-25T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+- `iconMeta.mode` 取值：`preset` / `emoji` / `image`
+- 旧数组结构会在加载时自动迁移为 v2 对象结构
+
 ### IndexedDB 存储
 
 | 数据库名 | 对象存储 | 用途 |
@@ -632,6 +671,12 @@ webPreferences: {
 ---
 
 ## 更新日志
+
+### v1.3 (2026-02-25)
+
+- ✅ 应用中心支持图标 DIY（预设图标 / Emoji / 本地图片上传）
+- ✅ 应用中心支持桌面端拖拽排序并持久化顺序
+- ✅ `flowboard_apps` 升级为 v2 存储结构并兼容旧数据迁移
 
 ### v1.2 (2026-02-23)
 
