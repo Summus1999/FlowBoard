@@ -890,9 +890,14 @@
                 <div class="page" id="page-apps">
                     <div class="page-header">
                         <h2><i class="fas fa-th-large"></i> 应用中心</h2>
-                        <button class="btn-primary" onclick="openAddAppModal()">
-                            <i class="fas fa-plus"></i> 添加应用
-                        </button>
+                        <div class="apps-header-actions">
+                            <button class="btn-secondary apps-reorder-btn" id="toggleAppsReorderBtn" onclick="toggleAppsReorderMode()">
+                                <i class="fas fa-up-down-left-right"></i> 排序模式
+                            </button>
+                            <button class="btn-primary" onclick="openAddAppModal()">
+                                <i class="fas fa-plus"></i> 添加应用
+                            </button>
+                        </div>
                     </div>
                     <div class="apps-container">
                         <div class="apps-grid" id="appsGrid">
@@ -931,13 +936,47 @@
                             </div>
                             <div class="form-group">
                                 <label>选择图标</label>
-                                <div class="icon-selector-wrapper">
-                                    <div class="selected-icon-preview" id="selectedIconPreview">
-                                        <i class="fas fa-desktop" style="color: #3b82f6;"></i>
+                                <div class="selected-icon-preview" id="selectedIconPreview">
+                                    <i class="fas fa-desktop" style="color: #3b82f6;"></i>
+                                </div>
+                                <div class="icon-mode-tabs" id="iconModeTabs">
+                                    <button class="icon-mode-tab active" type="button" data-mode="preset" onclick="setIconMode('preset')">
+                                        <i class="fas fa-icons"></i> 预设
+                                    </button>
+                                    <button class="icon-mode-tab" type="button" data-mode="emoji" onclick="setIconMode('emoji')">
+                                        <i class="far fa-face-smile"></i> Emoji
+                                    </button>
+                                    <button class="icon-mode-tab" type="button" data-mode="image" onclick="setIconMode('image')">
+                                        <i class="fas fa-image"></i> 上传图片
+                                    </button>
+                                </div>
+                                <div class="icon-mode-panel active" id="iconModePanelPreset">
+                                    <div class="icon-selector-wrapper">
+                                        <div class="icon-selector" id="iconSelector">
+                                            <!-- 图标选项将通过 JS 动态生成 -->
+                                        </div>
                                     </div>
-                                    <div class="icon-selector" id="iconSelector">
-                                        <!-- 图标选项将通过 JS 动态生成 -->
+                                </div>
+                                <div class="icon-mode-panel" id="iconModePanelEmoji">
+                                    <div class="emoji-input-row">
+                                        <div class="input-with-icon">
+                                            <i class="far fa-face-smile"></i>
+                                            <input type="text" id="iconEmojiInput" class="emoji-input" maxlength="16" placeholder="输入一个 Emoji" oninput="handleEmojiInput(event)">
+                                        </div>
+                                        <p class="icon-mode-hint">仅保留第一个字符簇，建议输入一个 Emoji。</p>
                                     </div>
+                                </div>
+                                <div class="icon-mode-panel" id="iconModePanelImage">
+                                    <input type="file" id="iconImageInput" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" style="display: none;" onchange="handleIconImageUpload(event)">
+                                    <div class="icon-upload-actions">
+                                        <button class="btn-secondary" type="button" onclick="triggerIconImageSelect()">
+                                            <i class="fas fa-upload"></i> 选择图片
+                                        </button>
+                                        <button class="btn-secondary" type="button" onclick="clearIconImage()">
+                                            <i class="fas fa-trash"></i> 清除
+                                        </button>
+                                    </div>
+                                    <p class="icon-mode-hint">仅支持 png/jpg/jpeg/webp，建议小于 300KB，系统会自动压缩。</p>
                                 </div>
                             </div>
                         </div>
