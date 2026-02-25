@@ -381,11 +381,31 @@ const categoryBtns = document.querySelectorAll('.cat-btn');
 const tabBtns = document.querySelectorAll('.tab-btn');
 const modal = document.getElementById('addPasswordModal');
 
+async function applyPlatformRenderWorkarounds() {
+    const body = document.body;
+    if (!body) return;
+
+    if (!window.electronAPI || typeof window.electronAPI.getPlatform !== 'function') {
+        return;
+    }
+
+    body.classList.add('env-electron');
+    try {
+        const platform = await window.electronAPI.getPlatform();
+        if (platform === 'win32') {
+            body.classList.add('platform-win32');
+        }
+    } catch {
+        // Ignore platform detection failures and keep default rendering.
+    }
+}
+
 // ========================================
 // 初始化
 // ========================================
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await applyPlatformRenderWorkarounds();
     initNavigation();
     renderPasswordCards();
     updatePasswordCount();
