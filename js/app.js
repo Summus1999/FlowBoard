@@ -130,8 +130,8 @@ let passwordData = [
     }
 ];
 
-// 资讯数据
-const newsData = [
+// 资讯默认数据（兜底）
+const defaultNewsData = [
     {
         id: 1,
         title: 'OpenAI发布GPT-5新功能：多模态能力大幅提升',
@@ -309,6 +309,10 @@ const newsData = [
     }
 ];
 
+let newsData = [...defaultNewsData];
+let featuredNewsItem = newsData[0] || null;
+let removeNewsUpdatedListener = null;
+
 // 待办事项数据
 let todoData = [];
 
@@ -375,6 +379,8 @@ document.addEventListener('DOMContentLoaded', () => {
     updatePasswordCount();
     renderPasswordPreview();
     renderNewsList();
+    updateFeaturedNews();
+    initNewsSync();
     initThemeSwitcher();
     initCategoryFilter();
     initTabSwitcher();
@@ -674,8 +680,78 @@ function renderPasswordPreview() {
 
 function renderNewsList() {
     if (!newsList) return;
-    
-    newsList.innerHTML = newsData.slice(0, 8).map((item, index) => `
+    filterNews(getActiveNewsFilter());
+}
+
+function formatHot(hot) {
+    if (hot >= 10000) {
+        return (hot / 10000).toFixed(1) + '万';
+    }
+    return hot.toString();
+}
+
+function formatNewsRelativeTime(publishedAt, fallback = '刚刚') {
+    if (!publishedAt) return fallback;
+    const timestamp = Date.parse(publishedAt);
+    if (!Number.isFinite(timestamp)) return fallback;
+
+    const diffMs = Date.now() - timestamp;
+    if (diffMs < 0) return '刚刚';
+
+    const diffMinutes = Math.floor(diffMs / 60000);
+    if (diffMinutes < 1) return '刚刚';
+    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
+
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `${diffHours}小时前`;
+
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 30) return `${diffDays}天前`;
+
+    const date = new Date(timestamp);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${month}-${day}`;
+}
+
+function formatNewsUpdateTime(isoString) {
+    if (!isoString) return '暂无';
+    const timestamp = Date.parse(isoString);
+    if (!Number.isFinite(timestamp)) return '暂无';
+    const date = new Date(timestamp);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+}
+
+function normalizeNewsItemsForUI(items) {
+    return items.map((item) => {
+        const hot = Number.isFinite(Number(item.hot)) ? Number(item.hot) : 10000;
+        const publishedAt = item.publishedAt || null;
+        const fallbackTime = typeof item.time === 'string' ? item.time : '刚刚';
+        return {
+            id: item.id || `${item.source || 'news'}-${item.url || item.title || Date.now()}`,
+            title: item.title || '未命名资讯',
+            source: item.source || '未知来源',
+            time: formatNewsRelativeTime(publishedAt, fallbackTime),
+            category: item.category || 'tech',
+            hot,
+            url: item.url || '',
+            publishedAt
+        };
+    }).filter((item) => item.url && item.title);
+}
+
+function getActiveNewsFilter() {
+    const activeBtn = document.querySelector('.news-filters .filter-btn.active');
+    return activeBtn ? activeBtn.dataset.filter : 'all';
+}
+
+function renderNewsItems(listEl, items) {
+    listEl.innerHTML = items.map((item, index) => `
         <div class="news-item-simple" onclick="openNewsUrl('${item.url}')">
             <span class="news-rank ${index < 3 ? 'top' : ''}">${index + 1}</span>
             <div class="news-simple-content">
@@ -690,11 +766,105 @@ function renderNewsList() {
     `).join('');
 }
 
-function formatHot(hot) {
-    if (hot >= 10000) {
-        return (hot / 10000).toFixed(1) + '万';
+function updateNewsSyncStatus(snapshot = null, fallbackMessage = '') {
+    const statusEl = document.getElementById('newsUpdateStatus');
+    const refreshBtn = document.getElementById('newsRefreshBtn');
+    if (refreshBtn) {
+        refreshBtn.disabled = snapshot?.status === 'updating';
     }
-    return hot.toString();
+    if (!statusEl) return;
+
+    if (fallbackMessage) {
+        statusEl.textContent = fallbackMessage;
+        return;
+    }
+
+    if (!snapshot) {
+        statusEl.textContent = '资讯状态：显示本地示例资讯';
+        return;
+    }
+
+    if (snapshot.status === 'updating') {
+        statusEl.textContent = '资讯状态：正在更新...';
+        return;
+    }
+
+    if (snapshot.status === 'error') {
+        statusEl.textContent = '资讯状态：更新失败，已回退到缓存';
+        return;
+    }
+
+    const updateAt = formatNewsUpdateTime(snapshot.lastSuccessAt);
+    statusEl.textContent = `资讯状态：最近更新 ${updateAt}`;
+}
+
+function applyNewsSnapshot(snapshot) {
+    if (!snapshot || typeof snapshot !== 'object') {
+        updateNewsSyncStatus(null, '资讯状态：显示本地示例资讯');
+        return;
+    }
+
+    const incomingItems = Array.isArray(snapshot.items) ? normalizeNewsItemsForUI(snapshot.items) : [];
+    if (incomingItems.length > 0) {
+        newsData = incomingItems;
+    } else if (newsData.length === 0) {
+        newsData = [...defaultNewsData];
+    }
+
+    featuredNewsItem = newsData[0] || null;
+    renderNewsList();
+    updateFeaturedNews();
+    updateNewsSyncStatus(snapshot);
+}
+
+async function refreshNewsNow() {
+    if (!window.electronAPI || !window.electronAPI.refreshNewsNow) {
+        showToast('当前环境不支持实时拉取资讯');
+        return;
+    }
+
+    updateNewsSyncStatus({ status: 'updating' });
+    try {
+        const snapshot = await window.electronAPI.refreshNewsNow();
+        applyNewsSnapshot(snapshot);
+        showToast('资讯已刷新');
+    } catch (_error) {
+        updateNewsSyncStatus(null, '资讯状态：刷新失败，已保留历史缓存');
+        showToast('资讯刷新失败，请稍后重试');
+    }
+}
+
+async function initNewsSync() {
+    const refreshBtn = document.getElementById('newsRefreshBtn');
+    if (refreshBtn && !refreshBtn.dataset.bound) {
+        refreshBtn.dataset.bound = '1';
+        refreshBtn.addEventListener('click', () => {
+            void refreshNewsNow();
+        });
+    }
+
+    if (!window.electronAPI || !window.electronAPI.getNewsSnapshot) {
+        updateNewsSyncStatus(null, '资讯状态：浏览器模式，显示本地示例资讯');
+        return;
+    }
+
+    if (typeof removeNewsUpdatedListener === 'function') {
+        removeNewsUpdatedListener();
+        removeNewsUpdatedListener = null;
+    }
+
+    if (typeof window.electronAPI.onNewsUpdated === 'function') {
+        removeNewsUpdatedListener = window.electronAPI.onNewsUpdated((snapshot) => {
+            applyNewsSnapshot(snapshot);
+        });
+    }
+
+    try {
+        const snapshot = await window.electronAPI.getNewsSnapshot();
+        applyNewsSnapshot(snapshot);
+    } catch (_error) {
+        updateNewsSyncStatus(null, '资讯状态：读取缓存失败，显示本地示例资讯');
+    }
 }
 
 function initTabSwitcher() {
@@ -712,8 +882,8 @@ function initTabSwitcher() {
 }
 
 function filterNews(category) {
-    const newsList = document.getElementById('newsList');
-    if (!newsList) return;
+    const listEl = document.getElementById('newsList');
+    if (!listEl) return;
     
     let filtered = newsData;
     if (category && category !== 'all') {
@@ -724,7 +894,7 @@ function filterNews(category) {
     const displayData = filtered.slice(0, 8);
     
     if (displayData.length === 0) {
-        newsList.innerHTML = `
+        listEl.innerHTML = `
             <div class="news-empty">
                 <i class="fas fa-newspaper"></i>
                 <p>暂无该分类的资讯</p>
@@ -732,20 +902,8 @@ function filterNews(category) {
         `;
         return;
     }
-    
-    newsList.innerHTML = displayData.map((item, index) => `
-        <div class="news-item-simple" onclick="openNewsUrl('${item.url}')">
-            <span class="news-rank ${index < 3 ? 'top' : ''}">${index + 1}</span>
-            <div class="news-simple-content">
-                <h4 class="news-simple-title">${item.title}</h4>
-                <div class="news-simple-meta">
-                    <span class="news-source">${item.source}</span>
-                    <span class="news-time">${item.time}</span>
-                    <span class="news-hot"><i class="fas fa-fire"></i> ${formatHot(item.hot)}</span>
-                </div>
-            </div>
-        </div>
-    `).join('');
+
+    renderNewsItems(listEl, displayData);
 }
 
 function openNewsUrl(url) {
@@ -1148,9 +1306,39 @@ setInterval(() => {
 // 热榜中心点击跳转
 // ========================================
 
+function getNewsCategoryLabel(category) {
+    const labelMap = {
+        ai: 'AI',
+        tech: '科技',
+        finance: '财经',
+        entertainment: '娱乐',
+        social: '社会'
+    };
+    return labelMap[category] || '头条';
+}
+
+function updateFeaturedNews() {
+    const item = featuredNewsItem || newsData[0];
+    if (!item) return;
+
+    const titleEl = document.getElementById('featuredNewsTitle');
+    const tagEl = document.getElementById('featuredNewsTag');
+    const metaEl = document.getElementById('featuredNewsMeta');
+
+    if (titleEl) {
+        titleEl.textContent = item.title;
+    }
+    if (tagEl) {
+        tagEl.textContent = getNewsCategoryLabel(item.category);
+    }
+    if (metaEl) {
+        metaEl.textContent = `${item.time || '刚刚'} · ${item.source || '未知来源'}`;
+    }
+}
+
 function openFeaturedNews() {
-    // 打开头条新闻链接
-    const url = 'https://www.thepaper.cn/newsDetail_forward_12345678';
+    const fallback = defaultNewsData[0]?.url || 'https://www.thepaper.cn/';
+    const url = featuredNewsItem?.url || newsData[0]?.url || fallback;
     if (window.electronAPI && window.electronAPI.openExternal) {
         window.electronAPI.openExternal(url);
     } else {

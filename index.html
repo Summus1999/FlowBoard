@@ -333,6 +333,12 @@
                             <button class="filter-btn" data-filter="entertainment">娱乐</button>
                             <button class="filter-btn" data-filter="social">社会</button>
                         </div>
+                        <div class="news-update-bar">
+                            <span id="newsUpdateStatus">资讯状态：等待首次更新</span>
+                            <button class="btn-secondary btn-sm news-refresh-btn" id="newsRefreshBtn" type="button">
+                                <i class="fas fa-rotate-right"></i> 立即刷新
+                            </button>
+                        </div>
                     </div>
                     <div class="news-grid">
                         <div class="news-main">
@@ -352,9 +358,9 @@
                                         <div style="position: absolute; width: 60px; height: 60px; background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%); border-radius: 50%; bottom: 20%; right: 15%; animation: float 8s ease-in-out infinite reverse;"></div>
                                     </div>
                                     <div class="featured-overlay">
-                                        <span class="featured-tag">头条</span>
-                                        <h3>AI技术突破：新一代大模型能力大幅提升</h3>
-                                        <p>2小时前 · 科技日报</p>
+                                        <span class="featured-tag" id="featuredNewsTag">头条</span>
+                                        <h3 id="featuredNewsTitle">AI技术突破：新一代大模型能力大幅提升</h3>
+                                        <p id="featuredNewsMeta">2小时前 · 科技日报</p>
                                     </div>
                                     <style>
                                         @keyframes gradientShift {

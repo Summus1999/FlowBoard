@@ -1075,6 +1075,36 @@ body {
 .news-filters {
     display: flex;
     gap: 8px;
+    flex-wrap: wrap;
+}
+
+.news-update-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+}
+
+#newsUpdateStatus {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.news-refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.news-refresh-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#page-news .page-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
 .filter-btn {
@@ -1947,6 +1977,11 @@ textarea:focus {
     
     .news-grid {
         grid-template-columns: 1fr;
+    }
+
+    .news-update-bar {
+        width: 100%;
+        justify-content: space-between;
     }
     
     .settings-grid {

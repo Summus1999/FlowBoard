@@ -126,13 +126,13 @@
 
 ### 环境要求
 
-- Node.js >= 16.x
-- npm >= 8.x
+- Node.js >= 20.x
+- npm >= 10.x
 
 ### 安装依赖
 
 ```bash
-npm install
+npm run bootstrap:deps
 ```bash
 
 ### 开发模式运行

@@ -22,6 +22,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // 数据存储
     saveData: (filename, data) => ipcRenderer.invoke('save-data', filename, data),
     loadData: (filename) => ipcRenderer.invoke('load-data', filename),
+
+    // 资讯更新
+    getNewsSnapshot: () => ipcRenderer.invoke('news-get-snapshot'),
+    refreshNewsNow: () => ipcRenderer.invoke('news-refresh-now'),
+    onNewsUpdated: (callback) => {
+        const channel = 'news-updated';
+        const listener = (_event, payload) => callback(payload);
+        ipcRenderer.on(channel, listener);
+        return () => ipcRenderer.removeListener(channel, listener);
+    },
     
     // 文件对话框
     selectFile: (options) => ipcRenderer.invoke('select-file', options),
@@ -29,7 +39,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     
     // 事件监听
     on: (channel, callback) => {
-        const validChannels = ['window-state-change'];
+        const validChannels = ['window-state-change', 'news-updated'];
         if (validChannels.includes(channel)) {
             ipcRenderer.on(channel, (event, ...args) => callback(...args));
         }
