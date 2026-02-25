@@ -7,13 +7,64 @@ const { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage, dialog, shell } = 
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
+const { XMLParser } = require('fast-xml-parser');
 
 // 保持对窗口对象的全局引用，防止被垃圾回收
 let mainWindow = null;
 let tray = null;
+let newsUpdateTimer = null;
 
 // 判断是否为开发环境
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+
+const NEWS_CACHE_VERSION = 1;
+const NEWS_CACHE_FILE = 'news-cache-v1.json';
+const NEWS_UPDATE_INTERVAL_MS = 4 * 60 * 60 * 1000;
+const NEWS_FETCH_TIMEOUT_MS = 12000;
+const NEWS_MAX_ITEMS = 120;
+const NEWS_SOURCE_LIMIT = 40;
+const NEWS_FEED_SOURCES = [
+    {
+        id: 'ithome',
+        name: 'IT之家',
+        category: 'tech',
+        url: 'https://www.ithome.com/rss/'
+    },
+    {
+        id: 'cnbeta',
+        name: 'cnBeta',
+        category: 'tech',
+        url: 'https://rss.cnbeta.com/'
+    },
+    {
+        id: 'hackernews',
+        name: 'Hacker News',
+        category: 'ai',
+        url: 'https://hnrss.org/frontpage'
+    },
+    {
+        id: 'theverge',
+        name: 'The Verge',
+        category: 'tech',
+        url: 'https://www.theverge.com/rss/index.xml'
+    },
+    {
+        id: 'coindesk',
+        name: 'CoinDesk',
+        category: 'finance',
+        url: 'https://www.coindesk.com/arc/outboundfeeds/rss/'
+    }
+];
+const xmlParser = new XMLParser({
+    ignoreAttributes: false,
+    attributeNamePrefix: '',
+    parseTagValue: false,
+    trimValues: true
+});
+
+let isNewsUpdating = false;
+let newsSnapshot = createEmptyNewsSnapshot();
 
 // 配置文件路径
 const getConfigPath = () => {
@@ -43,6 +94,434 @@ const saveConfig = (config) => {
         console.error('保存配置失败:', error);
     }
 };
+
+function createEmptyNewsSnapshot() {
+    return {
+        version: NEWS_CACHE_VERSION,
+        status: 'idle',
+        lastReason: 'startup',
+        lastAttemptAt: null,
+        lastSuccessAt: null,
+        items: [],
+        sourceStatus: []
+    };
+}
+
+function getNewsCachePath() {
+    return path.join(app.getPath('userData'), NEWS_CACHE_FILE);
+}
+
+function toArray(value) {
+    if (!value) return [];
+    return Array.isArray(value) ? value : [value];
+}
+
+function toText(value) {
+    if (typeof value === 'string') return value.trim();
+    if (typeof value === 'number') return String(value);
+    if (!value || typeof value !== 'object') return '';
+    if (typeof value['#text'] === 'string') return value['#text'].trim();
+    if (typeof value._cdata === 'string') return value._cdata.trim();
+    return '';
+}
+
+function stripHtmlTags(text) {
+    return text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function safeDateToIso(dateLike) {
+    if (!dateLike) return null;
+    const timestamp = Date.parse(dateLike);
+    if (!Number.isFinite(timestamp)) return null;
+    return new Date(timestamp).toISOString();
+}
+
+function normalizeUrl(rawUrl) {
+    if (typeof rawUrl !== 'string') return '';
+    return rawUrl.trim().replace(/\/+$/, '');
+}
+
+function computeHotScore(publishedAt) {
+    const timestamp = Date.parse(publishedAt);
+    if (!Number.isFinite(timestamp)) return 10000;
+    const ageHours = Math.max(0, (Date.now() - timestamp) / (60 * 60 * 1000));
+    const rawScore = Math.round(1200000 / (1 + ageHours * 0.8));
+    return Math.max(5000, rawScore);
+}
+
+function createNewsId(sourceId, url, title) {
+    return crypto
+        .createHash('sha1')
+        .update(`${sourceId}|${url}|${title}`)
+        .digest('hex')
+        .slice(0, 16);
+}
+
+function normalizeNewsItem(item) {
+    if (!item || typeof item !== 'object') return null;
+    const title = stripHtmlTags(toText(item.title));
+    const url = normalizeUrl(toText(item.url));
+    if (!title || !url) return null;
+
+    const source = toText(item.source) || '未知来源';
+    const category = toText(item.category) || 'tech';
+    const publishedAt = safeDateToIso(item.publishedAt) || new Date().toISOString();
+    const hot = Number.isFinite(Number(item.hot)) ? Number(item.hot) : computeHotScore(publishedAt);
+    const id = toText(item.id) || createNewsId(source, url, title);
+
+    return {
+        id,
+        title,
+        source,
+        time: toText(item.time),
+        category,
+        hot,
+        url,
+        publishedAt
+    };
+}
+
+function normalizeSourceStatus(status) {
+    if (!status || typeof status !== 'object') return null;
+    return {
+        id: toText(status.id) || 'unknown',
+        name: toText(status.name) || 'unknown',
+        success: Boolean(status.success),
+        itemCount: Number.isFinite(Number(status.itemCount)) ? Number(status.itemCount) : 0,
+        durationMs: Number.isFinite(Number(status.durationMs)) ? Number(status.durationMs) : 0,
+        error: toText(status.error)
+    };
+}
+
+function normalizeNewsCollection(items) {
+    const dedupMap = new Map();
+    for (const item of items) {
+        const normalized = normalizeNewsItem(item);
+        if (!normalized) continue;
+        const dedupKey = normalized.url || `${normalized.source}:${normalized.title.toLowerCase()}`;
+        if (!dedupMap.has(dedupKey)) {
+            dedupMap.set(dedupKey, normalized);
+        }
+    }
+
+    return Array.from(dedupMap.values()).sort((a, b) => {
+        const aTime = Date.parse(a.publishedAt);
+        const bTime = Date.parse(b.publishedAt);
+        if (aTime !== bTime) {
+            return bTime - aTime;
+        }
+        return b.hot - a.hot;
+    });
+}
+
+function sanitizeNewsSnapshot(snapshot) {
+    const base = createEmptyNewsSnapshot();
+    if (!snapshot || typeof snapshot !== 'object') return base;
+    const normalizedStatus = ['idle', 'updating', 'success', 'error'].includes(snapshot.status)
+        ? snapshot.status
+        : 'idle';
+    const normalizedItems = normalizeNewsCollection(Array.isArray(snapshot.items) ? snapshot.items : [])
+        .slice(0, NEWS_MAX_ITEMS);
+    const normalizedSourceStatus = toArray(snapshot.sourceStatus)
+        .map(normalizeSourceStatus)
+        .filter(Boolean)
+        .slice(0, NEWS_FEED_SOURCES.length);
+
+    return {
+        ...base,
+        version: NEWS_CACHE_VERSION,
+        status: normalizedStatus,
+        lastReason: toText(snapshot.lastReason) || base.lastReason,
+        lastAttemptAt: safeDateToIso(snapshot.lastAttemptAt),
+        lastSuccessAt: safeDateToIso(snapshot.lastSuccessAt),
+        items: normalizedItems,
+        sourceStatus: normalizedSourceStatus
+    };
+}
+
+function loadNewsSnapshot() {
+    try {
+        const cachePath = getNewsCachePath();
+        if (!fs.existsSync(cachePath)) {
+            return createEmptyNewsSnapshot();
+        }
+        const rawText = fs.readFileSync(cachePath, 'utf8');
+        return sanitizeNewsSnapshot(JSON.parse(rawText));
+    } catch (error) {
+        console.warn('加载资讯缓存失败:', error.message || error);
+        return createEmptyNewsSnapshot();
+    }
+}
+
+function persistNewsSnapshot() {
+    try {
+        const cachePath = getNewsCachePath();
+        fs.writeFileSync(cachePath, JSON.stringify(newsSnapshot, null, 2), 'utf8');
+    } catch (error) {
+        console.warn('保存资讯缓存失败:', error.message || error);
+    }
+}
+
+function getNewsSnapshot() {
+    return JSON.parse(JSON.stringify(newsSnapshot));
+}
+
+function broadcastNewsSnapshot() {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    mainWindow.webContents.send('news-updated', getNewsSnapshot());
+}
+
+async function fetchTextWithTimeout(url) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), NEWS_FETCH_TIMEOUT_MS);
+
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                Accept: 'application/rss+xml,application/atom+xml,application/xml,text/xml,*/*',
+                'User-Agent': 'FlowBoard-NewsFetcher/1.0'
+            },
+            signal: controller.signal
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        return response.text();
+    } finally {
+        clearTimeout(timeoutId);
+    }
+}
+
+function resolveRssLink(linkNode) {
+    if (typeof linkNode === 'string') {
+        return linkNode;
+    }
+    if (!linkNode || typeof linkNode !== 'object') {
+        return '';
+    }
+    if (typeof linkNode.href === 'string') {
+        return linkNode.href;
+    }
+    return toText(linkNode);
+}
+
+function resolveAtomLink(linkNode) {
+    const links = toArray(linkNode);
+    for (const link of links) {
+        if (typeof link === 'string' && link.trim()) {
+            return link.trim();
+        }
+        if (!link || typeof link !== 'object') continue;
+        const href = toText(link.href);
+        const rel = toText(link.rel);
+        if (href && (!rel || rel === 'alternate')) {
+            return href;
+        }
+    }
+
+    for (const link of links) {
+        if (!link || typeof link !== 'object') continue;
+        const href = toText(link.href);
+        if (href) return href;
+    }
+
+    return '';
+}
+
+function extractRssItems(parsedFeed) {
+    const channel = parsedFeed?.rss?.channel;
+    if (!channel) return [];
+    const items = toArray(channel.item);
+    return items.map((item) => ({
+        title: toText(item.title),
+        link: resolveRssLink(item.link),
+        publishedAt: toText(item.pubDate) || toText(item.published) || toText(item.updated) || toText(item['dc:date'])
+    }));
+}
+
+function extractAtomItems(parsedFeed) {
+    const feed = parsedFeed?.feed;
+    if (!feed) return [];
+    const entries = toArray(feed.entry);
+    return entries.map((entry) => ({
+        title: toText(entry.title),
+        link: resolveAtomLink(entry.link),
+        publishedAt: toText(entry.published) || toText(entry.updated)
+    }));
+}
+
+function buildNewsItem(source, feedItem) {
+    const title = stripHtmlTags(toText(feedItem.title));
+    const url = normalizeUrl(toText(feedItem.link));
+    if (!title || !url) return null;
+    const publishedAt = safeDateToIso(feedItem.publishedAt) || new Date().toISOString();
+
+    return {
+        id: createNewsId(source.id, url, title),
+        title,
+        source: source.name,
+        time: '',
+        category: source.category,
+        hot: computeHotScore(publishedAt),
+        url,
+        publishedAt
+    };
+}
+
+async function fetchNewsSource(source) {
+    const startTime = Date.now();
+    try {
+        const feedText = await fetchTextWithTimeout(source.url);
+        const parsedFeed = xmlParser.parse(feedText);
+        const rawItems = extractRssItems(parsedFeed);
+        const feedItems = rawItems.length > 0 ? rawItems : extractAtomItems(parsedFeed);
+        const items = feedItems
+            .map((item) => buildNewsItem(source, item))
+            .filter(Boolean)
+            .slice(0, NEWS_SOURCE_LIMIT);
+
+        return {
+            id: source.id,
+            name: source.name,
+            success: true,
+            itemCount: items.length,
+            durationMs: Date.now() - startTime,
+            error: '',
+            items
+        };
+    } catch (error) {
+        return {
+            id: source.id,
+            name: source.name,
+            success: false,
+            itemCount: 0,
+            durationMs: Date.now() - startTime,
+            error: error.message || String(error),
+            items: []
+        };
+    }
+}
+
+async function updateNewsSnapshot(reason = 'interval') {
+    if (isNewsUpdating) {
+        return getNewsSnapshot();
+    }
+    isNewsUpdating = true;
+
+    const attemptAt = new Date().toISOString();
+    newsSnapshot = {
+        ...newsSnapshot,
+        status: 'updating',
+        lastReason: reason,
+        lastAttemptAt: attemptAt
+    };
+    persistNewsSnapshot();
+    broadcastNewsSnapshot();
+
+    try {
+        const settled = await Promise.allSettled(NEWS_FEED_SOURCES.map((source) => fetchNewsSource(source)));
+        const sourceStatus = [];
+        const fetchedItems = [];
+
+        settled.forEach((result, index) => {
+            if (result.status === 'fulfilled') {
+                const sourceResult = result.value;
+                sourceStatus.push({
+                    id: sourceResult.id,
+                    name: sourceResult.name,
+                    success: sourceResult.success,
+                    itemCount: sourceResult.itemCount,
+                    durationMs: sourceResult.durationMs,
+                    error: sourceResult.error
+                });
+                if (sourceResult.success && sourceResult.items.length > 0) {
+                    fetchedItems.push(...sourceResult.items);
+                }
+                return;
+            }
+
+            const source = NEWS_FEED_SOURCES[index];
+            sourceStatus.push({
+                id: source.id,
+                name: source.name,
+                success: false,
+                itemCount: 0,
+                durationMs: 0,
+                error: result.reason?.message || String(result.reason)
+            });
+        });
+
+        const normalizedFetchedItems = normalizeNewsCollection(fetchedItems).slice(0, NEWS_MAX_ITEMS);
+        const hasSuccessfulSource = sourceStatus.some((item) => item.success);
+
+        if (normalizedFetchedItems.length > 0) {
+            newsSnapshot = {
+                ...newsSnapshot,
+                status: 'success',
+                lastReason: reason,
+                lastAttemptAt: attemptAt,
+                lastSuccessAt: attemptAt,
+                items: normalizedFetchedItems,
+                sourceStatus
+            };
+        } else if (newsSnapshot.items.length > 0) {
+            newsSnapshot = {
+                ...newsSnapshot,
+                status: hasSuccessfulSource ? 'success' : 'error',
+                lastReason: reason,
+                lastAttemptAt: attemptAt,
+                sourceStatus
+            };
+            if (hasSuccessfulSource && !newsSnapshot.lastSuccessAt) {
+                newsSnapshot.lastSuccessAt = attemptAt;
+            }
+        } else {
+            newsSnapshot = {
+                ...newsSnapshot,
+                status: 'error',
+                lastReason: reason,
+                lastAttemptAt: attemptAt,
+                sourceStatus
+            };
+        }
+    } catch (error) {
+        newsSnapshot = {
+            ...newsSnapshot,
+            status: 'error',
+            lastReason: reason,
+            lastAttemptAt: attemptAt
+        };
+        console.warn('资讯更新失败:', error.message || error);
+    } finally {
+        persistNewsSnapshot();
+        broadcastNewsSnapshot();
+        isNewsUpdating = false;
+    }
+
+    return getNewsSnapshot();
+}
+
+function initNewsUpdater() {
+    newsSnapshot = loadNewsSnapshot();
+
+    if (newsUpdateTimer) {
+        clearInterval(newsUpdateTimer);
+    }
+
+    newsUpdateTimer = setInterval(() => {
+        void updateNewsSnapshot('interval');
+    }, NEWS_UPDATE_INTERVAL_MS);
+
+    void updateNewsSnapshot('startup');
+}
+
+function stopNewsUpdater() {
+    if (newsUpdateTimer) {
+        clearInterval(newsUpdateTimer);
+        newsUpdateTimer = null;
+    }
+}
 
 // 创建主窗口
 function createMainWindow() {
@@ -92,6 +571,8 @@ function createMainWindow() {
         if (config.isMaximized) {
             mainWindow.maximize();
         }
+
+        broadcastNewsSnapshot();
     });
 
     // 窗口关闭前保存尺寸和状态
@@ -322,6 +803,14 @@ ipcMain.handle('load-data', async (event, filename) => {
     }
 });
 
+ipcMain.handle('news-get-snapshot', async () => {
+    return getNewsSnapshot();
+});
+
+ipcMain.handle('news-refresh-now', async () => {
+    return updateNewsSnapshot('manual');
+});
+
 // 选择文件对话框
 ipcMain.handle('select-file', async (event, options) => {
     if (mainWindow) {
@@ -507,6 +996,7 @@ app.whenReady().then(() => {
     createMainWindow();
     createTray();
     setApplicationMenu();
+    initNewsUpdater();
 
     app.on('activate', () => {
         // macOS: 点击 dock 图标时重新创建窗口
@@ -523,6 +1013,10 @@ app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit();
     }
+});
+
+app.on('before-quit', () => {
+    stopNewsUpdater();
 });
 
 // 在 macOS 上，当用户点击 dock 图标且没有其他窗口打开时，通常会重新创建一个窗口
