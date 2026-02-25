@@ -561,6 +561,12 @@ body {
 #page-dashboard .content-card {
     height: 100%;
     overflow: hidden;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    isolation: isolate;
+    contain: paint;
+    animation: none;
+    transform: none;
 }
 
 #page-dashboard .card-header {
@@ -2708,7 +2714,6 @@ textarea:focus {
 }
 
 /* 卡片玻璃反光效果 */
-.content-card::after,
 .password-card::after,
 .settings-card::after {
     content: '';
@@ -2723,7 +2728,6 @@ textarea:focus {
     pointer-events: none;
 }
 
-.content-card:hover::after,
 .password-card:hover::after,
 .settings-card:hover::after {
     left: 150%;
