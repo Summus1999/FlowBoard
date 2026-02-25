@@ -519,18 +519,4 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// ========================================
-// 页面切换初始化
-// ========================================
-
-const originalShowPage3 = window.showPage;
-if (originalShowPage3) {
-    window.showPage = function(pageName) {
-        originalShowPage3(pageName);
-        if (pageName === 'github') {
-            setTimeout(initGithub, 100);
-        }
-    };
-}
-
 console.log('GitHub 项目跟踪模块已加载 🐙');

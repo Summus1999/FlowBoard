@@ -594,19 +594,4 @@ function formatTime(date) {
     return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
 }
 
-// ========================================
-// 页面切换初始化
-// ========================================
-
-// 当切换到笔记页面时初始化
-const originalShowPage = window.showPage;
-if (originalShowPage) {
-    window.showPage = function(pageName) {
-        originalShowPage(pageName);
-        if (pageName === 'notes') {
-            setTimeout(initNotes, 100);
-        }
-    };
-}
-
 console.log('Markdown 笔记模块已加载 📝');

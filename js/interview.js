@@ -469,18 +469,4 @@ function pauseAllAudio() {
     });
 }
 
-// ========================================
-// 页面切换初始化
-// ========================================
-
-const originalShowPage5 = window.showPage;
-if (originalShowPage5) {
-    window.showPage = function(pageName) {
-        originalShowPage5(pageName);
-        if (pageName === 'interview') {
-            setTimeout(initInterview, 100);
-        }
-    };
-}
-
 console.log('面试追踪模块已加载 🎙️');
