@@ -360,8 +360,18 @@ function saveTodosToStorage() {
 // DOM 元素
 // ========================================
 
-const navItems = document.querySelectorAll('.nav-item');
-const pages = document.querySelectorAll('.page');
+let navItems = [];
+let pages = [];
+let removeSidebarChangeListener = null;
+const pageInitializerMap = {
+    notes: 'initNotes',
+    calendar: 'initCalendar',
+    github: 'initGithub',
+    growth: 'initGrowth',
+    interview: 'initInterview',
+    leetcode: 'initLeetCode',
+    apps: 'initAppCenter'
+};
 const passwordCards = document.getElementById('passwordCards');
 const newsList = document.getElementById('newsList');
 const themeCards = document.querySelectorAll('.theme-card');
@@ -401,30 +411,94 @@ document.addEventListener('DOMContentLoaded', () => {
 // ========================================
 
 function initNavigation() {
+    renderNavigation(getCurrentActivePageName());
+    bindNavigationEvents();
+
+    if (window.FlowBoardSidebar && typeof window.FlowBoardSidebar.onChange === 'function' && !removeSidebarChangeListener) {
+        removeSidebarChangeListener = window.FlowBoardSidebar.onChange(() => {
+            renderNavigation(getCurrentActivePageName());
+            bindNavigationEvents();
+        });
+    }
+}
+
+function renderNavigation(activePage = 'dashboard') {
+    const navContainer = document.querySelector('.sidebar-nav');
+    if (!navContainer) return;
+
+    if (window.FlowBoardSidebar && typeof window.FlowBoardSidebar.render === 'function') {
+        window.FlowBoardSidebar.render(navContainer, activePage);
+    }
+
+    navItems = Array.from(navContainer.querySelectorAll('.nav-item'));
+}
+
+function bindNavigationEvents() {
     navItems.forEach(item => {
+        if (item.dataset.bound === '1') return;
+        item.dataset.bound = '1';
+
         item.addEventListener('click', (e) => {
             e.preventDefault();
             const pageName = item.dataset.page;
             showPage(pageName);
-            
-            // 更新导航激活状态
-            navItems.forEach(nav => nav.classList.remove('active'));
-            item.classList.add('active');
         });
     });
 }
 
+function getCurrentActivePageName() {
+    const activePage = document.querySelector('.page.active');
+    if (!activePage || !activePage.id) return 'dashboard';
+    return activePage.id.replace('page-', '');
+}
+
+function resolvePageInitializer(pageName) {
+    if (window.FlowBoardSidebar && typeof window.FlowBoardSidebar.getPageEnterHook === 'function') {
+        const pluginHook = window.FlowBoardSidebar.getPageEnterHook(pageName);
+        if (typeof pluginHook === 'function') {
+            return pluginHook;
+        }
+    }
+
+    const legacyInitializerName = pageInitializerMap[pageName];
+    if (!legacyInitializerName) return null;
+
+    return typeof window[legacyInitializerName] === 'function'
+        ? window[legacyInitializerName]
+        : null;
+}
+
+function runPageInitializer(pageName) {
+    const initializer = resolvePageInitializer(pageName);
+    if (!initializer) return;
+
+    setTimeout(() => {
+        try {
+            initializer();
+        } catch (error) {
+            console.error(`页面初始化失败 (${pageName}):`, error);
+        }
+    }, 100);
+}
+
 function showPage(pageName) {
+    const targetPage = document.getElementById(`page-${pageName}`);
+    if (!targetPage) {
+        console.warn(`页面不存在: ${pageName}`);
+        // 对于动作型插件入口，仍允许触发 onEnter 钩子。
+        runPageInitializer(pageName);
+        return;
+    }
+
+    pages = document.querySelectorAll('.page');
     pages.forEach(page => {
         page.classList.remove('active');
     });
     
-    const targetPage = document.getElementById(`page-${pageName}`);
-    if (targetPage) {
-        targetPage.classList.add('active');
-    }
+    targetPage.classList.add('active');
     
     // 更新导航状态
+    navItems = Array.from(document.querySelectorAll('.sidebar-nav .nav-item'));
     navItems.forEach(nav => {
         nav.classList.remove('active');
         if (nav.dataset.page === pageName) {
@@ -444,40 +518,8 @@ function showPage(pageName) {
             }
         }, 50);
     }
-    
-    // 初始化笔记页面
-    if (pageName === 'notes' && typeof initNotes === 'function') {
-        setTimeout(initNotes, 100);
-    }
-    
-    // 初始化日程页面
-    if (pageName === 'calendar' && typeof initCalendar === 'function') {
-        setTimeout(initCalendar, 100);
-    }
-    
-    // 初始化 GitHub 页面
-    if (pageName === 'github' && typeof initGithub === 'function') {
-        setTimeout(initGithub, 100);
-    }
-    
-    // 初始化个人提升页面
-    if (pageName === 'growth' && typeof initGrowth === 'function') {
-        setTimeout(initGrowth, 100);
-    }
-    
-    // 初始化面试追踪页面
-    if (pageName === 'interview' && typeof initInterview === 'function') {
-        setTimeout(initInterview, 100);
-    }
-    
-    // 初始化 LeetCode 页面
-    if (pageName === 'leetcode') {
-        setTimeout(() => {
-            if (typeof initLeetCode === 'function') {
-                initLeetCode();
-            }
-        }, 100);
-    }
+
+    runPageInitializer(pageName);
 }
 
 // ========================================

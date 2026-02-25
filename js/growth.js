@@ -340,18 +340,4 @@ function updateGrowthStats() {
     document.getElementById('growthStreak').textContent = '5 天';
 }
 
-// ========================================
-// 页面切换初始化
-// ========================================
-
-const originalShowPage4 = window.showPage;
-if (originalShowPage4) {
-    window.showPage = function(pageName) {
-        originalShowPage4(pageName);
-        if (pageName === 'growth') {
-            setTimeout(initGrowth, 100);
-        }
-    };
-}
-
 console.log('个人提升计划模块已加载 📈');

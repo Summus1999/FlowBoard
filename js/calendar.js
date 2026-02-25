@@ -413,18 +413,4 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// ========================================
-// 页面切换初始化
-// ========================================
-
-const originalShowPage2 = window.showPage;
-if (originalShowPage2) {
-    window.showPage = function(pageName) {
-        originalShowPage2(pageName);
-        if (pageName === 'calendar') {
-            setTimeout(initCalendar, 100);
-        }
-    };
-}
-
 console.log('日程管理模块已加载 📅');

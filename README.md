@@ -181,6 +181,7 @@ FlowBoard/
 │   └── apps.css         # 应用中心
 ├── js/                  # JavaScript 逻辑
 │   ├── app.js           # 主应用逻辑
+│   ├── sidebar-registry.js # 侧边栏热插拔注册中心
 │   ├── leetcode.js      # LeetCode 模块
 │   ├── leetcode-api.js  # LeetCode API
 │   ├── code-snippets.js # 代码智能提示
@@ -206,6 +207,59 @@ FlowBoard/
 1. 在 `index.html` 中添加界面元素
 2. 在 `css/` 目录下创建或修改样式文件
 3. 在 `js/` 目录下创建或修改逻辑文件
+
+### 侧边栏热插拔（新增）
+
+侧边栏入口已改为 **注册中心驱动**，支持运行时增删、启停、排序与持久化：
+
+- 注册中心文件：`js/sidebar-registry.js`
+- 全局 API：`window.FlowBoardSidebar`
+- 导航渲染由 `app.js` 自动接管，无需手动写死 `<a class="nav-item">`
+
+常用 API：
+
+```javascript
+// 注册（或更新）一个分组
+FlowBoardSidebar.registerSection({
+  id: 'team-tools',
+  title: '团队工具',
+  order: 30
+});
+
+// 注册（或更新）一个侧边栏入口
+FlowBoardSidebar.registerItem({
+  page: 'kanban',
+  title: '团队看板',
+  icon: 'fas fa-columns',
+  sectionId: 'team-tools',
+  order: 10,
+  onEnter: 'initKanban' // 对应 window.initKanban()
+});
+
+// 禁用/启用入口
+FlowBoardSidebar.setItemEnabled('github', false);
+FlowBoardSidebar.setItemEnabled('github', true);
+
+// 删除入口（内置项会标记移除，自定义项会直接删除）
+FlowBoardSidebar.unregisterItem('leetcode');
+
+// 调整位置（分组 + 排序）
+FlowBoardSidebar.moveItem('calendar', { sectionId: 'core', order: 15 });
+
+// 重置为默认布局
+FlowBoardSidebar.resetLayout();
+```
+
+如需监听布局变化（例如做自定义设置面板）：
+
+```javascript
+const dispose = FlowBoardSidebar.onChange((payload) => {
+  console.log(payload.reason, payload.state);
+});
+
+// 取消监听
+dispose();
+```
 
 ### 与 Electron 主进程通信
 
