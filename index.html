@@ -127,7 +127,7 @@
                         <span class="stat-label">待办任务</span>
                     </div>
                 </div>
-                <div class="stat-card weather-card" id="weatherCard" title="点击刷新天气">
+                <div class="stat-card weather-card" id="weatherCard" title="单击自动定位，双击设置城市">
                     <div class="stat-icon icon-weather" id="weatherIcon">
                         <i class="fas fa-cloud-sun"></i>
                     </div>
@@ -883,28 +883,6 @@
                             </div>
                         </div>
                         
-                        <div class="settings-card">
-                            <h3><i class="fas fa-location-dot"></i> 天气定位</h3>
-                            <div class="weather-location-setting">
-                                <p class="weather-location-desc">
-                                    默认使用自动定位。若定位不准，可手动设置城市用于天气查询。
-                                </p>
-                                <div class="weather-location-controls">
-                                    <input type="text" id="weatherCityInput" placeholder="输入城市名称，例如：北京">
-                                    <div class="weather-location-actions">
-                                        <button class="btn-secondary" onclick="useAutoWeatherLocation()">
-                                            <i class="fas fa-location-crosshairs"></i> 自动定位
-                                        </button>
-                                        <button class="btn-primary" onclick="saveManualWeatherLocation()">
-                                            <i class="fas fa-save"></i> 保存城市
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="weather-location-status" id="weatherLocationStatus">
-                                    定位策略：自动定位
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -1355,6 +1333,34 @@
             <div class="modal-footer">
                 <button class="btn-secondary" onclick="closeProfileModal()">取消</button>
                 <button class="btn-primary" onclick="saveProfile()">
+                    <i class="fas fa-save"></i> 保存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 天气城市设置模态框 -->
+    <div class="modal" id="weatherCityModal">
+        <div class="modal-overlay" onclick="closeWeatherCityModal()"></div>
+        <div class="modal-content" style="max-width: 420px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-location-dot"></i> 设置天气城市</h3>
+                <button class="close-btn" onclick="closeWeatherCityModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>城市名称</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-city"></i>
+                        <input type="text" id="weatherCityModalInput" placeholder="例如：北京">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeWeatherCityModal()">取消</button>
+                <button class="btn-primary" onclick="saveWeatherCityFromModal()">
                     <i class="fas fa-save"></i> 保存
                 </button>
             </div>

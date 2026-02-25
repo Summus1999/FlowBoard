@@ -986,8 +986,6 @@ function initSettings() {
     // 初始化开机启动设置
     initAutoLaunchSettings();
     
-    // Initialize weather location preference settings
-    initWeatherLocationSettings();
 }
 
 // ========================================
@@ -1736,10 +1734,12 @@ console.log('FlowBoard 已加载完成 🚀');
 
 let weatherData = null;
 let currentLocation = null;
+let weatherCardClickTimer = null;
 const WEATHER_CACHE_KEY = 'weather_cache_v2';
 const WEATHER_PREFERENCE_KEY = 'weather_location_preference_v1';
 const WEATHER_CACHE_DURATION = 30 * 60 * 1000;
 const GPS_ACCURACY_THRESHOLD_METERS = 5000;
+const WEATHER_CARD_CLICK_DELAY = 260;
 const DEFAULT_WEATHER_LOCATION = {
     lat: 39.9042,
     lon: 116.4074,
@@ -1788,57 +1788,6 @@ function getWeatherPreference() {
 
 function setWeatherPreference(preference) {
     localStorage.setItem(WEATHER_PREFERENCE_KEY, JSON.stringify(preference));
-}
-
-function getLocationSourceLabel(source) {
-    const sourceLabels = {
-        manual: '手动城市',
-        gps: 'GPS',
-        'gps-low-accuracy': 'GPS(低精度)',
-        ip: 'IP',
-        default: '默认城市'
-    };
-    return sourceLabels[source] || '未知';
-}
-
-function updateWeatherLocationStatus() {
-    const statusEl = document.getElementById('weatherLocationStatus');
-    if (!statusEl) return;
-
-    const preference = getWeatherPreference();
-    const strategyText = preference.mode === 'manual'
-        ? `定位策略：手动城市（${preference.city || '未设置'}）`
-        : '定位策略：自动定位';
-
-    if (!currentLocation) {
-        statusEl.textContent = strategyText;
-        return;
-    }
-
-    const sourceLabel = getLocationSourceLabel(currentLocation.source);
-    const cityText = currentLocation.city ? `（${currentLocation.city}）` : '';
-    statusEl.textContent = `${strategyText} · 当前来源：${sourceLabel}${cityText}`;
-}
-
-function initWeatherLocationSettings() {
-    const cityInput = document.getElementById('weatherCityInput');
-    if (!cityInput) return;
-
-    const preference = getWeatherPreference();
-    if (preference.mode === 'manual' && preference.city) {
-        cityInput.value = preference.city;
-    } else {
-        cityInput.value = '';
-    }
-
-    cityInput.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            saveManualWeatherLocation();
-        }
-    });
-
-    updateWeatherLocationStatus();
 }
 
 function toFiniteNumber(value) {
@@ -1928,20 +1877,17 @@ async function geocodeCityLocation(cityName) {
     }
 }
 
-async function saveManualWeatherLocation() {
-    const cityInput = document.getElementById('weatherCityInput');
-    if (!cityInput) return;
-
-    const city = cityInput.value.trim();
+async function saveManualWeatherLocation(cityName) {
+    const city = (cityName || '').trim();
     if (!city) {
         showToast('请输入城市名称');
-        return;
+        return false;
     }
 
     const resolvedLocation = await geocodeCityLocation(city);
     if (!resolvedLocation) {
         showToast('未找到该城市，请检查城市名称');
-        return;
+        return false;
     }
 
     setWeatherPreference({
@@ -1953,31 +1899,90 @@ async function saveManualWeatherLocation() {
 
     clearWeatherCache();
     await getWeather(true);
-    updateWeatherLocationStatus();
     showToast(`天气定位已切换到 ${resolvedLocation.city}`);
+    return true;
 }
 
 async function useAutoWeatherLocation() {
-    const cityInput = document.getElementById('weatherCityInput');
-    if (cityInput) {
-        cityInput.value = '';
-    }
-
     setWeatherPreference({ mode: 'auto' });
     clearWeatherCache();
     await getWeather(true);
-    updateWeatherLocationStatus();
     showToast('已切换为自动定位');
+}
+
+function openWeatherCityModal() {
+    const modal = document.getElementById('weatherCityModal');
+    const input = document.getElementById('weatherCityModalInput');
+    if (!modal || !input) return;
+
+    const preference = getWeatherPreference();
+    if (preference.mode === 'manual' && preference.city) {
+        input.value = preference.city;
+    } else {
+        input.value = currentLocation?.city || '';
+    }
+
+    modal.classList.add('active');
+    setTimeout(() => {
+        input.focus();
+        input.select();
+    }, 10);
+}
+
+function closeWeatherCityModal() {
+    const modal = document.getElementById('weatherCityModal');
+    if (!modal) return;
+    modal.classList.remove('active');
+}
+
+async function saveWeatherCityFromModal() {
+    const input = document.getElementById('weatherCityModalInput');
+    if (!input) return;
+
+    const success = await saveManualWeatherLocation(input.value);
+    if (!success) return;
+    closeWeatherCityModal();
+}
+
+function bindWeatherCardInteraction(weatherCard) {
+    weatherCard.addEventListener('click', () => {
+        if (weatherCardClickTimer) {
+            clearTimeout(weatherCardClickTimer);
+        }
+
+        weatherCardClickTimer = setTimeout(() => {
+            weatherCardClickTimer = null;
+            void useAutoWeatherLocation();
+        }, WEATHER_CARD_CLICK_DELAY);
+    });
+
+    weatherCard.addEventListener('dblclick', () => {
+        if (weatherCardClickTimer) {
+            clearTimeout(weatherCardClickTimer);
+            weatherCardClickTimer = null;
+        }
+        openWeatherCityModal();
+    });
 }
 
 // 初始化天气
 function initWeather() {
     const weatherCard = document.getElementById('weatherCard');
     if (weatherCard) {
-        weatherCard.addEventListener('click', refreshWeather);
+        bindWeatherCardInteraction(weatherCard);
     }
 
-    updateWeatherLocationStatus();
+    const weatherCityModalInput = document.getElementById('weatherCityModalInput');
+    if (weatherCityModalInput && !weatherCityModalInput.dataset.bound) {
+        weatherCityModalInput.dataset.bound = '1';
+        weatherCityModalInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                void saveWeatherCityFromModal();
+            }
+        });
+    }
+
     getWeather();
 }
 
@@ -2207,8 +2212,6 @@ function updateWeatherUI() {
     if (iconEl) {
         iconEl.innerHTML = `<i class="fas ${weatherInfo.icon}" style="color: ${weatherInfo.color}"></i>`;
     }
-
-    updateWeatherLocationStatus();
 }
 
 // 更新加载状态
@@ -2240,7 +2243,6 @@ function updateWeatherError() {
     if (tempEl) tempEl.textContent = '--°';
     if (descEl) descEl.textContent = '获取失败';
     if (iconEl) iconEl.innerHTML = '<i class="fas fa-exclamation-circle" style="color: #ff6b6b"></i>';
-    updateWeatherLocationStatus();
 }
 
 // 刷新天气
