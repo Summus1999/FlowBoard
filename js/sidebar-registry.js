@@ -7,6 +7,7 @@
     const LAYOUT_VERSION = 1;
     const FALLBACK_ICON = 'fas fa-circle';
     const FALLBACK_SECTION_ID = 'tools';
+    const EDITABLE_SECTION_IDS = new Set([FALLBACK_SECTION_ID]);
 
     const defaultLayout = {
         sections: [
@@ -436,44 +437,131 @@
         return typeof hook === 'function' ? hook : null;
     }
 
-    function render(container, activePage = '') {
+    function render(container, activePage = '', options = {}) {
         if (!container) return;
 
+        const editingSectionId = typeof options.editingSectionId === 'string'
+            ? options.editingSectionId.trim()
+            : '';
         const sections = getSections();
-        const visibleItems = getItems({ includeDisabled: false });
-        const itemsBySection = new Map();
+        const allItems = getItems({ includeDisabled: true });
+        const visibleItems = allItems.filter((item) => item.enabled && !item.removed);
+        const visibleItemsBySection = new Map();
+        const allItemsBySection = new Map();
 
         visibleItems.forEach((item) => {
-            if (!itemsBySection.has(item.sectionId)) {
-                itemsBySection.set(item.sectionId, []);
+            if (!visibleItemsBySection.has(item.sectionId)) {
+                visibleItemsBySection.set(item.sectionId, []);
             }
-            itemsBySection.get(item.sectionId).push(item);
+            visibleItemsBySection.get(item.sectionId).push(item);
+        });
+
+        allItems.forEach((item) => {
+            if (!allItemsBySection.has(item.sectionId)) {
+                allItemsBySection.set(item.sectionId, []);
+            }
+            allItemsBySection.get(item.sectionId).push(item);
         });
 
         const html = sections
             .map((section) => {
-                const sectionItems = sortItems(itemsBySection.get(section.id) || []);
-                if (sectionItems.length === 0) return '';
+                const isSectionEditing = editingSectionId === section.id;
+                const isEditableSection = EDITABLE_SECTION_IDS.has(section.id);
+                const sectionItems = isSectionEditing
+                    ? sortItems(allItemsBySection.get(section.id) || [])
+                    : sortItems(visibleItemsBySection.get(section.id) || []);
 
-                const titleHtml = section.title
-                    ? `<p class="section-title">${escapeHtml(section.title)}</p>`
-                    : '';
+                if (sectionItems.length === 0 && !isSectionEditing) return '';
+
+                const titleHtml = section.title ? `
+                    <div class="section-title-row">
+                        <p class="section-title">${escapeHtml(section.title)}</p>
+                        ${isEditableSection ? `
+                            <button
+                                type="button"
+                                class="section-manage-btn ${isSectionEditing ? 'active' : ''}"
+                                data-section-id="${escapeHtml(section.id)}"
+                                title="${isSectionEditing ? '完成管理' : '管理栏目'}"
+                            >
+                                <i class="fas ${isSectionEditing ? 'fa-check' : 'fa-sliders-h'}"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                ` : '';
 
                 const itemsHtml = sectionItems
                     .map((item) => {
-                        const activeClass = item.page === activePage ? ' active' : '';
+                        const isEnabled = item.enabled && !item.removed;
+                        const activeClass = item.page === activePage && isEnabled ? ' active' : '';
+                        const disabledClass = isEnabled ? '' : ' is-disabled';
+                        const toggleTitle = isEnabled ? '隐藏此栏' : '显示此栏';
+                        const toggleIcon = isEnabled ? 'fa-eye-slash' : 'fa-eye';
+                        const deleteButtonHtml = item.source === 'custom'
+                            ? `
+                            <button
+                                type="button"
+                                class="nav-item-action-btn nav-item-delete-btn"
+                                data-page="${escapeHtml(item.page)}"
+                                title="删除该栏目"
+                            >
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            `
+                            : '';
+
                         return `
-                    <a href="#" class="nav-item${activeClass}" data-page="${escapeHtml(item.page)}">
+                    <a
+                        href="#"
+                        class="nav-item${activeClass}${disabledClass}"
+                        data-page="${escapeHtml(item.page)}"
+                        data-item-enabled="${isEnabled ? '1' : '0'}"
+                        data-item-source="${escapeHtml(item.source || 'builtin')}"
+                        aria-disabled="${isEnabled ? 'false' : 'true'}"
+                    >
                         <i class="${escapeHtml(item.icon)}"></i>
-                        <span>${escapeHtml(item.title)}</span>
+                        <span class="nav-item-label">${escapeHtml(item.title)}</span>
+                        ${isEditableSection ? `
+                        <span class="nav-item-manage-actions">
+                            <button
+                                type="button"
+                                class="nav-item-action-btn nav-item-toggle-btn"
+                                data-page="${escapeHtml(item.page)}"
+                                data-enabled="${isEnabled ? '1' : '0'}"
+                                title="${toggleTitle}"
+                            >
+                                <i class="fas ${toggleIcon}"></i>
+                            </button>
+                            ${deleteButtonHtml}
+                        </span>
+                        ` : ''}
                     </a>`;
                     })
                     .join('');
 
-                return `<div class="nav-section" data-section-id="${escapeHtml(section.id)}">${titleHtml}${itemsHtml}</div>`;
+                const addButtonHtml = isSectionEditing && isEditableSection
+                    ? `
+                    <button
+                        type="button"
+                        class="nav-add-item-btn"
+                        data-section-id="${escapeHtml(section.id)}"
+                    >
+                        <i class="fas fa-plus"></i>
+                        <span>新增栏目</span>
+                    </button>
+                    `
+                    : '';
+
+                return `
+                    <div class="nav-section ${isSectionEditing ? 'is-editing' : ''}" data-section-id="${escapeHtml(section.id)}">
+                        ${titleHtml}
+                        ${itemsHtml}
+                        ${addButtonHtml}
+                    </div>
+                `;
             })
             .join('');
 
+        container.dataset.editingSectionId = editingSectionId;
         container.innerHTML = html;
     }
 

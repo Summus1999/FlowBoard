@@ -363,6 +363,8 @@ function saveTodosToStorage() {
 let navItems = [];
 let pages = [];
 let removeSidebarChangeListener = null;
+let sidebarEditingSectionId = null;
+const SIDEBAR_ITEM_MODAL_ID = 'sidebarItemModal';
 const pageInitializerMap = {
     notes: 'initNotes',
     calendar: 'initCalendar',
@@ -416,9 +418,26 @@ function initNavigation() {
 
     if (window.FlowBoardSidebar && typeof window.FlowBoardSidebar.onChange === 'function' && !removeSidebarChangeListener) {
         removeSidebarChangeListener = window.FlowBoardSidebar.onChange(() => {
+            syncSidebarEditingState();
             renderNavigation(getCurrentActivePageName());
             bindNavigationEvents();
         });
+    }
+}
+
+function getSidebarApi() {
+    return window.FlowBoardSidebar && typeof window.FlowBoardSidebar === 'object'
+        ? window.FlowBoardSidebar
+        : null;
+}
+
+function syncSidebarEditingState() {
+    if (!sidebarEditingSectionId) return;
+    const sidebarApi = getSidebarApi();
+    if (!sidebarApi || typeof sidebarApi.getSections !== 'function') return;
+    const exists = sidebarApi.getSections().some((section) => section.id === sidebarEditingSectionId);
+    if (!exists) {
+        sidebarEditingSectionId = null;
     }
 }
 
@@ -427,10 +446,10 @@ function renderNavigation(activePage = 'dashboard') {
     if (!navContainer) return;
 
     if (window.FlowBoardSidebar && typeof window.FlowBoardSidebar.render === 'function') {
-        window.FlowBoardSidebar.render(navContainer, activePage);
+        window.FlowBoardSidebar.render(navContainer, activePage, { editingSectionId: sidebarEditingSectionId });
     }
 
-    navItems = Array.from(navContainer.querySelectorAll('.nav-item'));
+    navItems = Array.from(navContainer.querySelectorAll('.nav-item[data-page]'));
 }
 
 function bindNavigationEvents() {
@@ -440,8 +459,92 @@ function bindNavigationEvents() {
 
         item.addEventListener('click', (e) => {
             e.preventDefault();
+            if (item.dataset.itemEnabled === '0') {
+                showToast('该栏目已隐藏，可点击眼睛图标恢复');
+                return;
+            }
             const pageName = item.dataset.page;
             showPage(pageName);
+        });
+    });
+
+    bindSidebarManageEvents();
+}
+
+function bindSidebarManageEvents() {
+    const navContainer = document.querySelector('.sidebar-nav');
+    if (!navContainer) return;
+
+    const manageBtns = navContainer.querySelectorAll('.section-manage-btn');
+    manageBtns.forEach((btn) => {
+        if (btn.dataset.bound === '1') return;
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const sectionId = btn.dataset.sectionId;
+            sidebarEditingSectionId = sidebarEditingSectionId === sectionId ? null : sectionId;
+            renderNavigation(getCurrentActivePageName());
+            bindNavigationEvents();
+        });
+    });
+
+    const toggleBtns = navContainer.querySelectorAll('.nav-item-toggle-btn');
+    toggleBtns.forEach((btn) => {
+        if (btn.dataset.bound === '1') return;
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const sidebarApi = getSidebarApi();
+            if (!sidebarApi || typeof sidebarApi.setItemEnabled !== 'function') return;
+
+            const page = btn.dataset.page;
+            const isEnabled = btn.dataset.enabled === '1';
+            const updated = sidebarApi.setItemEnabled(page, !isEnabled);
+            if (!updated) return;
+
+            if (isEnabled && getCurrentActivePageName() === page) {
+                showPage('dashboard');
+            }
+            showToast(isEnabled ? `已隐藏「${page}」栏目` : `已显示「${page}」栏目`);
+        });
+    });
+
+    const deleteBtns = navContainer.querySelectorAll('.nav-item-delete-btn');
+    deleteBtns.forEach((btn) => {
+        if (btn.dataset.bound === '1') return;
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const sidebarApi = getSidebarApi();
+            if (!sidebarApi || typeof sidebarApi.unregisterItem !== 'function') return;
+
+            const page = btn.dataset.page;
+            if (!confirm('确定删除这个自定义栏目吗？')) return;
+
+            const removed = sidebarApi.unregisterItem(page);
+            if (!removed) return;
+
+            if (getCurrentActivePageName() === page) {
+                showPage('dashboard');
+            }
+            showToast(`已删除「${page}」栏目`);
+        });
+    });
+
+    const addBtns = navContainer.querySelectorAll('.nav-add-item-btn');
+    addBtns.forEach((btn) => {
+        if (btn.dataset.bound === '1') return;
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const sectionId = btn.dataset.sectionId || 'tools';
+            openSidebarItemModal(sectionId);
         });
     });
 }
@@ -481,6 +584,173 @@ function runPageInitializer(pageName) {
     }, 100);
 }
 
+function normalizeSidebarPageKey(rawValue) {
+    return String(rawValue || '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9_-]/g, '');
+}
+
+function getNextSidebarItemOrder(sectionId) {
+    const sidebarApi = getSidebarApi();
+    if (!sidebarApi || typeof sidebarApi.getItems !== 'function') return 100;
+
+    const items = sidebarApi
+        .getItems({ includeDisabled: true })
+        .filter((item) => item.sectionId === sectionId);
+    const maxOrder = items.reduce((max, item) => Math.max(max, Number(item.order) || 0), 0);
+    return maxOrder + 10;
+}
+
+function ensureSidebarItemModal() {
+    let modal = document.getElementById(SIDEBAR_ITEM_MODAL_ID);
+    if (modal) return modal;
+
+    modal = document.createElement('div');
+    modal.id = SIDEBAR_ITEM_MODAL_ID;
+    modal.className = 'modal sidebar-item-modal';
+    modal.innerHTML = `
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-puzzle-piece"></i> 新增工具栏目</h3>
+                <button class="close-btn" type="button">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="sidebar-item-modal-tip">
+                    支持快速增删工具栏目。若页面不存在，可填写“进入时函数”作为动作入口。
+                </p>
+                <div class="form-group">
+                    <label for="sidebarItemTitleInput">栏目名称</label>
+                    <input type="text" id="sidebarItemTitleInput" placeholder="例如：知识库">
+                </div>
+                <div class="form-group">
+                    <label for="sidebarItemPageInput">页面标识（唯一）</label>
+                    <input type="text" id="sidebarItemPageInput" list="sidebarPageSuggestionList" placeholder="例如：github">
+                    <datalist id="sidebarPageSuggestionList"></datalist>
+                    <small class="sidebar-item-hint">若存在 page-xxx 页面会自动跳转。</small>
+                </div>
+                <div class="form-group">
+                    <label for="sidebarItemIconInput">图标 class</label>
+                    <input type="text" id="sidebarItemIconInput" value="fas fa-puzzle-piece" placeholder="例如：fas fa-book">
+                </div>
+                <div class="form-group">
+                    <label for="sidebarItemOnEnterInput">进入时函数（可选）</label>
+                    <input type="text" id="sidebarItemOnEnterInput" placeholder="例如：initKnowledgeBase">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" type="button" id="sidebarItemCancelBtn">取消</button>
+                <button class="btn-primary" type="button" id="sidebarItemSaveBtn">保存</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const closeFn = () => closeSidebarItemModal();
+    modal.querySelector('.modal-overlay')?.addEventListener('click', closeFn);
+    modal.querySelector('.close-btn')?.addEventListener('click', closeFn);
+    modal.querySelector('#sidebarItemCancelBtn')?.addEventListener('click', closeFn);
+    modal.querySelector('#sidebarItemSaveBtn')?.addEventListener('click', saveSidebarItemFromModal);
+    modal.querySelector('#sidebarItemPageInput')?.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            saveSidebarItemFromModal();
+        }
+    });
+
+    return modal;
+}
+
+function refreshSidebarPageSuggestionList() {
+    const listEl = document.getElementById('sidebarPageSuggestionList');
+    if (!listEl) return;
+
+    const pageIds = Array.from(document.querySelectorAll('.page[id^="page-"]'))
+        .map((page) => page.id.replace('page-', ''))
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, 'zh-CN'));
+
+    listEl.innerHTML = pageIds.map((pageId) => `<option value="${pageId}"></option>`).join('');
+}
+
+function openSidebarItemModal(sectionId = 'tools') {
+    const modal = ensureSidebarItemModal();
+    modal.dataset.sectionId = sectionId;
+
+    const titleInput = document.getElementById('sidebarItemTitleInput');
+    const pageInput = document.getElementById('sidebarItemPageInput');
+    const iconInput = document.getElementById('sidebarItemIconInput');
+    const onEnterInput = document.getElementById('sidebarItemOnEnterInput');
+
+    if (titleInput) titleInput.value = '';
+    if (pageInput) pageInput.value = '';
+    if (iconInput) iconInput.value = 'fas fa-puzzle-piece';
+    if (onEnterInput) onEnterInput.value = '';
+
+    refreshSidebarPageSuggestionList();
+    modal.classList.add('active');
+    setTimeout(() => titleInput?.focus(), 20);
+}
+
+function closeSidebarItemModal() {
+    const modal = document.getElementById(SIDEBAR_ITEM_MODAL_ID);
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+function saveSidebarItemFromModal() {
+    const sidebarApi = getSidebarApi();
+    if (!sidebarApi || typeof sidebarApi.getItem !== 'function') return;
+
+    const modal = document.getElementById(SIDEBAR_ITEM_MODAL_ID);
+    const sectionId = modal?.dataset.sectionId || 'tools';
+    const title = document.getElementById('sidebarItemTitleInput')?.value.trim() || '';
+    const rawPage = document.getElementById('sidebarItemPageInput')?.value || '';
+    const page = normalizeSidebarPageKey(rawPage);
+    const icon = document.getElementById('sidebarItemIconInput')?.value.trim() || 'fas fa-puzzle-piece';
+    const onEnter = document.getElementById('sidebarItemOnEnterInput')?.value.trim() || '';
+
+    if (!title) {
+        showToast('请输入栏目名称');
+        return;
+    }
+    if (!page) {
+        showToast('请输入合法的页面标识（英文/数字/连字符）');
+        return;
+    }
+
+    const existing = sidebarApi.getItem(page);
+    const payload = {
+        title,
+        icon,
+        sectionId,
+        onEnter,
+        enabled: true,
+        removed: false
+    };
+
+    if (existing && typeof sidebarApi.updateItem === 'function') {
+        sidebarApi.updateItem(page, payload);
+        showToast(`已更新栏目：${title}`);
+    } else if (typeof sidebarApi.registerItem === 'function') {
+        sidebarApi.registerItem({
+            page,
+            order: getNextSidebarItemOrder(sectionId),
+            source: 'custom',
+            ...payload
+        });
+        showToast(`已新增栏目：${title}`);
+    }
+
+    closeSidebarItemModal();
+}
+
 function showPage(pageName) {
     const targetPage = document.getElementById(`page-${pageName}`);
     if (!targetPage) {
@@ -498,7 +768,7 @@ function showPage(pageName) {
     targetPage.classList.add('active');
     
     // 更新导航状态
-    navItems = Array.from(document.querySelectorAll('.sidebar-nav .nav-item'));
+    navItems = Array.from(document.querySelectorAll('.sidebar-nav .nav-item[data-page]'));
     navItems.forEach(nav => {
         nav.classList.remove('active');
         if (nav.dataset.page === pageName) {
@@ -1311,8 +1581,15 @@ function showToast(message) {
 // 快捷键支持
 document.addEventListener('keydown', (e) => {
     // ESC关闭模态框
-    if (e.key === 'Escape' && modal.classList.contains('active')) {
-        closeAddPasswordModal();
+    if (e.key === 'Escape') {
+        const sidebarModal = document.getElementById(SIDEBAR_ITEM_MODAL_ID);
+        if (sidebarModal?.classList.contains('active')) {
+            closeSidebarItemModal();
+            return;
+        }
+        if (modal.classList.contains('active')) {
+            closeAddPasswordModal();
+        }
     }
     
     // Ctrl/Cmd + K 搜索
