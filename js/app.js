@@ -2579,7 +2579,7 @@ function initVersion() {
     if (versionEl) {
         // 从 package.json 获取版本号（Electron 环境）
         // 或者使用硬编码版本号
-        let version = 'v1.1.0';
+        let version = 'v2.0.1';
         
         // 尝试从 localStorage 获取版本（如果有保存）
         const storedVersion = localStorage.getItem('app_version');
@@ -2597,7 +2597,7 @@ function initVersion() {
 // 显示版本信息
 function showVersionInfo() {
     const versionInfo = {
-        version: 'v1.1.0',
+        version: 'v2.0.1',
         buildDate: '2026-02-23',
         electron: window.isElectron ? '已启用' : '未启用',
         platform: navigator.platform,
