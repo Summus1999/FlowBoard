@@ -5,6 +5,7 @@
   "main": "electron/main.js",
   "homepage": "./",
   "scripts": {
+    "bootstrap:deps": "node scripts/ensure-node-deps.js",
     "start": "electron .",
     "dev": "set NODE_ENV=development && electron .",
     "build": "electron-builder",

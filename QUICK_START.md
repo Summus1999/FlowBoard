@@ -48,12 +48,12 @@ npm run dev
 
 ### 先决条件
 
-确保已安装 Node.js (>= 16.x)
+确保已安装 Node.js (>= 20.x)
 
 ### 1. 安装依赖
 
 ```bash
-npm install
+npm run bootstrap:deps
 ```
 
 ### 2. 开发模式运行
@@ -137,7 +137,7 @@ node scripts/generate-icons.js
 
 ### 启动时白屏？
 
-- 检查是否正确安装了依赖：`npm install`
+- 检查是否正确安装了依赖：`npm run bootstrap:deps`
 - 尝试删除 `node_modules` 后重新安装
 
 ### 如何调试？
