@@ -1,16 +1,20 @@
 """
-配置管理模块
-支持环境变量和.env文件配置
+Configuration module
+Supports environment variables and .env files
 """
 
 from functools import lru_cache
+from pathlib import Path
 from typing import List, Optional
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Default data directory: ai_service/local_data/
+_DEFAULT_DATA_DIR = str(Path(__file__).resolve().parent.parent.parent / "local_data")
+
 
 class Settings(BaseSettings):
-    """应用配置类"""
+    """Application settings"""
     
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -19,78 +23,75 @@ class Settings(BaseSettings):
         extra="ignore"
     )
     
-    # 应用基础配置
+    # App
     APP_NAME: str = "FlowBoard AI Service"
-    APP_VERSION: str = "0.1.0"
-    DEBUG: bool = Field(default=False, description="调试模式")
-    ENV: str = Field(default="development", description="运行环境")
+    APP_VERSION: str = "0.2.0"
+    DEBUG: bool = Field(default=False, description="Debug mode")
+    ENV: str = Field(default="development", description="Runtime environment")
     
-    # API配置
+    # API
     API_PREFIX: str = "/api/v1"
     API_HOST: str = "0.0.0.0"
     API_PORT: int = 8000
     
-    # CORS配置
+    # CORS
     CORS_ORIGINS: List[str] = Field(
-        default=["http://localhost:3000", "http://127.0.0.1:3000"],
-        description="允许的CORS源"
+        default=["*"],
+        description="Allowed CORS origins"
     )
     
-    # 数据库配置
-    DATABASE_URL: str = Field(
-        default="postgresql://postgres:postgres@localhost:5432/flowboard_ai",
-        description="PostgreSQL连接字符串"
-    )
-    DATABASE_POOL_SIZE: int = 20
-    DATABASE_MAX_OVERFLOW: int = 10
+    # Local data directory (SQLite DB + ChromaDB persistence)
+    DATA_DIR: str = Field(default=_DEFAULT_DATA_DIR, description="Local data directory")
     
-    # pgvector配置
+    # Database (SQLite)
+    DATABASE_URL: Optional[str] = Field(
+        default=None,
+        description="SQLite connection string; auto-derived from DATA_DIR if not set"
+    )
+    
+    # ChromaDB (embedded vector store)
+    CHROMA_PERSIST_DIR: Optional[str] = Field(
+        default=None,
+        description="ChromaDB persistence directory; auto-derived from DATA_DIR if not set"
+    )
     VECTOR_DIMENSION: int = 1024
     
-    # Redis配置
-    REDIS_URL: str = Field(
-        default="redis://localhost:6379/0",
-        description="Redis连接字符串"
-    )
-    REDIS_PASSWORD: Optional[str] = None
-    
-    # LangSmith配置
+    # LangSmith (optional)
     LANGSMITH_API_KEY: Optional[str] = None
     LANGSMITH_PROJECT: str = "flowboard-ai"
     LANGSMITH_ENDPOINT: str = "https://api.smith.langchain.com"
-    LANGSMITH_TRACING: bool = True
+    LANGSMITH_TRACING: bool = False
     
-    # 模型网关配置
-    # Qwen配置
+    # Model gateway - Qwen
     QWEN_API_KEY: Optional[str] = None
     QWEN_BASE_URL: str = "https://dashscope.aliyuncs.com/api/v1"
     QWEN_DEFAULT_MODEL: str = "qwen-max"
     QWEN_EMBEDDING_MODEL: str = "text-embedding-v3"
     
-    # Kimi配置
+    # Model gateway - Kimi
     KIMI_API_KEY: Optional[str] = None
     KIMI_BASE_URL: str = "https://api.moonshot.cn/v1"
     KIMI_DEFAULT_MODEL: str = "moonshot-v1-8k"
     
-    # GLM配置
+    # Model gateway - GLM
     GLM_API_KEY: Optional[str] = None
     GLM_BASE_URL: str = "https://open.bigmodel.cn/api/paas/v4"
     GLM_DEFAULT_MODEL: str = "glm-4-flash"
     
-    # 默认模型路由
-    DEFAULT_MODEL_PROVIDER: str = "qwen"  # qwen, kimi, glm
+    # Model routing
+    DEFAULT_MODEL_PROVIDER: str = "qwen"
     FALLBACK_MODEL_PROVIDER: str = "kimi"
     
-    # 模型成本配置（用于预算控制）
+    # Budget
     MONTHLY_BUDGET_RMB: float = 150.0
-    COST_WARNING_THRESHOLD: float = 0.8  # 80%预算时发出警告
+    COST_WARNING_THRESHOLD: float = 0.8
     
-    # 性能配置
+    # Performance
     REQUEST_TIMEOUT: int = 60
     STREAM_CHUNK_SIZE: int = 64
     MAX_RETRIES: int = 3
     
-    # RAG配置
+    # RAG
     RAG_CHUNK_SIZE: int = 500
     RAG_CHUNK_OVERLAP: int = 100
     RAG_TOP_K: int = 8
@@ -99,17 +100,17 @@ class Settings(BaseSettings):
     RAG_RETRIEVAL_TIMEOUT_MS: int = 1800
     RAG_DEGRADE_ON_TIMEOUT: bool = True
     
-    # 文档目录配置
+    # Docs
     DOCS_BASE_PATH: str = "./docs"
-    INDEX_VERSION_RETENTION: int = 5  # 保留的索引版本数
+    INDEX_VERSION_RETENTION: int = 5
     
-    # 安全配置
-    SECRET_KEY: str = Field(default="change-me-in-production", description="用于签名等")
-    API_TOKEN: Optional[str] = Field(default=None, description="Bearer token for remote access; if empty, only localhost is allowed")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7天
+    # Security
+    SECRET_KEY: str = Field(default="change-me-in-production")
+    API_TOKEN: Optional[str] = Field(default=None, description="Bearer token for remote access")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7
     SECURITY_SOURCE_WHITELIST: List[str] = Field(default_factory=list)
 
-    # Idempotency配置
+    # Idempotency
     IDEMPOTENCY_TTL_SECONDS: int = 24 * 60 * 60
     IDEMPOTENCY_ENFORCE_POST: bool = True
     IDEMPOTENCY_EXEMPT_POST_PATHS: List[str] = Field(
@@ -126,7 +127,7 @@ class Settings(BaseSettings):
         ]
     )
 
-    # Prompt和评测配置
+    # Prompt and evaluation
     PROMPT_REGISTRY_PATH: str = "data/prompt_versions.json"
     EVAL_REPORT_DIR: str = "data/eval_reports"
 
@@ -150,20 +151,30 @@ class Settings(BaseSettings):
     def PORT(self) -> int:
         return self.API_PORT
     
+    def get_data_dir(self) -> str:
+        p = Path(self.DATA_DIR)
+        p.mkdir(parents=True, exist_ok=True)
+        return str(p)
+    
     def get_database_url(self) -> str:
-        """获取数据库连接URL"""
-        return self.DATABASE_URL
+        if self.DATABASE_URL:
+            return self.DATABASE_URL
+        return f"sqlite:///{Path(self.get_data_dir()) / 'flowboard.db'}"
     
     def get_async_database_url(self) -> str:
-        """获取异步数据库连接URL"""
-        return self.DATABASE_URL.replace(
-            "postgresql://", "postgresql+asyncpg://"
-        )
+        url = self.get_database_url()
+        return url.replace("sqlite:///", "sqlite+aiosqlite:///")
+    
+    def get_chroma_persist_dir(self) -> str:
+        if self.CHROMA_PERSIST_DIR:
+            return self.CHROMA_PERSIST_DIR
+        p = Path(self.get_data_dir()) / "chroma"
+        p.mkdir(parents=True, exist_ok=True)
+        return str(p)
 
 
 @lru_cache()
 def get_settings() -> Settings:
-    """获取配置单例"""
     return Settings()
 
 

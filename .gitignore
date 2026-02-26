@@ -30,6 +30,9 @@ logs/
 .env
 .env.local
 
+# AI service local data (SQLite DB + ChromaDB)
+ai_service/local_data/
+
 # 测试覆盖率
 coverage/
 

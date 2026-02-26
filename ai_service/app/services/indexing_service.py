@@ -225,15 +225,20 @@ class IndexingService:
                 # 失败时使用零向量
                 embeddings = [[0.0] * 1024] * len(batch)
             
-            # 创建chunk记录
+            # Create chunk records in SQLite + store embeddings in ChromaDB
+            from app.services import vector_store
+
+            chunk_ids = []
+            chunk_embeddings = []
+            chunk_documents = []
+
             for j, (chunk, embedding) in enumerate(zip(batch, embeddings)):
+                chunk_id = str(uuid4())
                 db_chunk = RAGChunk(
-                    id=str(uuid4()),
+                    id=chunk_id,
                     doc_version_id=version_id,
                     chunk_index=chunk.chunk_index,
                     content=chunk.content,
-                    embedding=embedding,
-                    tsv=None,  # PostgreSQL将自动处理
                     lang=self._detect_language(chunk.content),
                     token_count=chunk.token_count,
                     quality_score=chunk.quality_score,
@@ -243,9 +248,20 @@ class IndexingService:
                     position_end=chunk.position_end,
                 )
                 db.add(db_chunk)
-            
-            # 每批次提交
+
+                chunk_ids.append(chunk_id)
+                chunk_embeddings.append(embedding)
+                chunk_documents.append(chunk.content)
+
             await db.flush()
+
+            # Upsert embeddings into ChromaDB
+            if chunk_ids and chunk_embeddings:
+                vector_store.upsert_embeddings(
+                    ids=chunk_ids,
+                    embeddings=chunk_embeddings,
+                    documents=chunk_documents,
+                )
     
     def _detect_language(self, text: str) -> str:
         """检测文本语言"""

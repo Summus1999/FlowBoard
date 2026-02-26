@@ -5,9 +5,8 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import String, Text, ForeignKey, DateTime, Index
+from sqlalchemy import String, Text, ForeignKey, DateTime, Index, JSON
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.dialects.postgresql import JSONB
 
 from app.models.base import Base
 
@@ -28,13 +27,13 @@ class ShortTermMemory(Base):
     conversation_summary: Mapped[str] = mapped_column(Text, nullable=True)
     
     # 关键约束和上下文
-    key_constraints: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)
+    key_constraints: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
     
     # 窗口大小（轮数）
     window_size: Mapped[int] = mapped_column(default=10)
     
     # 过期时间
-    expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(), nullable=True)
     
     __table_args__ = (
         Index("idx_st_memory_session", "session_id"),
@@ -50,7 +49,7 @@ class LongTermMemory(Base):
     user_id: Mapped[str] = mapped_column(String(36), nullable=False, unique=True)
     
     # 用户目标偏好
-    goal_preferences: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    goal_preferences: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
     # 语言风格偏好
     language_style: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
@@ -59,10 +58,10 @@ class LongTermMemory(Base):
     learning_pace: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     
     # 领域兴趣
-    topic_interests: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)
+    topic_interests: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
     
     # 其他用户画像
-    user_profile: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    user_profile: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
     # 最后更新来源会话
     last_updated_from_session: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)

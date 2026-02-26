@@ -21,7 +21,7 @@ from app.services.model_gateway import (
 
 logger = get_logger(__name__)
 
-router = APIRouter(prefix="/config", tags=["config"])
+router = APIRouter(tags=["config"])
 
 
 class ProviderConfig(BaseModel):

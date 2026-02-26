@@ -13,12 +13,13 @@ langchain-openai==0.2.0
 langgraph==0.2.0
 langsmith==0.1.0
 
-# Database
+# Database (SQLite + async)
 sqlalchemy==2.0.36
 alembic==1.14.0
-psycopg2-binary==2.9.10
-pgvector==0.3.0
-redis==5.2.0
+aiosqlite==0.20.0
+
+# Vector Store (embedded, no server needed)
+chromadb==0.5.23
 
 # Document Processing
 pypdf==5.1.0
@@ -27,13 +28,6 @@ markdown==3.7.0
 python-magic==0.4.27
 chardet==5.2.0
 pyyaml==6.0.2
-
-# Async database
-asyncpg==0.30.0
-aiosqlite==0.20.0
-
-# Audio Processing (optional)
-# whisper-openai==20231117
 
 # HTTP Client
 httpx==0.27.0
@@ -45,12 +39,12 @@ tenacity==9.0.0
 structlog==24.4.0
 orjson==3.10.0
 uuid7==0.1.0
+openai==1.58.1
 
 # Testing
 pytest==8.3.0
 pytest-asyncio==0.24.0
 pytest-cov==6.0.0
-httpx==0.27.0
 
 # Development
 black==24.10.0

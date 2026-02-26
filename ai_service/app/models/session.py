@@ -6,9 +6,8 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
-from sqlalchemy import String, Text, ForeignKey, Integer, Boolean, DateTime, Index
+from sqlalchemy import String, Text, ForeignKey, Integer, Boolean, DateTime, Index, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import JSONB, UUID
 
 from app.models.base import Base
 
@@ -40,7 +39,7 @@ class Session(Base):
         default=SessionStatus.ACTIVE.value,
         nullable=False,
     )
-    context: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    context: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
     # 关系
     messages: Mapped[List["Message"]] = relationship(
@@ -69,7 +68,7 @@ class Message(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     
     # 工具调用相关
-    tool_calls: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)
+    tool_calls: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
     tool_call_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     
     # Token统计
@@ -78,7 +77,7 @@ class Message(Base):
     total_tokens: Mapped[int] = mapped_column(Integer, default=0)
     
     # 元数据
-    meta_info: Mapped[Optional[dict]] = mapped_column("metadata", JSONB, nullable=True)
+    meta_info: Mapped[Optional[dict]] = mapped_column("metadata", JSON, nullable=True)
     
     # 关系
     session: Mapped["Session"] = relationship("Session", back_populates="messages")

@@ -6,9 +6,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional, List
 
-from sqlalchemy import String, Text, ForeignKey, Integer, Boolean, DateTime, Index
+from sqlalchemy import String, Text, ForeignKey, Integer, Boolean, DateTime, Index, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import JSONB
 
 from app.models.base import Base
 
@@ -45,10 +44,10 @@ class Plan(Base):
     
     # 目标信息
     goal: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    target_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    target_date: Mapped[Optional[datetime]] = mapped_column(DateTime(), nullable=True)
     
     # 关联领域/标签
-    tags: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)
+    tags: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
     
     # 关系
     versions: Mapped[List["PlanVersion"]] = relationship(
@@ -86,14 +85,14 @@ class PlanVersion(Base):
     
     # 内容
     content_md: Mapped[str] = mapped_column(Text, nullable=False)
-    content_json: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    content_json: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
     # 变更摘要
     change_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
     # 确认状态
     confirmed_by_user: Mapped[bool] = mapped_column(Boolean, default=False)
-    confirmed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    confirmed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(), nullable=True)
     
     # 创建信息
     created_by_agent: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
@@ -107,11 +106,12 @@ class PlanVersion(Base):
 
 
 class TaskStatus(str, Enum):
-    """任务状态"""
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     BLOCKED = "blocked"
+    PAUSED = "paused"
     COMPLETED = "completed"
+    FAILED = "failed"
     CANCELLED = "cancelled"
 
 
@@ -141,11 +141,11 @@ class Task(Base):
     priority: Mapped[int] = mapped_column(Integer, default=1)
     
     # 时间安排
-    scheduled_start: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    scheduled_end: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    scheduled_start: Mapped[Optional[datetime]] = mapped_column(DateTime(), nullable=True)
+    scheduled_end: Mapped[Optional[datetime]] = mapped_column(DateTime(), nullable=True)
     
     # 实际完成时间
-    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(), nullable=True)
     
     # 父任务（支持层级）
     parent_id: Mapped[Optional[str]] = mapped_column(
@@ -161,7 +161,7 @@ class Task(Base):
     todo_id: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
     
     # 额外元数据
-    meta_info: Mapped[Optional[dict]] = mapped_column("metadata", JSONB, nullable=True)
+    meta_info: Mapped[Optional[dict]] = mapped_column("metadata", JSON, nullable=True)
     
     # 关系
     plan: Mapped["Plan"] = relationship("Plan", back_populates="tasks")

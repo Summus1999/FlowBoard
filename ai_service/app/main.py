@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
-from app.core.database import engine, Base
+from app.core.database import create_tables_async, init_db
 from app.core.exceptions import AIErrorCode, AIException
 from app.core.request_context import normalize_request_id, normalize_trace_id
 from app.api.middleware import RequestContextMiddleware, IdempotencyMiddleware
@@ -34,10 +34,9 @@ async def lifespan(app: FastAPI):
     # 启动时
     logger.info("application.starting")
     
-    # 创建数据库表
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    
+    # Initialize database and create tables
+    init_db()
+    await create_tables_async()
     logger.info("database.initialized")
     
     # 初始化模型网关
