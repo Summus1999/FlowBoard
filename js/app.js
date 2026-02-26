@@ -130,6 +130,43 @@ let passwordData = [
     }
 ];
 
+const DEFAULT_PASSWORD_DATA = passwordData.map((item) => ({ ...item }));
+const PASSWORD_STORAGE_KEY = 'flowboard_passwords_v1';
+const UI_SETTINGS_STORAGE_KEY = 'flowboard_ui_settings_v1';
+const DEFAULT_UI_SETTINGS = {
+    glassEnabled: true,
+    animationEnabled: true,
+    borderRadius: 12
+};
+const PASSWORD_CATEGORY_VISUALS = {
+    social: { icon: 'fas fa-share-alt', color: 'linear-gradient(135deg, #07C160, #05a350)' },
+    work: { icon: 'fas fa-briefcase', color: 'linear-gradient(135deg, #1677FF, #0958d9)' },
+    finance: { icon: 'fas fa-credit-card', color: 'linear-gradient(135deg, #FF5000, #e64800)' },
+    entertainment: { icon: 'fas fa-gamepad', color: 'linear-gradient(135deg, #FB7299, #e5678e)' }
+};
+const FEATURED_NEWS_THEME_MAP = {
+    ai: {
+        base: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        overlay: 'linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.9) 50%, rgba(102, 126, 234, 0.8) 100%)'
+    },
+    tech: {
+        base: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+        overlay: 'linear-gradient(135deg, rgba(17, 153, 142, 0.82) 0%, rgba(56, 239, 125, 0.9) 50%, rgba(17, 153, 142, 0.82) 100%)'
+    },
+    finance: {
+        base: 'linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)',
+        overlay: 'linear-gradient(135deg, rgba(255, 153, 102, 0.82) 0%, rgba(255, 94, 98, 0.9) 50%, rgba(255, 153, 102, 0.82) 100%)'
+    },
+    entertainment: {
+        base: 'linear-gradient(135deg, #f857a6 0%, #ff5858 100%)',
+        overlay: 'linear-gradient(135deg, rgba(248, 87, 166, 0.82) 0%, rgba(255, 88, 88, 0.9) 50%, rgba(248, 87, 166, 0.82) 100%)'
+    },
+    social: {
+        base: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+        overlay: 'linear-gradient(135deg, rgba(79, 172, 254, 0.82) 0%, rgba(0, 242, 254, 0.9) 50%, rgba(79, 172, 254, 0.82) 100%)'
+    }
+};
+
 // 资讯默认数据（兜底）
 const defaultNewsData = [
     {
@@ -356,6 +393,138 @@ function saveTodosToStorage() {
     }
 }
 
+function getPasswordCategoryVisual(category) {
+    return PASSWORD_CATEGORY_VISUALS[category] || {
+        icon: 'fas fa-lock',
+        color: 'linear-gradient(135deg, #667eea, #764ba2)'
+    };
+}
+
+function normalizePasswordRecord(item, index = 0) {
+    if (!item || typeof item !== 'object') return null;
+
+    const idNum = Number(item.id);
+    const id = Number.isInteger(idNum) && idNum > 0 ? idNum : index + 1;
+    const platform = String(item.platform || '').trim();
+    const username = String(item.username || '').trim();
+    const password = String(item.password || '').trim();
+    const category = ['social', 'work', 'finance', 'entertainment'].includes(item.category)
+        ? item.category
+        : 'social';
+    const strength = ['weak', 'medium', 'strong'].includes(item.strength)
+        ? item.strength
+        : checkPasswordStrength(password);
+    const visual = getPasswordCategoryVisual(category);
+
+    if (!platform || !username || !password) return null;
+
+    return {
+        id,
+        platform,
+        username,
+        password,
+        category,
+        icon: visual.icon,
+        color: visual.color,
+        strength
+    };
+}
+
+function savePasswordsToStorage() {
+    try {
+        localStorage.setItem(PASSWORD_STORAGE_KEY, JSON.stringify(passwordData));
+    } catch (error) {
+        console.error('保存账户数据失败:', error);
+    }
+}
+
+function loadPasswordsFromStorage() {
+    try {
+        const raw = localStorage.getItem(PASSWORD_STORAGE_KEY);
+        if (!raw) {
+            passwordData = DEFAULT_PASSWORD_DATA.map((item) => ({ ...item }));
+            savePasswordsToStorage();
+            return;
+        }
+
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) {
+            throw new Error('账户数据格式错误');
+        }
+
+        const normalized = parsed
+            .map((item, index) => normalizePasswordRecord(item, index))
+            .filter(Boolean);
+
+        passwordData = normalized.length > 0
+            ? normalized
+            : DEFAULT_PASSWORD_DATA.map((item) => ({ ...item }));
+        savePasswordsToStorage();
+    } catch (error) {
+        console.error('加载账户数据失败:', error);
+        passwordData = DEFAULT_PASSWORD_DATA.map((item) => ({ ...item }));
+        savePasswordsToStorage();
+    }
+}
+
+function normalizeUiSettings(payload) {
+    const source = payload && typeof payload === 'object' ? payload : {};
+    const radius = Number(source.borderRadius);
+    return {
+        glassEnabled: source.glassEnabled !== false,
+        animationEnabled: source.animationEnabled !== false,
+        borderRadius: Number.isFinite(radius)
+            ? Math.max(0, Math.min(20, Math.round(radius)))
+            : DEFAULT_UI_SETTINGS.borderRadius
+    };
+}
+
+function loadUiSettings() {
+    try {
+        const raw = localStorage.getItem(UI_SETTINGS_STORAGE_KEY);
+        if (!raw) return { ...DEFAULT_UI_SETTINGS };
+        return normalizeUiSettings(JSON.parse(raw));
+    } catch (_error) {
+        return { ...DEFAULT_UI_SETTINGS };
+    }
+}
+
+function saveUiSettings(settings) {
+    localStorage.setItem(UI_SETTINGS_STORAGE_KEY, JSON.stringify(normalizeUiSettings(settings)));
+}
+
+function applyUiSettings(settings, syncControls = true) {
+    const normalized = normalizeUiSettings(settings);
+    const blur = normalized.glassEnabled ? 'blur(20px)' : 'none';
+    const transition = normalized.animationEnabled ? 'all 0.3s ease' : 'none';
+    const radius = `${normalized.borderRadius}px`;
+
+    document.documentElement.style.setProperty('--glass-blur', blur);
+    document.documentElement.style.setProperty('--transition', transition);
+    document.documentElement.style.setProperty('--border-radius', radius);
+
+    if (!syncControls) return normalized;
+
+    const toggleGlass = document.getElementById('toggleGlass');
+    const toggleAnim = document.getElementById('toggleAnim');
+    const radiusRange = document.getElementById('radiusRange');
+    if (toggleGlass) {
+        toggleGlass.checked = normalized.glassEnabled;
+    }
+    if (toggleAnim) {
+        toggleAnim.checked = normalized.animationEnabled;
+    }
+    if (radiusRange) {
+        radiusRange.value = String(normalized.borderRadius);
+        const valueEl = radiusRange.parentElement?.querySelector('.range-value');
+        if (valueEl) {
+            valueEl.textContent = `${normalized.borderRadius}px`;
+        }
+    }
+
+    return normalized;
+}
+
 // ========================================
 // DOM 元素
 // ========================================
@@ -387,6 +556,7 @@ const modal = document.getElementById('addPasswordModal');
 
 document.addEventListener('DOMContentLoaded', () => {
     initNavigation();
+    loadPasswordsFromStorage();
     renderPasswordCards();
     updatePasswordCount();
     renderPasswordPreview();
@@ -799,37 +969,37 @@ function showPage(pageName) {
 
 function renderPasswordCards(category = 'all') {
     if (!passwordCards) return;
-    
-    const filtered = category === 'all' 
-        ? passwordData 
+
+    const filtered = category === 'all'
+        ? passwordData
         : passwordData.filter(p => p.category === category);
-    
+
     passwordCards.innerHTML = filtered.map(item => `
         <div class="password-card">
             <div class="pwd-card-header">
-                <div class="pwd-card-icon" style="background: ${item.color}">
-                    <i class="${item.icon}"></i>
+                <div class="pwd-card-icon" style="background: ${getPasswordCategoryVisual(item.category).color}">
+                    <i class="${getPasswordCategoryVisual(item.category).icon}"></i>
                 </div>
                 <div class="pwd-card-title">
-                    <h4>${item.platform}</h4>
+                    <h4>${escapeHtml(item.platform)}</h4>
                     <span>${getCategoryName(item.category)}</span>
                 </div>
             </div>
             <div class="pwd-card-body">
                 <div class="pwd-field">
                     <i class="fas fa-user"></i>
-                    <input type="text" value="${item.username}" readonly>
-                    <button onclick="copyToClipboard('${item.username}')">
+                    <input type="text" value="${escapeHtml(item.username)}" readonly>
+                    <button type="button" class="pwd-copy-btn" data-copy-type="username" data-id="${item.id}">
                         <i class="fas fa-copy"></i>
                     </button>
                 </div>
                 <div class="pwd-field">
                     <i class="fas fa-lock"></i>
-                    <input type="password" value="${item.password}" readonly id="pwd-${item.id}">
-                    <button onclick="togglePasswordVisibility(${item.id})">
+                    <input type="password" value="${escapeHtml(item.password)}" readonly id="pwd-${item.id}">
+                    <button type="button" class="pwd-toggle-btn" data-id="${item.id}">
                         <i class="fas fa-eye" id="eye-${item.id}"></i>
                     </button>
-                    <button onclick="copyToClipboard('password${item.id}')">
+                    <button type="button" class="pwd-copy-btn" data-copy-type="password" data-id="${item.id}">
                         <i class="fas fa-copy"></i>
                     </button>
                 </div>
@@ -840,16 +1010,61 @@ function renderPasswordCards(category = 'all') {
                     <span>${getStrengthText(item.strength)}</span>
                 </div>
                 <div class="pwd-actions">
-                    <button class="pwd-action-btn" onclick="editPassword(${item.id})">
+                    <button class="pwd-action-btn" type="button" data-action="edit" data-id="${item.id}">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="pwd-action-btn" onclick="deletePassword(${item.id})">
+                    <button class="pwd-action-btn" type="button" data-action="delete" data-id="${item.id}">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
             </div>
         </div>
     `).join('');
+
+    bindPasswordCardEvents();
+}
+
+function bindPasswordCardEvents() {
+    if (!passwordCards) return;
+
+    passwordCards.querySelectorAll('.pwd-copy-btn[data-id]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const id = Number(button.dataset.id);
+            const type = button.dataset.copyType === 'password' ? 'password' : 'username';
+            copyPasswordField(id, type);
+        });
+    });
+
+    passwordCards.querySelectorAll('.pwd-toggle-btn[data-id]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const id = Number(button.dataset.id);
+            togglePasswordVisibility(id);
+        });
+    });
+
+    passwordCards.querySelectorAll('.pwd-action-btn[data-action][data-id]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const id = Number(button.dataset.id);
+            if (button.dataset.action === 'edit') {
+                editPassword(id);
+                return;
+            }
+            if (button.dataset.action === 'delete') {
+                deletePassword(id);
+            }
+        });
+    });
+}
+
+function copyPasswordField(id, type) {
+    const item = passwordData.find((record) => record.id === id);
+    if (!item) {
+        showToast('账户不存在');
+        return;
+    }
+
+    const value = type === 'password' ? item.password : item.username;
+    void copyToClipboard(value);
 }
 
 function getCategoryName(category) {
@@ -893,7 +1108,8 @@ function initCategoryFilter() {
 function togglePasswordVisibility(id) {
     const input = document.getElementById(`pwd-${id}`);
     const eye = document.getElementById(`eye-${id}`);
-    
+    if (!input || !eye) return;
+
     if (input.type === 'password') {
         input.type = 'text';
         eye.classList.remove('fa-eye');
@@ -905,9 +1121,63 @@ function togglePasswordVisibility(id) {
     }
 }
 
-function copyToClipboard(text) {
-    // 模拟复制功能
-    showToast('已复制到剪贴板');
+function fallbackCopyToClipboard(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.setAttribute('readonly', 'readonly');
+    textArea.style.position = 'fixed';
+    textArea.style.top = '-9999px';
+    textArea.style.opacity = '0';
+    document.body.appendChild(textArea);
+    textArea.select();
+
+    let copied = false;
+    try {
+        copied = document.execCommand('copy');
+    } catch (_error) {
+        copied = false;
+    }
+
+    document.body.removeChild(textArea);
+    return copied;
+}
+
+async function copyToClipboard(text) {
+    const payload = String(text ?? '');
+    if (!payload) {
+        showToast('复制内容为空');
+        return false;
+    }
+
+    try {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            await navigator.clipboard.writeText(payload);
+            showToast('已复制到剪贴板');
+            return true;
+        }
+    } catch (_error) {
+        // no-op
+    }
+
+    if (window.electronAPI && typeof window.electronAPI.writeClipboardText === 'function') {
+        try {
+            const result = await window.electronAPI.writeClipboardText(payload);
+            if (result?.success) {
+                showToast('已复制到剪贴板');
+                return true;
+            }
+        } catch (_error) {
+            // no-op
+        }
+    }
+
+    if (fallbackCopyToClipboard(payload)) {
+        showToast('已复制到剪贴板');
+        return true;
+    }
+
+    showToast('复制失败，请手动复制');
+    return false;
 }
 
 // 当前编辑的密码 ID
@@ -951,6 +1221,7 @@ function deletePassword(id) {
         const index = passwordData.findIndex(p => p.id === id);
         if (index > -1) {
             passwordData.splice(index, 1);
+            savePasswordsToStorage();
             renderPasswordCards();
             updatePasswordCount();
             renderPasswordPreview();
@@ -974,21 +1245,44 @@ function updatePasswordCount() {
 function renderPasswordPreview() {
     const previewList = document.getElementById('passwordPreviewList');
     if (!previewList) return;
-    
-    // 取前3个密码显示
+
     const previewData = passwordData.slice(0, 3);
-    
-    previewList.innerHTML = previewData.map(item => `
-        <div class="pwd-item">
-            <div class="pwd-icon" style="background: ${item.color}">
-                <i class="${item.icon}"></i>
-            </div>
-            <div class="pwd-info">
-                <span class="pwd-name">${item.platform}</span>
-                <span class="pwd-strength ${item.strength}">${getStrengthText(item.strength).replace('密码', '')}</span>
-            </div>
-        </div>
-    `).join('');
+    previewList.innerHTML = '';
+
+    const fragment = document.createDocumentFragment();
+    previewData.forEach((item) => {
+        const visual = getPasswordCategoryVisual(item.category);
+
+        const row = document.createElement('div');
+        row.className = 'pwd-item';
+
+        const iconWrap = document.createElement('div');
+        iconWrap.className = 'pwd-icon';
+        iconWrap.style.background = visual.color;
+
+        const icon = document.createElement('i');
+        icon.className = visual.icon;
+        iconWrap.appendChild(icon);
+
+        const info = document.createElement('div');
+        info.className = 'pwd-info';
+
+        const name = document.createElement('span');
+        name.className = 'pwd-name';
+        name.textContent = item.platform;
+
+        const strength = document.createElement('span');
+        strength.className = `pwd-strength ${item.strength}`;
+        strength.textContent = getStrengthText(item.strength).replace('密码', '');
+
+        info.appendChild(name);
+        info.appendChild(strength);
+        row.appendChild(iconWrap);
+        row.appendChild(info);
+        fragment.appendChild(row);
+    });
+
+    previewList.appendChild(fragment);
 }
 
 // ========================================
@@ -999,6 +1293,15 @@ function renderNewsList() {
     if (!newsList) return;
     filterNews(getActiveNewsFilter());
 }
+
+const NEWS_ALLOWED_CATEGORIES = new Set(['ai', 'tech', 'finance', 'entertainment', 'social']);
+const NEWS_CATEGORY_KEYWORDS = [
+    { category: 'ai', keywords: ['ai', '大模型', '模型', '智能体', 'gpt', 'llm', 'copilot', 'chatgpt'] },
+    { category: 'finance', keywords: ['财经', '金融', '股票', '基金', '货币', '比特币', '加息'] },
+    { category: 'entertainment', keywords: ['娱乐', '电影', '影视', '综艺', '明星', '票房', '演唱会'] },
+    { category: 'social', keywords: ['社会', '教育', '医疗', '政策', '就业', '民生', '世界', '国际'] },
+    { category: 'tech', keywords: ['科技', '芯片', '软件', '硬件', '系统', '开发'] }
+];
 
 function formatHot(hot) {
     if (hot >= 10000) {
@@ -1044,19 +1347,62 @@ function formatNewsUpdateTime(isoString) {
     return `${year}-${month}-${day} ${hours}:${minutes}`;
 }
 
+function normalizeNewsCategory(category) {
+    const normalized = typeof category === 'string' ? category.trim().toLowerCase() : '';
+    return NEWS_ALLOWED_CATEGORIES.has(normalized) ? normalized : '';
+}
+
+function inferNewsCategoryForUI(item) {
+    const title = String(item?.title || '').toLowerCase();
+    const source = String(item?.source || '').toLowerCase();
+    const text = `${title} ${source}`;
+
+    for (const rule of NEWS_CATEGORY_KEYWORDS) {
+        if (rule.keywords.some((keyword) => text.includes(keyword.toLowerCase()))) {
+            return rule.category;
+        }
+    }
+
+    return normalizeNewsCategory(item?.category) || 'tech';
+}
+
+function resolveNewsCategory(item) {
+    return normalizeNewsCategory(item?.normalizedCategory) || inferNewsCategoryForUI(item);
+}
+
+function normalizeHttpUrl(url) {
+    if (typeof url !== 'string') return '';
+    const trimmed = url.trim();
+    if (!trimmed) return '';
+
+    try {
+        const parsed = new URL(trimmed);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+            return '';
+        }
+        return parsed.toString();
+    } catch (_error) {
+        return '';
+    }
+}
+
 function normalizeNewsItemsForUI(items) {
     return items.map((item) => {
         const hot = Number.isFinite(Number(item.hot)) ? Number(item.hot) : 10000;
         const publishedAt = item.publishedAt || null;
         const fallbackTime = typeof item.time === 'string' ? item.time : '刚刚';
+        const category = inferNewsCategoryForUI(item);
+        const url = normalizeHttpUrl(item.url || '');
+
         return {
             id: item.id || `${item.source || 'news'}-${item.url || item.title || Date.now()}`,
             title: item.title || '未命名资讯',
             source: item.source || '未知来源',
             time: formatNewsRelativeTime(publishedAt, fallbackTime),
-            category: item.category || 'tech',
+            category,
+            normalizedCategory: category,
             hot,
-            url: item.url || '',
+            url,
             publishedAt
         };
     }).filter((item) => item.url && item.title);
@@ -1068,19 +1414,56 @@ function getActiveNewsFilter() {
 }
 
 function renderNewsItems(listEl, items) {
-    listEl.innerHTML = items.map((item, index) => `
-        <div class="news-item-simple" onclick="openNewsUrl('${item.url}')">
-            <span class="news-rank ${index < 3 ? 'top' : ''}">${index + 1}</span>
-            <div class="news-simple-content">
-                <h4 class="news-simple-title">${item.title}</h4>
-                <div class="news-simple-meta">
-                    <span class="news-source">${item.source}</span>
-                    <span class="news-time">${item.time}</span>
-                    <span class="news-hot"><i class="fas fa-fire"></i> ${formatHot(item.hot)}</span>
-                </div>
-            </div>
-        </div>
-    `).join('');
+    listEl.innerHTML = '';
+    const fragment = document.createDocumentFragment();
+
+    items.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'news-item-simple';
+        row.addEventListener('click', () => {
+            openNewsUrl(item.url);
+        });
+
+        const rank = document.createElement('span');
+        rank.className = `news-rank ${index < 3 ? 'top' : ''}`;
+        rank.textContent = String(index + 1);
+
+        const content = document.createElement('div');
+        content.className = 'news-simple-content';
+
+        const title = document.createElement('h4');
+        title.className = 'news-simple-title';
+        title.textContent = item.title;
+
+        const meta = document.createElement('div');
+        meta.className = 'news-simple-meta';
+
+        const source = document.createElement('span');
+        source.className = 'news-source';
+        source.textContent = item.source;
+
+        const time = document.createElement('span');
+        time.className = 'news-time';
+        time.textContent = item.time;
+
+        const hot = document.createElement('span');
+        hot.className = 'news-hot';
+        const hotIcon = document.createElement('i');
+        hotIcon.className = 'fas fa-fire';
+        hot.appendChild(hotIcon);
+        hot.appendChild(document.createTextNode(` ${formatHot(item.hot)}`));
+
+        meta.appendChild(source);
+        meta.appendChild(time);
+        meta.appendChild(hot);
+        content.appendChild(title);
+        content.appendChild(meta);
+        row.appendChild(rank);
+        row.appendChild(content);
+        fragment.appendChild(row);
+    });
+
+    listEl.appendChild(fragment);
 }
 
 function updateNewsSyncStatus(snapshot = null, fallbackMessage = '') {
@@ -1125,7 +1508,7 @@ function applyNewsSnapshot(snapshot) {
     if (incomingItems.length > 0) {
         newsData = incomingItems;
     } else if (newsData.length === 0) {
-        newsData = [...defaultNewsData];
+        newsData = normalizeNewsItemsForUI(defaultNewsData);
     }
 
     featuredNewsItem = newsData[0] || null;
@@ -1201,15 +1584,15 @@ function initTabSwitcher() {
 function filterNews(category) {
     const listEl = document.getElementById('newsList');
     if (!listEl) return;
-    
+
+    const normalizedFilter = normalizeNewsCategory(category);
     let filtered = newsData;
-    if (category && category !== 'all') {
-        filtered = newsData.filter(item => item.category === category);
+    if (normalizedFilter) {
+        filtered = newsData.filter(item => resolveNewsCategory(item) === normalizedFilter);
     }
-    
-    // 显示前8条
+
     const displayData = filtered.slice(0, 8);
-    
+
     if (displayData.length === 0) {
         listEl.innerHTML = `
             <div class="news-empty">
@@ -1224,10 +1607,16 @@ function filterNews(category) {
 }
 
 function openNewsUrl(url) {
+    const safeUrl = normalizeHttpUrl(url);
+    if (!safeUrl) {
+        showToast('链接无效，已阻止打开');
+        return;
+    }
+
     if (window.electronAPI && window.electronAPI.openExternal) {
-        window.electronAPI.openExternal(url);
+        window.electronAPI.openExternal(safeUrl);
     } else {
-        window.open(url, '_blank');
+        window.open(safeUrl, '_blank');
     }
 }
 
@@ -1272,37 +1661,39 @@ function applyTheme(themeName) {
 // ========================================
 
 function initSettings() {
-    // 毛玻璃效果开关
     const toggleGlass = document.getElementById('toggleGlass');
-    if (toggleGlass) {
-        toggleGlass.addEventListener('change', (e) => {
-            const blur = e.target.checked ? 'blur(20px)' : 'none';
-            document.documentElement.style.setProperty('--glass-blur', blur);
-        });
-    }
-    
-    // 动画效果开关
     const toggleAnim = document.getElementById('toggleAnim');
-    if (toggleAnim) {
-        toggleAnim.addEventListener('change', (e) => {
-            const transition = e.target.checked ? 'all 0.3s ease' : 'none';
-            document.documentElement.style.setProperty('--transition', transition);
-        });
-    }
-    
-    // 圆角大小调节
     const radiusRange = document.getElementById('radiusRange');
-    if (radiusRange) {
-        radiusRange.addEventListener('input', (e) => {
-            const radius = e.target.value + 'px';
-            document.documentElement.style.setProperty('--border-radius', radius);
-            e.target.nextElementSibling.textContent = radius;
+    const applyAndPersist = (partial) => {
+        const next = normalizeUiSettings({
+            ...loadUiSettings(),
+            ...partial
+        });
+        saveUiSettings(next);
+        applyUiSettings(next);
+    };
+
+    applyUiSettings(loadUiSettings(), true);
+
+    if (toggleGlass) {
+        toggleGlass.addEventListener('change', (event) => {
+            applyAndPersist({ glassEnabled: event.target.checked });
         });
     }
-    
-    // 初始化开机启动设置
+
+    if (toggleAnim) {
+        toggleAnim.addEventListener('change', (event) => {
+            applyAndPersist({ animationEnabled: event.target.checked });
+        });
+    }
+
+    if (radiusRange) {
+        radiusRange.addEventListener('input', (event) => {
+            applyAndPersist({ borderRadius: Number(event.target.value) });
+        });
+    }
+
     initAutoLaunchSettings();
-    
 }
 
 // ========================================
@@ -1312,7 +1703,6 @@ function initSettings() {
 async function initAutoLaunchSettings() {
     // 检查是否在Electron环境中
     if (!window.electronAPI || !window.electronAPI.getAutoLaunchStatus) {
-        console.log('非Electron环境，跳过开机启动设置');
         disableAutoLaunchSettings('仅在桌面应用中可用');
         return;
     }
@@ -1320,7 +1710,6 @@ async function initAutoLaunchSettings() {
     // 获取开机启动状态
     try {
         const status = await window.electronAPI.getAutoLaunchStatus();
-        console.log('开机启动状态:', status);
         
         if (status.success) {
             const toggleAutoLaunch = document.getElementById('toggleAutoLaunch');
@@ -1435,6 +1824,7 @@ function savePassword() {
     
     // 计算密码强度
     const strength = checkPasswordStrength(password);
+    const visual = getPasswordCategoryVisual(category);
     
     if (editingPasswordId) {
         // 编辑模式
@@ -1446,6 +1836,8 @@ function savePassword() {
                 username,
                 password,
                 category,
+                icon: visual.icon,
+                color: visual.color,
                 strength
             };
             showToast('账户已更新');
@@ -1453,31 +1845,21 @@ function savePassword() {
     } else {
         // 添加模式
         const newId = Math.max(...passwordData.map(p => p.id), 0) + 1;
-        const iconMap = {
-            social: 'fas fa-share-alt',
-            work: 'fas fa-briefcase',
-            finance: 'fas fa-credit-card',
-            entertainment: 'fas fa-gamepad'
-        };
-        const colorMap = {
-            social: 'linear-gradient(135deg, #07C160, #05a350)',
-            work: 'linear-gradient(135deg, #1677FF, #0958d9)',
-            finance: 'linear-gradient(135deg, #FF5000, #e64800)',
-            entertainment: 'linear-gradient(135deg, #FB7299, #e5678e)'
-        };
-        
+
         passwordData.push({
             id: newId,
             platform,
             username,
             password,
             category,
-            icon: iconMap[category] || 'fas fa-lock',
-            color: colorMap[category] || 'linear-gradient(135deg, #667eea, #764ba2)',
+            icon: visual.icon,
+            color: visual.color,
             strength
         });
         showToast('账户添加成功');
     }
+
+    savePasswordsToStorage();
     
     // 刷新显示
     renderPasswordCards();
@@ -1696,9 +2078,24 @@ function getNewsCategoryLabel(category) {
     return labelMap[category] || '头条';
 }
 
+function applyFeaturedNewsTheme(category) {
+    const normalizedCategory = normalizeNewsCategory(category) || 'ai';
+    const theme = FEATURED_NEWS_THEME_MAP[normalizedCategory] || FEATURED_NEWS_THEME_MAP.ai;
+    const backgroundEl = document.getElementById('featuredNewsGradientBg');
+    const overlayEl = document.getElementById('featuredNewsGradientLayer');
+
+    if (backgroundEl) {
+        backgroundEl.style.background = theme.base;
+    }
+    if (overlayEl) {
+        overlayEl.style.background = theme.overlay;
+    }
+}
+
 function updateFeaturedNews() {
     const item = featuredNewsItem || newsData[0];
     if (!item) return;
+    const category = resolveNewsCategory(item);
 
     const titleEl = document.getElementById('featuredNewsTitle');
     const tagEl = document.getElementById('featuredNewsTag');
@@ -1708,21 +2105,18 @@ function updateFeaturedNews() {
         titleEl.textContent = item.title;
     }
     if (tagEl) {
-        tagEl.textContent = getNewsCategoryLabel(item.category);
+        tagEl.textContent = getNewsCategoryLabel(category);
     }
     if (metaEl) {
         metaEl.textContent = `${item.time || '刚刚'} · ${item.source || '未知来源'}`;
     }
+    applyFeaturedNewsTheme(category);
 }
 
 function openFeaturedNews() {
     const fallback = defaultNewsData[0]?.url || 'https://www.thepaper.cn/';
     const url = featuredNewsItem?.url || newsData[0]?.url || fallback;
-    if (window.electronAPI && window.electronAPI.openExternal) {
-        window.electronAPI.openExternal(url);
-    } else {
-        window.open(url, '_blank');
-    }
+    openNewsUrl(url);
 }
 
 function initNewsClickHandler() {
@@ -1733,12 +2127,7 @@ function initNewsClickHandler() {
         item.addEventListener('click', () => {
             const news = newsData[index];
             if (news && news.url) {
-                // 在默认浏览器中打开链接
-                if (window.electronAPI && window.electronAPI.openExternal) {
-                    window.electronAPI.openExternal(news.url);
-                } else {
-                    window.open(news.url, '_blank');
-                }
+                openNewsUrl(news.url);
             } else {
                 showToast('暂无该新闻的链接');
             }
@@ -1752,11 +2141,7 @@ function initNewsClickHandler() {
         item.addEventListener('click', () => {
             const news = newsData[index];
             if (news && news.url) {
-                if (window.electronAPI && window.electronAPI.openExternal) {
-                    window.electronAPI.openExternal(news.url);
-                } else {
-                    window.open(news.url, '_blank');
-                }
+                openNewsUrl(news.url);
             }
         });
     });
@@ -1771,6 +2156,21 @@ function initTodoList() {
     renderTodoList();
     renderDashboardTodoList();
     updateTaskCount();
+}
+
+function getTagClass(tag) {
+    switch (tag) {
+        case '紧急':
+            return 'urgent';
+        case '重要':
+            return 'important';
+        case '一般':
+            return 'normal';
+        case '日常':
+            return 'daily';
+        default:
+            return '';
+    }
 }
 
 function renderTodoList() {
@@ -1919,17 +2319,7 @@ function updateTaskCount() {
 function renderDashboardTodoList() {
     const todoList = document.getElementById('dashboardTodoList');
     if (!todoList) return;
-    
-    const getTagClass = (tag) => {
-        switch(tag) {
-            case '紧急': return 'urgent';
-            case '重要': return 'important';
-            case '一般': return 'normal';
-            case '日常': return 'daily';
-            default: return '';
-        }
-    };
-    
+
     todoList.innerHTML = todoData.map(todo => `
         <div class="todo-item">
             <input type="checkbox" class="todo-check" id="todo${todo.id}" ${todo.completed ? 'checked' : ''} onchange="toggleDashboardTodo(${todo.id})">
@@ -2139,15 +2529,22 @@ const weatherCodeMap = {
     51: { desc: '毛毛雨', icon: 'fa-cloud-rain', color: '#4682B4' },
     53: { desc: '小雨', icon: 'fa-cloud-rain', color: '#4682B4' },
     55: { desc: '中雨', icon: 'fa-cloud-rain', color: '#4682B4' },
+    56: { desc: '冻毛毛雨', icon: 'fa-cloud-meatball', color: '#5f9ea0' },
+    57: { desc: '强冻毛毛雨', icon: 'fa-cloud-meatball', color: '#4682b4' },
     61: { desc: '小雨', icon: 'fa-cloud-rain', color: '#4682B4' },
     63: { desc: '中雨', icon: 'fa-cloud-showers-heavy', color: '#4169E1' },
     65: { desc: '大雨', icon: 'fa-cloud-showers-heavy', color: '#4169E1' },
+    66: { desc: '冻雨', icon: 'fa-cloud-meatball', color: '#5f9ea0' },
+    67: { desc: '强冻雨', icon: 'fa-cloud-meatball', color: '#3f729b' },
     71: { desc: '小雪', icon: 'fa-snowflake', color: '#87CEFA' },
     73: { desc: '中雪', icon: 'fa-snowflake', color: '#87CEFA' },
     75: { desc: '大雪', icon: 'fa-snowflake', color: '#87CEFA' },
+    77: { desc: '雪粒', icon: 'fa-snowflake', color: '#9ecae1' },
     80: { desc: '阵雨', icon: 'fa-cloud-showers-heavy', color: '#4169E1' },
     81: { desc: '强阵雨', icon: 'fa-cloud-showers-heavy', color: '#4169E1' },
     82: { desc: '暴雨', icon: 'fa-cloud-showers-heavy', color: '#0000CD' },
+    85: { desc: '阵雪', icon: 'fa-snowflake', color: '#87cefa' },
+    86: { desc: '强阵雪', icon: 'fa-snowflake', color: '#5dade2' },
     95: { desc: '雷雨', icon: 'fa-bolt', color: '#FFD700' },
     96: { desc: '雷阵雨', icon: 'fa-bolt', color: '#FFD700' },
     99: { desc: '强雷雨', icon: 'fa-bolt', color: '#FFD700' }
