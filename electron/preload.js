@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     
     // 外部链接
     openExternal: (url) => ipcRenderer.send('open-external', url),
+    writeClipboardText: (text) => ipcRenderer.invoke('write-clipboard-text', text),
     
     // 数据存储
     saveData: (filename, data) => ipcRenderer.invoke('save-data', filename, data),

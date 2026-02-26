@@ -3,7 +3,7 @@
  * 支持 macOS 和 Windows 双平台
  */
 
-const { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage, dialog, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage, dialog, shell, clipboard } = require('electron');
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
@@ -17,6 +17,7 @@ let newsUpdateTimer = null;
 
 // 判断是否为开发环境
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+const ALLOW_INSECURE_WEB_SECURITY_ENV = 'FLOWBOARD_ALLOW_INSECURE_WEB_SECURITY';
 
 const NEWS_CACHE_VERSION = 1;
 const NEWS_CACHE_FILE = 'news-cache-v1.json';
@@ -54,6 +55,18 @@ const NEWS_FEED_SOURCES = [
         name: 'CoinDesk',
         category: 'finance',
         url: 'https://www.coindesk.com/arc/outboundfeeds/rss/'
+    },
+    {
+        id: 'bbc-entertainment',
+        name: 'BBC Entertainment',
+        category: 'entertainment',
+        url: 'https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml'
+    },
+    {
+        id: 'bbc-world',
+        name: 'BBC World',
+        category: 'social',
+        url: 'https://feeds.bbci.co.uk/news/world/rss.xml'
     }
 ];
 const xmlParser = new XMLParser({
@@ -141,6 +154,49 @@ function normalizeUrl(rawUrl) {
     return rawUrl.trim().replace(/\/+$/, '');
 }
 
+const NEWS_ALLOWED_CATEGORIES = new Set(['ai', 'tech', 'finance', 'entertainment', 'social']);
+const NEWS_CATEGORY_RULES = [
+    {
+        category: 'ai',
+        keywords: ['ai', '大模型', '模型', '智能体', 'machine learning', 'llm', 'copilot', 'chatgpt', 'gpt']
+    },
+    {
+        category: 'finance',
+        keywords: ['财经', '金融', '股票', '基金', '债券', '货币', '加息', '美联储', '比特币', 'btc', 'eth']
+    },
+    {
+        category: 'entertainment',
+        keywords: ['娱乐', '电影', '影视', '综艺', '音乐', '明星', '演唱会', '票房', 'game', 'gaming']
+    },
+    {
+        category: 'social',
+        keywords: ['社会', '民生', '教育', '医疗', '政策', '就业', 'world', 'global', '国际', '民众']
+    },
+    {
+        category: 'tech',
+        keywords: ['科技', '芯片', '系统', '开发', '软件', '硬件', '程序', 'computer', 'tech']
+    }
+];
+
+function normalizeNewsCategory(category) {
+    const normalized = typeof category === 'string' ? category.trim().toLowerCase() : '';
+    if (!normalized) return '';
+    return NEWS_ALLOWED_CATEGORIES.has(normalized) ? normalized : '';
+}
+
+function inferNewsCategory(rawCategory, title, source) {
+    const normalizedInput = normalizeNewsCategory(rawCategory);
+    const lookupText = `${toText(title).toLowerCase()} ${toText(source).toLowerCase()}`;
+
+    for (const rule of NEWS_CATEGORY_RULES) {
+        if (rule.keywords.some((keyword) => lookupText.includes(keyword.toLowerCase()))) {
+            return rule.category;
+        }
+    }
+
+    return normalizedInput || 'tech';
+}
+
 function computeHotScore(publishedAt) {
     const timestamp = Date.parse(publishedAt);
     if (!Number.isFinite(timestamp)) return 10000;
@@ -164,7 +220,7 @@ function normalizeNewsItem(item) {
     if (!title || !url) return null;
 
     const source = toText(item.source) || '未知来源';
-    const category = toText(item.category) || 'tech';
+    const category = inferNewsCategory(item.category, title, source);
     const publishedAt = safeDateToIso(item.publishedAt) || new Date().toISOString();
     const hot = Number.isFinite(Number(item.hot)) ? Number(item.hot) : computeHotScore(publishedAt);
     const id = toText(item.id) || createNewsId(source, url, title);
@@ -362,7 +418,7 @@ function buildNewsItem(source, feedItem) {
         title,
         source: source.name,
         time: '',
-        category: source.category,
+        category: inferNewsCategory(source.category, title, source.name),
         hot: computeHotScore(publishedAt),
         url,
         publishedAt
@@ -523,6 +579,10 @@ function stopNewsUpdater() {
     }
 }
 
+function shouldDisableWebSecurity() {
+    return isDev && process.env[ALLOW_INSECURE_WEB_SECURITY_ENV] === '1';
+}
+
 // 创建主窗口
 function createMainWindow() {
     const config = readConfig();
@@ -540,7 +600,7 @@ function createMainWindow() {
             contextIsolation: true,
             enableRemoteModule: false,
             preload: path.join(__dirname, 'preload.js'),
-            webSecurity: false // 开发环境禁用，生产环境视情况而定
+            webSecurity: !shouldDisableWebSecurity()
         },
         titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
         // macOS 隐藏标题栏
@@ -734,6 +794,49 @@ function setApplicationMenu() {
     }
 }
 
+const ALLOWED_EXTERNAL_PROTOCOLS = new Set(['http:', 'https:']);
+const SAFE_STORAGE_FILENAME = /^[a-zA-Z0-9._-]{1,120}$/;
+
+function normalizeExternalUrl(rawUrl) {
+    if (typeof rawUrl !== 'string') return '';
+    const trimmed = rawUrl.trim();
+    if (!trimmed) return '';
+
+    try {
+        const parsed = new URL(trimmed);
+        if (!ALLOWED_EXTERNAL_PROTOCOLS.has(parsed.protocol)) {
+            return '';
+        }
+        return parsed.toString();
+    } catch (_error) {
+        return '';
+    }
+}
+
+function sanitizeStorageFilename(filename) {
+    if (typeof filename !== 'string') {
+        throw new Error('文件名无效');
+    }
+
+    const normalized = filename.trim();
+    if (!SAFE_STORAGE_FILENAME.test(normalized)) {
+        throw new Error('文件名包含非法字符');
+    }
+    if (normalized.includes('..')) {
+        throw new Error('文件名不允许包含路径跳转');
+    }
+    if (path.basename(normalized) !== normalized) {
+        throw new Error('文件名不允许包含路径分隔符');
+    }
+
+    return normalized;
+}
+
+function resolveSafeDataPath(filename) {
+    const safeName = sanitizeStorageFilename(filename);
+    return path.join(app.getPath('userData'), safeName);
+}
+
 // ====================
 // IPC 通信处理
 // ====================
@@ -775,13 +878,21 @@ ipcMain.on('window-close', () => {
 
 // 打开外部链接
 ipcMain.on('open-external', (event, url) => {
-    shell.openExternal(url);
+    const safeUrl = normalizeExternalUrl(url);
+    if (!safeUrl) {
+        console.warn('拒绝打开非法外链:', url);
+        return;
+    }
+
+    void shell.openExternal(safeUrl).catch((error) => {
+        console.error('打开外部链接失败:', error);
+    });
 });
 
 // 保存数据到本地文件
 ipcMain.handle('save-data', async (event, filename, data) => {
     try {
-        const dataPath = path.join(app.getPath('userData'), filename);
+        const dataPath = resolveSafeDataPath(filename);
         fs.writeFileSync(dataPath, JSON.stringify(data, null, 2));
         return { success: true };
     } catch (error) {
@@ -792,7 +903,7 @@ ipcMain.handle('save-data', async (event, filename, data) => {
 // 从本地文件读取数据
 ipcMain.handle('load-data', async (event, filename) => {
     try {
-        const dataPath = path.join(app.getPath('userData'), filename);
+        const dataPath = resolveSafeDataPath(filename);
         if (fs.existsSync(dataPath)) {
             const data = fs.readFileSync(dataPath, 'utf8');
             return { success: true, data: JSON.parse(data) };
@@ -801,6 +912,15 @@ ipcMain.handle('load-data', async (event, filename) => {
     } catch (error) {
         return { success: false, error: error.message };
     }
+});
+
+ipcMain.handle('write-clipboard-text', async (_event, text) => {
+    if (typeof text !== 'string') {
+        return { success: false, error: '复制内容必须为字符串' };
+    }
+
+    clipboard.writeText(text);
+    return { success: true };
 });
 
 ipcMain.handle('news-get-snapshot', async () => {
@@ -890,7 +1010,7 @@ ipcMain.handle('get-auto-launch-status', async () => {
 // 应用中心 - 启动本地应用
 // ====================
 
-const { exec, spawn } = require('child_process');
+const { spawn } = require('child_process');
 
 // 检查文件是否存在
 function fileExists(filePath) {
@@ -904,68 +1024,242 @@ function fileExists(filePath) {
 
 // 查找可执行文件
 function findExecutable(paths) {
-    for (const path of paths) {
-        if (path && fileExists(path)) {
-            return path;
+    if (!Array.isArray(paths)) return null;
+
+    for (const candidate of paths) {
+        const normalizedPath = typeof candidate === 'string' ? candidate.trim() : '';
+        if (isSafeExecutablePath(normalizedPath)) {
+            return normalizedPath;
         }
     }
     return null;
 }
 
+function isSafeExecutablePath(exePath) {
+    if (typeof exePath !== 'string') return false;
+    const normalizedPath = exePath.trim();
+    if (!normalizedPath || normalizedPath.includes('\0')) return false;
+    if (!path.isAbsolute(normalizedPath)) return false;
+    if (!fileExists(normalizedPath)) return false;
+
+    try {
+        const stat = fs.statSync(normalizedPath);
+        if (stat.isFile()) return true;
+        return process.platform === 'darwin' && stat.isDirectory() && normalizedPath.toLowerCase().endsWith('.app');
+    } catch {
+        return false;
+    }
+}
+
+const LEGACY_COMMAND_META_PATTERN = /(?:\|\||&&|[|;&<>`$()])/;
+
+function parseLegacyCommand(rawCommand) {
+    const command = typeof rawCommand === 'string' ? rawCommand.trim() : '';
+    if (!command) {
+        return { tokens: [], error: 'legacy command is empty' };
+    }
+    if (LEGACY_COMMAND_META_PATTERN.test(command)) {
+        return { tokens: [], error: 'legacy command contains unsafe shell meta characters' };
+    }
+
+    const tokens = [];
+    let current = '';
+    let quote = '';
+    let escaping = false;
+
+    for (const ch of command) {
+        if (escaping) {
+            current += ch;
+            escaping = false;
+            continue;
+        }
+
+        if (ch === '\\' && quote === '"') {
+            escaping = true;
+            continue;
+        }
+
+        if (ch === '"' || ch === '\'') {
+            if (!quote) {
+                quote = ch;
+                continue;
+            }
+            if (quote === ch) {
+                quote = '';
+                continue;
+            }
+            current += ch;
+            continue;
+        }
+
+        if (!quote && /\s/.test(ch)) {
+            if (current) {
+                tokens.push(current);
+                current = '';
+            }
+            continue;
+        }
+
+        current += ch;
+    }
+
+    if (escaping || quote) {
+        return { tokens: [], error: 'legacy command quote is invalid' };
+    }
+    if (current) {
+        tokens.push(current);
+    }
+    if (tokens.length === 0) {
+        return { tokens: [], error: 'legacy command is empty after parse' };
+    }
+
+    return { tokens, error: '' };
+}
+
+function normalizeCommandConfig(appConfig) {
+    const commandFile = typeof appConfig?.commandFile === 'string'
+        ? appConfig.commandFile.trim()
+        : '';
+    const commandArgs = Array.isArray(appConfig?.commandArgs)
+        ? appConfig.commandArgs.filter((arg) => typeof arg === 'string').map((arg) => arg.trim())
+        : [];
+
+    if (commandFile) {
+        return {
+            commandFile,
+            commandArgs,
+            migratedFromLegacy: false,
+            migrationError: ''
+        };
+    }
+
+    const legacyCommand = typeof appConfig?.command === 'string' ? appConfig.command.trim() : '';
+    if (!legacyCommand) {
+        return {
+            commandFile: '',
+            commandArgs: [],
+            migratedFromLegacy: false,
+            migrationError: ''
+        };
+    }
+
+    const parsed = parseLegacyCommand(legacyCommand);
+    if (parsed.error || parsed.tokens.length === 0) {
+        return {
+            commandFile: '',
+            commandArgs: [],
+            migratedFromLegacy: false,
+            migrationError: parsed.error || 'legacy command parse failed'
+        };
+    }
+
+    return {
+        commandFile: parsed.tokens[0],
+        commandArgs: parsed.tokens.slice(1),
+        migratedFromLegacy: true,
+        migrationError: ''
+    };
+}
+
+function sanitizeCommandArgs(args) {
+    if (!Array.isArray(args)) return [];
+
+    const sanitized = [];
+    for (const arg of args) {
+        if (typeof arg !== 'string') continue;
+        if (arg.includes('\0')) {
+            throw new Error('命令参数包含空字节');
+        }
+        sanitized.push(arg);
+    }
+    return sanitized;
+}
+
+function launchDetached(commandFile, args = []) {
+    return new Promise((resolve, reject) => {
+        const child = spawn(commandFile, args, {
+            detached: true,
+            shell: false,
+            windowsHide: false,
+            stdio: 'ignore'
+        });
+
+        child.once('error', reject);
+        child.once('spawn', () => {
+            child.unref();
+            resolve();
+        });
+    });
+}
+
+function isShortcutPath(filePath) {
+    const lowerPath = filePath.toLowerCase();
+    return lowerPath.endsWith('.lnk') || lowerPath.endsWith('.url');
+}
+
+async function launchExecutable(exePath) {
+    if (process.platform === 'darwin' && exePath.toLowerCase().endsWith('.app')) {
+        await launchDetached('open', ['-a', exePath]);
+        return 'direct-open';
+    }
+
+    if (isShortcutPath(exePath)) {
+        const openError = await shell.openPath(exePath);
+        if (openError) {
+            throw new Error(openError);
+        }
+        return 'direct-shortcut';
+    }
+
+    await launchDetached(exePath, []);
+    return 'direct';
+}
+
 // 启动应用
 ipcMain.handle('launch-app', async (event, appId, appConfig) => {
     try {
-        // 首先尝试直接路径
-        const exePath = findExecutable(appConfig.paths);
-        
+        const safeConfig = appConfig && typeof appConfig === 'object' ? appConfig : {};
+        const exePath = findExecutable(safeConfig.paths);
+
         if (exePath) {
-            // 使用 spawn 启动应用
-            const child = spawn('"' + exePath + '"', [], {
-                detached: true,
-                shell: true,
-                windowsHide: false
-            });
-            
-            child.unref();
-            
-            return { 
-                success: true, 
-                method: 'direct',
-                path: exePath 
+            const method = await launchExecutable(exePath);
+            return {
+                success: true,
+                method,
+                path: exePath
             };
         }
-        
-        // 如果直接路径失败，尝试使用命令
-        if (appConfig.command) {
-            return new Promise((resolve) => {
-                exec(appConfig.command, (error, stdout, stderr) => {
-                    if (error) {
-                        console.error(`启动应用失败: ${error}`);
-                        resolve({ 
-                            success: false, 
-                            error: '应用未安装或路径不正确' 
-                        });
-                    } else {
-                        resolve({ 
-                            success: true, 
-                            method: 'command',
-                            command: appConfig.command 
-                        });
-                    }
-                });
-            });
+
+        const commandConfig = normalizeCommandConfig(safeConfig);
+        if (commandConfig.migrationError) {
+            return {
+                success: false,
+                error: '旧版命令配置迁移失败，请重新配置应用路径',
+                requiresReconfigure: true
+            };
         }
-        
-        return { 
-            success: false, 
-            error: '未找到应用程序' 
+
+        if (commandConfig.commandFile) {
+            const safeArgs = sanitizeCommandArgs(commandConfig.commandArgs);
+            await launchDetached(commandConfig.commandFile, safeArgs);
+            return {
+                success: true,
+                method: 'command',
+                commandFile: commandConfig.commandFile,
+                commandArgs: safeArgs,
+                migratedFromLegacy: commandConfig.migratedFromLegacy
+            };
+        }
+
+        return {
+            success: false,
+            error: '未找到应用程序'
         };
-        
     } catch (error) {
         console.error('启动应用失败:', error);
-        return { 
-            success: false, 
-            error: error.message 
+        return {
+            success: false,
+            error: error.message
         };
     }
 });
