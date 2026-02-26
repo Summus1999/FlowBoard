@@ -1,6 +1,6 @@
 {
   "name": "flowboard",
-  "version": "1.0.0",
+  "version": "2.0.1",
   "description": "FlowBoard - 个人工作台，支持多平台账户密码管理、界面UI风格切换、实时资讯整合",
   "main": "electron/main.js",
   "homepage": "./",

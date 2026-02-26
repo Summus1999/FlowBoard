@@ -390,6 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPasswordCards();
     updatePasswordCount();
     renderPasswordPreview();
+    updateSecurityScore();
     renderNewsList();
     updateFeaturedNews();
     initNewsSync();
@@ -952,6 +953,8 @@ function deletePassword(id) {
             passwordData.splice(index, 1);
             renderPasswordCards();
             updatePasswordCount();
+            renderPasswordPreview();
+            updateSecurityScore();
             showToast('账户已删除');
         }
     }
@@ -963,6 +966,8 @@ function updatePasswordCount() {
     if (countEl) {
         countEl.textContent = passwordData.length;
     }
+    // 更新安全评分
+    updateSecurityScore();
 }
 
 // 渲染首页密码预览列表
@@ -1477,6 +1482,8 @@ function savePassword() {
     // 刷新显示
     renderPasswordCards();
     updatePasswordCount();
+    renderPasswordPreview();
+    updateSecurityScore();
     closeAddPasswordModal();
     
     // 清空表单
@@ -1508,6 +1515,73 @@ function checkPasswordStrength(password) {
     if (score <= 2) return 'weak';
     if (score <= 4) return 'medium';
     return 'strong';
+}
+
+// 计算密码强度得分（0-100分制）
+function getPasswordStrengthScore(password) {
+    if (!password || password === '********') return 50; // 隐藏密码按中等计算
+    
+    let score = 0;
+    // 长度得分（最高30分）
+    if (password.length >= 8) score += 10;
+    if (password.length >= 12) score += 10;
+    if (password.length >= 16) score += 10;
+    
+    // 复杂度得分（最高50分）
+    if (/[a-z]/.test(password)) score += 10;
+    if (/[A-Z]/.test(password)) score += 10;
+    if (/\d/.test(password)) score += 10;
+    if (/[^a-zA-Z0-9]/.test(password)) score += 20;
+    
+    // 多样性奖励（最高20分）
+    const uniqueChars = new Set(password).size;
+    score += Math.min(20, Math.floor(uniqueChars / 2));
+    
+    return Math.min(100, score);
+}
+
+// 计算整体安全评分
+function calculateSecurityScore() {
+    if (passwordData.length === 0) return 0;
+    
+    let totalScore = 0;
+    passwordData.forEach(item => {
+        totalScore += getPasswordStrengthScore(item.password);
+    });
+    
+    const avgScore = Math.round(totalScore / passwordData.length);
+    
+    // 根据账户数量给予额外加分（账户越多，管理越完善）
+    const countBonus = Math.min(10, Math.floor(passwordData.length / 3));
+    
+    return Math.min(100, avgScore + countBonus);
+}
+
+// 更新安全评分UI
+function updateSecurityScore() {
+    const score = calculateSecurityScore();
+    const scoreValue = document.getElementById('securityScoreValue');
+    const scoreProgress = document.getElementById('securityScoreProgress');
+    const scoreText = document.getElementById('securityScoreText');
+    
+    if (scoreValue) {
+        scoreValue.textContent = score;
+    }
+    
+    if (scoreProgress) {
+        scoreProgress.style.setProperty('--progress', score);
+    }
+    
+    if (scoreText) {
+        let text = '安全评分';
+        if (score >= 80) text += ' - 优秀';
+        else if (score >= 60) text += ' - 良好';
+        else if (score >= 40) text += ' - 一般';
+        else text += ' - 需加强';
+        scoreText.textContent = text;
+    }
+    
+    return score;
 }
 
 function updateStrengthMeter(strength) {
@@ -1606,18 +1680,6 @@ function updateTime() {
 }
 
 setInterval(updateTime, 1000);
-
-// 模拟实时数据更新
-setInterval(() => {
-    // 更新消息计数
-    const msgCount = document.getElementById('messageCount');
-    if (msgCount && Math.random() > 0.7) {
-        const count = parseInt(msgCount.textContent);
-        if (Math.random() > 0.5 && count < 10) {
-            msgCount.textContent = count + 1;
-        }
-    }
-}, 30000);
 
 // ========================================
 // 热榜中心点击跳转
@@ -2598,7 +2660,7 @@ function initVersion() {
 function showVersionInfo() {
     const versionInfo = {
         version: 'v2.0.1',
-        buildDate: '2026-02-23',
+        buildDate: '2026-02-26',
         electron: window.isElectron ? '已启用' : '未启用',
         platform: navigator.platform,
         userAgent: navigator.userAgent

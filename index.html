@@ -9,6 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+    <!-- PDF.js for PDF import support -->
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/leetcode.css">
     <link rel="stylesheet" href="css/submissions.css">
@@ -151,14 +153,14 @@
                             </div>
                             <div class="password-preview">
                                 <div class="security-score">
-                                    <div class="score-ring">
+                                    <div class="score-ring" id="securityScoreRing">
                                         <svg viewBox="0 0 100 100">
                                             <circle class="ring-bg" cx="50" cy="50" r="45"/>
-                                            <circle class="ring-progress" cx="50" cy="50" r="45" style="--progress: 85"/>
+                                            <circle class="ring-progress" id="securityScoreProgress" cx="50" cy="50" r="45" style="--progress: 0"/>
                                         </svg>
-                                        <div class="score-value">85</div>
+                                        <div class="score-value" id="securityScoreValue">--</div>
                                     </div>
-                                    <p class="score-text">安全评分</p>
+                                    <p class="score-text" id="securityScoreText">安全评分</p>
                                 </div>
                                 <div class="password-list-short" id="passwordPreviewList">
                                     <div class="pwd-item">
@@ -596,6 +598,17 @@
                                 <div class="growth-stat-item">
                                     <span class="growth-stat-label">连续打卡</span>
                                     <span class="growth-stat-value" id="growthStreak">0 天</span>
+                                </div>
+                                <div class="study-timer-section" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+                                    <div class="study-timer-display" id="studyTimerDisplay" style="font-size: 24px; font-weight: 700; text-align: center; color: var(--accent-color); margin-bottom: 12px; display: none;">
+                                        00:00
+                                    </div>
+                                    <button class="btn-primary" id="studyTimerBtn" onclick="toggleStudyTimer()" style="width: 100%;">
+                                        <i class="fas fa-play"></i> 开始学习
+                                    </button>
+                                    <button class="btn-secondary btn-sm" onclick="addManualStudyRecord()" style="width: 100%; margin-top: 8px;">
+                                        <i class="fas fa-plus"></i> 手动添加记录
+                                    </button>
                                 </div>
                             </div>
                             <div class="growth-skills">
