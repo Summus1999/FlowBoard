@@ -74,19 +74,19 @@ class UpdateProvidersResponse(BaseModel):
     active_providers: list[str]
 
 
-def is_localhost_request(request: Request) -> bool:
-    """检查请求是否来自本地"""
+def verify_access(request: Request) -> bool:
+    """Verify request is from localhost or carries a valid API token."""
     client_host = request.client.host if request.client else None
-    forwarded_for = request.headers.get("x-forwarded-for")
-    
-    # 允许 localhost 和 127.0.0.1
     allowed_hosts = {"127.0.0.1", "localhost", "::1"}
-    
     if client_host and client_host in allowed_hosts:
         return True
-    if forwarded_for and any(h in forwarded_for for h in allowed_hosts):
-        return True
-    
+
+    # Remote access requires a valid Bearer token
+    if settings.API_TOKEN:
+        auth_header = request.headers.get("authorization", "")
+        if auth_header.startswith("Bearer ") and auth_header[7:] == settings.API_TOKEN:
+            return True
+
     return False
 
 
@@ -101,11 +101,10 @@ async def update_providers(
     config: ProvidersConfigRequest
 ):
     """更新提供商配置并热更新"""
-    # 安全限制：只允许本地请求
-    if not is_localhost_request(request):
+    if not verify_access(request):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only localhost requests are allowed"
+            detail="Access denied: localhost or valid API token required"
         )
     
     try:
@@ -170,11 +169,10 @@ async def update_providers(
 )
 async def get_providers_status(request: Request):
     """获取提供商状态"""
-    # 安全限制：只允许本地请求
-    if not is_localhost_request(request):
+    if not verify_access(request):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only localhost requests are allowed"
+            detail="Access denied: localhost or valid API token required"
         )
     
     try:
@@ -231,11 +229,10 @@ async def test_provider(
     test_req: TestProviderRequest
 ):
     """测试提供商连接"""
-    # 安全限制：只允许本地请求
-    if not is_localhost_request(request):
+    if not verify_access(request):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only localhost requests are allowed"
+            detail="Access denied: localhost or valid API token required"
         )
     
     try:
@@ -274,11 +271,10 @@ async def test_provider(
 )
 async def get_provider_registry(request: Request):
     """获取提供商注册表"""
-    # 安全限制：只允许本地请求
-    if not is_localhost_request(request):
+    if not verify_access(request):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only localhost requests are allowed"
+            detail="Access denied: localhost or valid API token required"
         )
     
     registry_info = {}

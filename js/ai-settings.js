@@ -34,6 +34,7 @@ const AI_PROVIDERS = {
 // 全局状态
 let aiSettingsState = {
     serviceUrl: 'http://localhost:8000',
+    apiToken: '',
     providers: {},
     defaultProvider: 'qwen',
     fallbackProvider: 'kimi',
@@ -111,6 +112,26 @@ function renderAiSettingsUI() {
                            class="ai-input" 
                            value="${aiSettingsState.serviceUrl}"
                            placeholder="http://localhost:8000">
+                </div>
+            </div>
+            
+            <!-- API Token -->
+            <div class="setting-item">
+                <div class="setting-info">
+                    <span class="setting-name">API Token</span>
+                    <span class="setting-desc">远程服务认证令牌 (本地可留空)</span>
+                </div>
+                <div class="setting-control">
+                    <div class="ai-input-wrapper">
+                        <input type="password" 
+                               id="aiApiToken" 
+                               class="ai-input" 
+                               value="${aiSettingsState.apiToken}"
+                               placeholder="留空则仅允许本地连接">
+                        <button class="ai-icon-btn" id="toggleApiTokenVisibility" title="显示/隐藏">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
             
@@ -265,7 +286,25 @@ function bindAiSettingsEvents() {
     const serviceUrlInput = document.getElementById('aiServiceUrl');
     if (serviceUrlInput) {
         serviceUrlInput.addEventListener('change', (e) => {
-            aiSettingsState.serviceUrl = e.target.value;
+            aiSettingsState.serviceUrl = e.target.value.replace(/\/+$/, '');
+        });
+    }
+    
+    // API Token 输入
+    const apiTokenInput = document.getElementById('aiApiToken');
+    if (apiTokenInput) {
+        apiTokenInput.addEventListener('change', (e) => {
+            aiSettingsState.apiToken = e.target.value;
+        });
+    }
+    const toggleTokenBtn = document.getElementById('toggleApiTokenVisibility');
+    if (toggleTokenBtn) {
+        toggleTokenBtn.addEventListener('click', () => {
+            if (apiTokenInput) {
+                const isPassword = apiTokenInput.type === 'password';
+                apiTokenInput.type = isPassword ? 'text' : 'password';
+                toggleTokenBtn.querySelector('i').className = isPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+            }
         });
     }
     
@@ -536,6 +575,7 @@ async function saveAiConfig() {
         // 1. 保存到 Electron 加密存储
         const saveResult = await window.electronAPI.saveAiConfig({
             serviceUrl: aiSettingsState.serviceUrl,
+            apiToken: aiSettingsState.apiToken,
             providers: aiSettingsState.providers,
             defaultProvider: aiSettingsState.defaultProvider,
             fallbackProvider: aiSettingsState.fallbackProvider,
@@ -564,7 +604,7 @@ async function saveAiConfig() {
 }
 
 /**
- * 同步配置到后端
+ * Sync config to backend via Electron main process IPC (avoids CORS)
  */
 async function syncConfigToBackend() {
     try {
@@ -572,44 +612,18 @@ async function syncConfigToBackend() {
             console.log('AI 服务未连接，跳过配置同步');
             return;
         }
-        
-        // 获取原始配置（未掩码的 API Key）
-        const rawConfig = await window.electronAPI.loadAiConfigRaw();
-        if (!rawConfig.success) {
-            throw new Error(rawConfig.error || '加载原始配置失败');
-        }
-        
-        const config = rawConfig.config;
-        
-        // 发送到后端
-        const response = await fetch(`${config.serviceUrl}/api/v1/config/providers`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                providers: config.providers,
-                default_provider: config.defaultProvider,
-                fallback_provider: config.fallbackProvider,
-                monthly_budget: config.monthlyBudget
-            })
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.detail || `HTTP ${response.status}`);
-        }
-        
-        const result = await response.json();
-        console.log('配置已同步到后端:', result);
-        
-        // 更新活跃提供商显示
-        if (result.active_providers) {
-            updateActiveProvidersDisplay(result.active_providers);
+
+        const result = await window.electronAPI.syncAiConfigToBackend();
+        if (result.success) {
+            console.log('配置已同步到后端, active:', result.active_providers);
+            if (result.active_providers) {
+                updateActiveProvidersDisplay(result.active_providers);
+            }
+        } else {
+            console.error('同步配置到后端失败:', result.error);
         }
     } catch (error) {
         console.error('同步配置到后端失败:', error);
-        // 不抛出错误，因为本地保存已经成功了
     }
 }
 

@@ -62,7 +62,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // AI 配置管理
     saveAiConfig: (config) => ipcRenderer.invoke('ai-config-save', config),
     loadAiConfig: () => ipcRenderer.invoke('ai-config-load'),
-    loadAiConfigRaw: () => ipcRenderer.invoke('ai-config-load-raw'),
     testAiProvider: (provider, apiKey) => ipcRenderer.invoke('ai-config-test', provider, apiKey),
-    getAiServiceStatus: () => ipcRenderer.invoke('ai-service-status')
+    getAiServiceStatus: () => ipcRenderer.invoke('ai-service-status'),
+    syncAiConfigToBackend: () => ipcRenderer.invoke('ai-config-sync-to-backend')
 });

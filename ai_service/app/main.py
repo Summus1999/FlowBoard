@@ -44,17 +44,12 @@ async def lifespan(app: FastAPI):
     from app.services.model_gateway import get_model_gateway
     model_gateway = get_model_gateway()
     
-    # 启动时预热
-    try:
-        # 测试模型网关
-        await model_gateway.generate(
-            messages=[{"role": "user", "content": "Hello"}],
-            temperature=0.1,
-            max_tokens=5,
-        )
-        logger.info("model_gateway.warmed_up")
-    except Exception as e:
-        logger.warning("model_gateway.warmup_failed", error=str(e))
+    # Skip warmup — model API keys may be configured later via /config/providers
+    active = [p.value for p in model_gateway._clients.keys()]
+    if active:
+        logger.info("model_gateway.ready", active_providers=active)
+    else:
+        logger.info("model_gateway.no_providers_configured")
     
     yield
     

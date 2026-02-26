@@ -105,6 +105,7 @@ class Settings(BaseSettings):
     
     # 安全配置
     SECRET_KEY: str = Field(default="change-me-in-production", description="用于签名等")
+    API_TOKEN: Optional[str] = Field(default=None, description="Bearer token for remote access; if empty, only localhost is allowed")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7天
     SECURITY_SOURCE_WHITELIST: List[str] = Field(default_factory=list)
 

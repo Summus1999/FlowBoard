@@ -1288,6 +1288,26 @@ ipcMain.handle('check-apps-availability', async (event, appConfigs) => {
 const AI_CONFIG_KEY = 'aiConfig';
 const AI_SERVICE_URL_DEFAULT = 'http://localhost:8000';
 
+function getAiConfig() {
+    const cfg = readConfig().aiConfig || {};
+    return {
+        serviceUrl: cfg.serviceUrl || AI_SERVICE_URL_DEFAULT,
+        apiToken: cfg.apiToken || '',
+        providers: cfg.providers || {},
+        defaultProvider: cfg.defaultProvider || 'qwen',
+        fallbackProvider: cfg.fallbackProvider || 'kimi',
+        monthlyBudget: cfg.monthlyBudget || 150.0,
+    };
+}
+
+function buildAuthHeaders(apiToken) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (apiToken) {
+        headers['Authorization'] = `Bearer ${apiToken}`;
+    }
+    return headers;
+}
+
 /**
  * 检查 safeStorage 是否可用
  */
@@ -1376,6 +1396,7 @@ ipcMain.handle('ai-config-save', async (event, config) => {
         
         const aiConfig = {
             serviceUrl: config.serviceUrl || AI_SERVICE_URL_DEFAULT,
+            apiToken: config.apiToken || '',
             providers: encryptedProviders,
             defaultProvider: config.defaultProvider || 'qwen',
             fallbackProvider: config.fallbackProvider || 'kimi',
@@ -1416,40 +1437,8 @@ ipcMain.handle('ai-config-load', async () => {
             success: true,
             config: {
                 serviceUrl: aiConfig.serviceUrl || AI_SERVICE_URL_DEFAULT,
+                apiToken: aiConfig.apiToken || '',
                 providers: maskedProviders,
-                defaultProvider: aiConfig.defaultProvider || 'qwen',
-                fallbackProvider: aiConfig.fallbackProvider || 'kimi',
-                monthlyBudget: aiConfig.monthlyBudget || 150.0
-            }
-        };
-    } catch (error) {
-        console.error('加载 AI 配置失败:', error);
-        return { success: false, error: error.message };
-    }
-});
-
-/**
- * 加载 AI 配置原始值（用于发送给后端）
- */
-ipcMain.handle('ai-config-load-raw', async () => {
-    try {
-        const existingConfig = readConfig();
-        const aiConfig = existingConfig.aiConfig || {};
-        
-        // 解密 API Keys
-        const rawProviders = {};
-        for (const [provider, providerConfig] of Object.entries(aiConfig.providers || {})) {
-            rawProviders[provider] = {
-                apiKey: decryptApiKey(providerConfig.apiKey),
-                enabled: providerConfig.enabled
-            };
-        }
-        
-        return {
-            success: true,
-            config: {
-                serviceUrl: aiConfig.serviceUrl || AI_SERVICE_URL_DEFAULT,
-                providers: rawProviders,
                 defaultProvider: aiConfig.defaultProvider || 'qwen',
                 fallbackProvider: aiConfig.fallbackProvider || 'kimi',
                 monthlyBudget: aiConfig.monthlyBudget || 150.0
@@ -1466,37 +1455,23 @@ ipcMain.handle('ai-config-load-raw', async () => {
  */
 ipcMain.handle('ai-config-test', async (event, provider, apiKey) => {
     try {
-        const existingConfig = readConfig();
-        const serviceUrl = existingConfig.aiConfig?.serviceUrl || AI_SERVICE_URL_DEFAULT;
-        
-        const response = await fetch(`${serviceUrl}/api/v1/config/providers/test`, {
+        const aiCfg = getAiConfig();
+        const response = await fetch(`${aiCfg.serviceUrl}/api/v1/config/providers/test`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ provider, api_key: apiKey })
+            headers: buildAuthHeaders(aiCfg.apiToken),
+            body: JSON.stringify({ provider, api_key: apiKey }),
+            signal: AbortSignal.timeout(30000)
         });
-        
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            return {
-                success: false,
-                error: errorData.detail || `HTTP ${response.status}`
-            };
+            return { success: false, error: errorData.detail || `HTTP ${response.status}` };
         }
-        
+
         const result = await response.json();
-        return {
-            success: result.success,
-            latencyMs: result.latency_ms,
-            error: result.error
-        };
+        return { success: result.success, latencyMs: result.latency_ms, error: result.error };
     } catch (error) {
-        console.error('测试 AI 提供商失败:', error);
-        return {
-            success: false,
-            error: error.message
-        };
+        return { success: false, error: error.message };
     }
 });
 
@@ -1504,26 +1479,53 @@ ipcMain.handle('ai-config-test', async (event, provider, apiKey) => {
  * 检查 AI 服务状态
  */
 ipcMain.handle('ai-service-status', async () => {
+    const aiCfg = getAiConfig();
     try {
-        const existingConfig = readConfig();
-        const serviceUrl = existingConfig.aiConfig?.serviceUrl || AI_SERVICE_URL_DEFAULT;
-        
-        const response = await fetch(`${serviceUrl}/api/v1/health`, {
+        const response = await fetch(`${aiCfg.serviceUrl}/api/v1/health`, {
             method: 'GET',
             signal: AbortSignal.timeout(5000)
         });
-        
-        return {
-            success: response.ok,
-            status: response.status,
-            url: serviceUrl
-        };
+        return { success: response.ok, status: response.status, url: aiCfg.serviceUrl };
     } catch (error) {
-        return {
-            success: false,
-            error: error.message,
-            url: existingConfig.aiConfig?.serviceUrl || AI_SERVICE_URL_DEFAULT
-        };
+        return { success: false, error: error.message, url: aiCfg.serviceUrl };
+    }
+});
+
+/**
+ * Sync config to backend (called from renderer via IPC to avoid CORS)
+ */
+ipcMain.handle('ai-config-sync-to-backend', async () => {
+    const aiCfg = getAiConfig();
+    try {
+        const rawProviders = {};
+        for (const [provider, providerConfig] of Object.entries(aiCfg.providers)) {
+            rawProviders[provider] = {
+                api_key: decryptApiKey(providerConfig.apiKey),
+                enabled: providerConfig.enabled
+            };
+        }
+
+        const response = await fetch(`${aiCfg.serviceUrl}/api/v1/config/providers`, {
+            method: 'POST',
+            headers: buildAuthHeaders(aiCfg.apiToken),
+            body: JSON.stringify({
+                providers: rawProviders,
+                default_provider: aiCfg.defaultProvider,
+                fallback_provider: aiCfg.fallbackProvider,
+                monthly_budget: aiCfg.monthlyBudget
+            }),
+            signal: AbortSignal.timeout(10000)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            return { success: false, error: errorData.detail || `HTTP ${response.status}` };
+        }
+
+        const result = await response.json();
+        return { success: true, active_providers: result.active_providers || [] };
+    } catch (error) {
+        return { success: false, error: error.message };
     }
 });
 
