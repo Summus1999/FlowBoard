@@ -10,6 +10,8 @@
 const INTERVIEW_DB_NAME = 'FlowBoardInterviewDB';
 const INTERVIEW_DB_VERSION = 1;
 const INTERVIEW_STORE_NAME = 'recordings';
+const INTERVIEW_SETTINGS_KEY = 'interview_settings';
+const INTERVIEW_CHECKLIST_KEY = 'flowboard_interview_checklist_v1';
 
 let interviewDB = null;
 
@@ -121,7 +123,7 @@ let interviewState = {
     startTime: null,
     timerInterval: null,
     recordings: [],
-    settings: JSON.parse(localStorage.getItem('interview_settings') || JSON.stringify({
+    settings: JSON.parse(localStorage.getItem(INTERVIEW_SETTINGS_KEY) || JSON.stringify({
         storagePath: '',
         quality: 'high',
         autoSave: true,
@@ -139,6 +141,8 @@ async function initInterview() {
     // 从 IndexedDB 加载录音数据
     interviewState.recordings = await loadRecordingsFromDB();
     renderInterviewList();
+    updateStoragePathCapability();
+    initChecklistState();
     
     // 请求录音权限
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -151,6 +155,47 @@ async function initInterview() {
                 showToast('请允许麦克风权限以使用录音功能');
             });
     }
+}
+
+function getChecklistInputs() {
+    return Array.from(document.querySelectorAll('.interview-checklist input[type="checkbox"]'));
+}
+
+function getChecklistItemKey(input, index) {
+    return input.dataset.checkId || input.id || `check_${index}`;
+}
+
+function saveChecklistState() {
+    const payload = {};
+    getChecklistInputs().forEach((input, index) => {
+        payload[getChecklistItemKey(input, index)] = Boolean(input.checked);
+    });
+    localStorage.setItem(INTERVIEW_CHECKLIST_KEY, JSON.stringify(payload));
+}
+
+function loadChecklistState() {
+    try {
+        const raw = localStorage.getItem(INTERVIEW_CHECKLIST_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (_error) {
+        return {};
+    }
+}
+
+function initChecklistState() {
+    const state = loadChecklistState();
+    getChecklistInputs().forEach((input, index) => {
+        const key = getChecklistItemKey(input, index);
+        input.checked = Boolean(state[key]);
+
+        if (input.dataset.bound === '1') return;
+        input.dataset.bound = '1';
+        input.addEventListener('change', () => {
+            saveChecklistState();
+        });
+    });
 }
 
 // ========================================
@@ -405,9 +450,19 @@ function closeInterviewSettingsModal() {
 }
 
 function loadInterviewSettings() {
-    const stored = localStorage.getItem('interview_settings');
-    if (stored) {
-        interviewState.settings = JSON.parse(stored);
+    const stored = localStorage.getItem(INTERVIEW_SETTINGS_KEY);
+    if (!stored) return;
+
+    try {
+        const parsed = JSON.parse(stored);
+        if (parsed && typeof parsed === 'object') {
+            interviewState.settings = {
+                ...interviewState.settings,
+                ...parsed
+            };
+        }
+    } catch (_error) {
+        localStorage.removeItem(INTERVIEW_SETTINGS_KEY);
     }
 }
 
@@ -416,23 +471,45 @@ function loadInterviewSettingsToForm() {
     document.getElementById('interviewAudioQuality').value = interviewState.settings.quality;
     document.getElementById('interviewAutoSaveToggle').checked = interviewState.settings.autoSave;
     document.getElementById('interviewPauseMusicToggle').checked = interviewState.settings.pauseMusic;
+    updateStoragePathCapability();
 }
 
-function selectInterviewStoragePath() {
-    // 创建文件输入来模拟选择目录（实际 Electron 中可以使用 dialog API）
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.webkitdirectory = true;
-    input.directory = true;
-    
-    input.onchange = (e) => {
-        if (e.target.files.length > 0) {
-            const path = e.target.files[0].path || e.target.files[0].webkitRelativePath;
-            document.getElementById('interviewStoragePath').value = path;
+function isDesktopAppEnvironment() {
+    return Boolean(window.electronAPI && typeof window.electronAPI.selectFile === 'function');
+}
+
+function updateStoragePathCapability() {
+    const browseBtn = document.getElementById('interviewStorageBrowseBtn');
+    const hintEl = document.getElementById('interviewStoragePathHint');
+    const supported = isDesktopAppEnvironment();
+
+    if (browseBtn) {
+        browseBtn.disabled = !supported;
+        browseBtn.classList.toggle('disabled', !supported);
+    }
+    if (hintEl && !supported) {
+        hintEl.textContent = '浏览器模式不支持目录选择，请在桌面端设置自动保存路径';
+    }
+}
+
+async function selectInterviewStoragePath() {
+    if (!isDesktopAppEnvironment()) {
+        showToast('当前环境不支持目录选择，请在桌面端使用');
+        return;
+    }
+
+    try {
+        const result = await window.electronAPI.selectFile({
+            title: '选择录音保存目录',
+            properties: ['openDirectory', 'createDirectory']
+        });
+
+        if (!result.canceled && Array.isArray(result.filePaths) && result.filePaths[0]) {
+            document.getElementById('interviewStoragePath').value = result.filePaths[0];
         }
-    };
-    
-    input.click();
+    } catch (_error) {
+        showToast('目录选择失败，请重试');
+    }
 }
 
 function saveInterviewSettings() {
@@ -443,7 +520,7 @@ function saveInterviewSettings() {
         pauseMusic: document.getElementById('interviewPauseMusicToggle').checked
     };
     
-    localStorage.setItem('interview_settings', JSON.stringify(interviewState.settings));
+    localStorage.setItem(INTERVIEW_SETTINGS_KEY, JSON.stringify(interviewState.settings));
     
     showToast('设置已保存');
     closeInterviewSettingsModal();

@@ -346,9 +346,9 @@
                         <div class="news-main">
                             <div class="featured-news" onclick="openFeaturedNews()" style="cursor: pointer;">
                                 <div class="featured-image">
-                                    <div class="featured-img-bg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); position: relative; overflow: hidden; border-radius: 12px; height: 200px;">
+                                    <div class="featured-img-bg" id="featuredNewsGradientBg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); position: relative; overflow: hidden; border-radius: 12px; height: 200px;">
                                         <!-- 动态渐变背景 -->
-                                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.9) 50%, rgba(102, 126, 234, 0.8) 100%); background-size: 200% 200%; animation: gradientShift 8s ease infinite;"></div>
+                                        <div id="featuredNewsGradientLayer" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.9) 50%, rgba(102, 126, 234, 0.8) 100%); background-size: 200% 200%; animation: gradientShift 8s ease infinite;"></div>
                                         <!-- 装饰性图标 -->
                                         <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 1;">
                                             <i class="fas fa-robot" style="font-size: 64px; color: rgba(255,255,255,0.3); margin-bottom: 10px; display: block;"></i>
@@ -714,23 +714,23 @@
                                 <h3>面试 checklist</h3>
                                 <div class="checklist-items">
                                     <label class="checklist-item">
-                                        <input type="checkbox">
+                                        <input type="checkbox" data-check-id="self_intro">
                                         <span>自我介绍准备</span>
                                     </label>
                                     <label class="checklist-item">
-                                        <input type="checkbox">
+                                        <input type="checkbox" data-check-id="project_review">
                                         <span>项目经验梳理</span>
                                     </label>
                                     <label class="checklist-item">
-                                        <input type="checkbox">
+                                        <input type="checkbox" data-check-id="knowledge_review">
                                         <span>技术知识点复习</span>
                                     </label>
                                     <label class="checklist-item">
-                                        <input type="checkbox">
+                                        <input type="checkbox" data-check-id="questions_prepare">
                                         <span>提问准备</span>
                                     </label>
                                     <label class="checklist-item">
-                                        <input type="checkbox">
+                                        <input type="checkbox" data-check-id="code_demo">
                                         <span>代码演示准备</span>
                                     </label>
                                 </div>
@@ -1557,11 +1557,11 @@
                     <label>录音文件存储路径</label>
                     <div class="input-with-button">
                         <input type="text" id="interviewStoragePath" placeholder="选择存储路径..." readonly>
-                        <button class="btn-secondary" onclick="selectInterviewStoragePath()">
+                        <button class="btn-secondary" id="interviewStorageBrowseBtn" onclick="selectInterviewStoragePath()">
                             <i class="fas fa-folder-open"></i> 浏览
                         </button>
                     </div>
-                    <small class="form-hint">录音文件将以 MP3 格式保存到此目录</small>
+                    <small class="form-hint" id="interviewStoragePathHint">录音文件将以 MP3 格式保存到此目录</small>
                 </div>
                 <div class="form-group">
                     <label>录音质量</label>
