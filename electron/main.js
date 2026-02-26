@@ -3,7 +3,7 @@
  * 支持 macOS 和 Windows 双平台
  */
 
-const { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage, dialog, shell, clipboard } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage, dialog, shell, clipboard, safeStorage } = require('electron');
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
@@ -1279,6 +1279,252 @@ ipcMain.handle('check-apps-availability', async (event, appConfigs) => {
     }
     
     return { available, unavailable };
+});
+
+// ====================
+// AI 配置管理
+// ====================
+
+const AI_CONFIG_KEY = 'aiConfig';
+const AI_SERVICE_URL_DEFAULT = 'http://localhost:8000';
+
+/**
+ * 检查 safeStorage 是否可用
+ */
+function isSafeStorageAvailable() {
+    try {
+        return safeStorage.isEncryptionAvailable();
+    } catch (error) {
+        console.error('safeStorage 检查失败:', error);
+        return false;
+    }
+}
+
+/**
+ * 加密 API Key
+ */
+function encryptApiKey(apiKey) {
+    if (!apiKey) return '';
+    
+    try {
+        if (isSafeStorageAvailable()) {
+            const encrypted = safeStorage.encryptString(apiKey);
+            return encrypted.toString('base64');
+        } else {
+            // Fallback: 使用简单的 XOR 混淆（非安全，仅作为降级方案）
+            console.warn('safeStorage 不可用，使用降级加密方案');
+            const key = crypto.createHash('sha256').update(process.env.USERNAME || 'default').digest();
+            const cipher = crypto.createCipheriv('aes-256-cbc', key, Buffer.alloc(16, 0));
+            let encrypted = cipher.update(apiKey, 'utf8', 'base64');
+            encrypted += cipher.final('base64');
+            return encrypted;
+        }
+    } catch (error) {
+        console.error('加密 API Key 失败:', error);
+        return '';
+    }
+}
+
+/**
+ * 解密 API Key
+ */
+function decryptApiKey(encryptedKey) {
+    if (!encryptedKey) return '';
+    
+    try {
+        if (isSafeStorageAvailable()) {
+            const buffer = Buffer.from(encryptedKey, 'base64');
+            return safeStorage.decryptString(buffer);
+        } else {
+            // Fallback 解密
+            const key = crypto.createHash('sha256').update(process.env.USERNAME || 'default').digest();
+            const decipher = crypto.createDecipheriv('aes-256-cbc', key, Buffer.alloc(16, 0));
+            let decrypted = decipher.update(encryptedKey, 'base64', 'utf8');
+            decrypted += decipher.final('utf8');
+            return decrypted;
+        }
+    } catch (error) {
+        console.error('解密 API Key 失败:', error);
+        return '';
+    }
+}
+
+/**
+ * 掩码显示 API Key
+ */
+function maskApiKey(apiKey) {
+    if (!apiKey || apiKey.length < 8) return '';
+    return apiKey.slice(0, 4) + '*'.repeat(apiKey.length - 8) + apiKey.slice(-4);
+}
+
+/**
+ * 保存 AI 配置
+ */
+ipcMain.handle('ai-config-save', async (event, config) => {
+    try {
+        const configPath = getConfigPath();
+        const existingConfig = readConfig();
+        
+        // 加密 API Keys
+        const encryptedProviders = {};
+        for (const [provider, providerConfig] of Object.entries(config.providers || {})) {
+            encryptedProviders[provider] = {
+                apiKey: encryptApiKey(providerConfig.apiKey),
+                enabled: providerConfig.enabled
+            };
+        }
+        
+        const aiConfig = {
+            serviceUrl: config.serviceUrl || AI_SERVICE_URL_DEFAULT,
+            providers: encryptedProviders,
+            defaultProvider: config.defaultProvider || 'qwen',
+            fallbackProvider: config.fallbackProvider || 'kimi',
+            monthlyBudget: config.monthlyBudget || 150.0
+        };
+        
+        // 合并到现有配置
+        existingConfig.aiConfig = aiConfig;
+        saveConfig(existingConfig);
+        
+        console.log('AI 配置已保存');
+        return { success: true };
+    } catch (error) {
+        console.error('保存 AI 配置失败:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+/**
+ * 加载 AI 配置（返回掩码版本）
+ */
+ipcMain.handle('ai-config-load', async () => {
+    try {
+        const existingConfig = readConfig();
+        const aiConfig = existingConfig.aiConfig || {};
+        
+        // 解密并掩码 API Keys
+        const maskedProviders = {};
+        for (const [provider, providerConfig] of Object.entries(aiConfig.providers || {})) {
+            const decryptedKey = decryptApiKey(providerConfig.apiKey);
+            maskedProviders[provider] = {
+                apiKey: maskApiKey(decryptedKey),
+                enabled: providerConfig.enabled
+            };
+        }
+        
+        return {
+            success: true,
+            config: {
+                serviceUrl: aiConfig.serviceUrl || AI_SERVICE_URL_DEFAULT,
+                providers: maskedProviders,
+                defaultProvider: aiConfig.defaultProvider || 'qwen',
+                fallbackProvider: aiConfig.fallbackProvider || 'kimi',
+                monthlyBudget: aiConfig.monthlyBudget || 150.0
+            }
+        };
+    } catch (error) {
+        console.error('加载 AI 配置失败:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+/**
+ * 加载 AI 配置原始值（用于发送给后端）
+ */
+ipcMain.handle('ai-config-load-raw', async () => {
+    try {
+        const existingConfig = readConfig();
+        const aiConfig = existingConfig.aiConfig || {};
+        
+        // 解密 API Keys
+        const rawProviders = {};
+        for (const [provider, providerConfig] of Object.entries(aiConfig.providers || {})) {
+            rawProviders[provider] = {
+                apiKey: decryptApiKey(providerConfig.apiKey),
+                enabled: providerConfig.enabled
+            };
+        }
+        
+        return {
+            success: true,
+            config: {
+                serviceUrl: aiConfig.serviceUrl || AI_SERVICE_URL_DEFAULT,
+                providers: rawProviders,
+                defaultProvider: aiConfig.defaultProvider || 'qwen',
+                fallbackProvider: aiConfig.fallbackProvider || 'kimi',
+                monthlyBudget: aiConfig.monthlyBudget || 150.0
+            }
+        };
+    } catch (error) {
+        console.error('加载 AI 配置失败:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+/**
+ * 测试 AI 提供商连接
+ */
+ipcMain.handle('ai-config-test', async (event, provider, apiKey) => {
+    try {
+        const existingConfig = readConfig();
+        const serviceUrl = existingConfig.aiConfig?.serviceUrl || AI_SERVICE_URL_DEFAULT;
+        
+        const response = await fetch(`${serviceUrl}/api/v1/config/providers/test`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ provider, api_key: apiKey })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            return {
+                success: false,
+                error: errorData.detail || `HTTP ${response.status}`
+            };
+        }
+        
+        const result = await response.json();
+        return {
+            success: result.success,
+            latencyMs: result.latency_ms,
+            error: result.error
+        };
+    } catch (error) {
+        console.error('测试 AI 提供商失败:', error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+});
+
+/**
+ * 检查 AI 服务状态
+ */
+ipcMain.handle('ai-service-status', async () => {
+    try {
+        const existingConfig = readConfig();
+        const serviceUrl = existingConfig.aiConfig?.serviceUrl || AI_SERVICE_URL_DEFAULT;
+        
+        const response = await fetch(`${serviceUrl}/api/v1/health`, {
+            method: 'GET',
+            signal: AbortSignal.timeout(5000)
+        });
+        
+        return {
+            success: response.ok,
+            status: response.status,
+            url: serviceUrl
+        };
+    } catch (error) {
+        return {
+            success: false,
+            error: error.message,
+            url: existingConfig.aiConfig?.serviceUrl || AI_SERVICE_URL_DEFAULT
+        };
+    }
 });
 
 // ====================

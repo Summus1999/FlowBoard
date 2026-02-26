@@ -57,5 +57,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     
     // 应用中心
     launchApp: (appId, appConfig) => ipcRenderer.invoke('launch-app', appId, appConfig),
-    checkAppsAvailability: (appConfigs) => ipcRenderer.invoke('check-apps-availability', appConfigs)
+    checkAppsAvailability: (appConfigs) => ipcRenderer.invoke('check-apps-availability', appConfigs),
+    
+    // AI 配置管理
+    saveAiConfig: (config) => ipcRenderer.invoke('ai-config-save', config),
+    loadAiConfig: () => ipcRenderer.invoke('ai-config-load'),
+    loadAiConfigRaw: () => ipcRenderer.invoke('ai-config-load-raw'),
+    testAiProvider: (provider, apiKey) => ipcRenderer.invoke('ai-config-test', provider, apiKey),
+    getAiServiceStatus: () => ipcRenderer.invoke('ai-service-status')
 });

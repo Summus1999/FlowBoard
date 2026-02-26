@@ -557,6 +557,13 @@ const modal = document.getElementById('addPasswordModal');
 document.addEventListener('DOMContentLoaded', () => {
     initNavigation();
     loadPasswordsFromStorage();
+    
+    // 初始化 AI 设置模块
+    if (typeof initAiSettings === 'function') {
+        initAiSettings();
+    } else {
+        console.warn('AI 设置模块未加载');
+    }
     renderPasswordCards();
     updatePasswordCount();
     renderPasswordPreview();

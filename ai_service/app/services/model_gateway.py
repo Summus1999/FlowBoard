@@ -1,8 +1,9 @@
 """
 模型网关服务
-统一封装Qwen和Kimi模型的调用，支持路由、降级、成本统计
+统一封装Qwen、Kimi、GLM模型的调用，支持路由、降级、成本统计
 """
 
+import asyncio
 import time
 from enum import Enum
 from typing import AsyncIterator, Dict, List, Optional, Any, Callable
@@ -24,6 +25,7 @@ class ModelProvider(str, Enum):
     """模型提供商"""
     QWEN = "qwen"
     KIMI = "kimi"
+    GLM = "glm"
 
 
 class ModelProfile(str, Enum):
@@ -52,67 +54,229 @@ class StreamingDelta:
     is_finish: bool = False
 
 
+# 提供商注册表
+PROVIDER_REGISTRY = {
+    ModelProvider.QWEN: {
+        "name": "通义千问",
+        "config_key_prefix": "QWEN",
+        "default_base_url": "https://dashscope.aliyuncs.com/api/v1",
+        "profiles": {
+            ModelProfile.HIGH_QUALITY: "qwen-max",
+            ModelProfile.BALANCED: "qwen-plus",
+            ModelProfile.COST_EFFECTIVE: "qwen-turbo",
+            ModelProfile.EMBEDDING: "text-embedding-v3",
+        },
+        "pricing": {
+            "qwen-max": {"input": 0.04, "output": 0.12},
+            "qwen-plus": {"input": 0.004, "output": 0.012},
+            "qwen-turbo": {"input": 0.002, "output": 0.006},
+            "text-embedding-v3": {"input": 0.0005, "output": 0},
+        }
+    },
+    ModelProvider.KIMI: {
+        "name": "Kimi",
+        "config_key_prefix": "KIMI",
+        "default_base_url": "https://api.moonshot.cn/v1",
+        "profiles": {
+            ModelProfile.HIGH_QUALITY: "moonshot-v1-32k",
+            ModelProfile.BALANCED: "moonshot-v1-8k",
+            ModelProfile.COST_EFFECTIVE: "moonshot-v1-8k",
+        },
+        "pricing": {
+            "moonshot-v1-8k": {"input": 0.012, "output": 0.012},
+            "moonshot-v1-32k": {"input": 0.024, "output": 0.024},
+        }
+    },
+    ModelProvider.GLM: {
+        "name": "智谱GLM",
+        "config_key_prefix": "GLM",
+        "default_base_url": "https://open.bigmodel.cn/api/paas/v4",
+        "profiles": {
+            ModelProfile.HIGH_QUALITY: "glm-4",
+            ModelProfile.BALANCED: "glm-4-flash",
+            ModelProfile.COST_EFFECTIVE: "glm-4-flash",
+        },
+        "pricing": {
+            "glm-4": {"input": 0.1, "output": 0.1},
+            "glm-4-flash": {"input": 0.001, "output": 0.001},
+        }
+    },
+}
+
+
 class ModelGateway:
     """
     模型网关
     
     职责：
-    1. 统一封装Qwen和Kimi模型调用
+    1. 统一封装Qwen、Kimi、GLM模型调用
     2. 支持模型路由和降级策略
     3. 成本统计和预算控制
     4. 超时、重试、熔断
+    5. 热更新支持
     """
     
     def __init__(self):
         self._clients: Dict[ModelProvider, BaseChatModel] = {}
         self._embedding_clients: Dict[ModelProvider, Any] = {}
         self._cost_stats: Dict[str, float] = {"monthly_total": 0.0}
+        self._lock = asyncio.Lock()
         self._init_clients()
     
     def _init_clients(self):
         """初始化模型客户端"""
-        # Qwen客户端
-        if settings.QWEN_API_KEY:
-            try:
-                self._clients[ModelProvider.QWEN] = ChatOpenAI(
-                    model=settings.QWEN_DEFAULT_MODEL,
-                    api_key=settings.QWEN_API_KEY,
-                    base_url=settings.QWEN_BASE_URL,
-                    temperature=0.7,
-                    timeout=settings.REQUEST_TIMEOUT,
-                    max_retries=settings.MAX_RETRIES,
-                )
-                logger.info("model_gateway.qwen_initialized")
-            except Exception as e:
-                logger.error("model_gateway.qwen_init_failed", error=str(e))
+        for provider in ModelProvider:
+            self._init_provider_client(provider)
+    
+    def _init_provider_client(self, provider: ModelProvider):
+        """初始化单个提供商客户端"""
+        registry_info = PROVIDER_REGISTRY.get(provider)
+        if not registry_info:
+            return
         
-        # Kimi客户端
-        if settings.KIMI_API_KEY:
-            try:
-                self._clients[ModelProvider.KIMI] = ChatOpenAI(
-                    model=settings.KIMI_DEFAULT_MODEL,
-                    api_key=settings.KIMI_API_KEY,
-                    base_url=settings.KIMI_BASE_URL,
-                    temperature=0.7,
-                    timeout=settings.REQUEST_TIMEOUT,
-                    max_retries=settings.MAX_RETRIES,
-                )
-                logger.info("model_gateway.kimi_initialized")
-            except Exception as e:
-                logger.error("model_gateway.kimi_init_failed", error=str(e))
+        config_key_prefix = registry_info["config_key_prefix"]
+        api_key = getattr(settings, f"{config_key_prefix}_API_KEY", None)
+        base_url = getattr(settings, f"{config_key_prefix}_BASE_URL", registry_info["default_base_url"])
+        default_model = getattr(settings, f"{config_key_prefix}_DEFAULT_MODEL", None)
+        
+        if not api_key:
+            logger.info(f"model_gateway.{provider.value}_skipped_no_key")
+            return
+        
+        try:
+            # 获取默认模型
+            if not default_model:
+                default_model = registry_info["profiles"].get(ModelProfile.BALANCED)
+            
+            self._clients[provider] = ChatOpenAI(
+                model=default_model,
+                api_key=api_key,
+                base_url=base_url,
+                temperature=0.7,
+                timeout=settings.REQUEST_TIMEOUT,
+                max_retries=settings.MAX_RETRIES,
+            )
+            logger.info(f"model_gateway.{provider.value}_initialized")
+        except Exception as e:
+            logger.error(f"model_gateway.{provider.value}_init_failed", error=str(e))
+    
+    async def reload_clients(self, provider_configs: Dict[ModelProvider, Dict[str, Any]]):
+        """
+        热重载模型客户端
+        
+        Args:
+            provider_configs: 提供商配置字典，格式为 {provider: {"api_key": str, "enabled": bool}}
+        """
+        async with self._lock:
+            logger.info("model_gateway.starting_reload", providers=list(provider_configs.keys()))
+            
+            # 记录需要重新初始化的提供商
+            to_reload = []
+            
+            for provider, config in provider_configs.items():
+                registry_info = PROVIDER_REGISTRY.get(provider)
+                if not registry_info:
+                    continue
+                
+                enabled = config.get("enabled", True)
+                new_api_key = config.get("api_key", "")
+                
+                # 检查是否需要重新初始化
+                current_client = self._clients.get(provider)
+                
+                if not enabled or not new_api_key:
+                    # 禁用或没有Key，移除客户端
+                    if provider in self._clients:
+                        del self._clients[provider]
+                        logger.info(f"model_gateway.{provider.value}_disabled")
+                else:
+                    # 需要重新初始化
+                    to_reload.append((provider, new_api_key))
+            
+            # 重新初始化需要更新的客户端
+            for provider, api_key in to_reload:
+                try:
+                    registry_info = PROVIDER_REGISTRY[provider]
+                    default_model = registry_info["profiles"].get(ModelProfile.BALANCED)
+                    base_url = registry_info["default_base_url"]
+                    
+                    self._clients[provider] = ChatOpenAI(
+                        model=default_model,
+                        api_key=api_key,
+                        base_url=base_url,
+                        temperature=0.7,
+                        timeout=settings.REQUEST_TIMEOUT,
+                        max_retries=settings.MAX_RETRIES,
+                    )
+                    logger.info(f"model_gateway.{provider.value}_reloaded")
+                except Exception as e:
+                    logger.error(f"model_gateway.{provider.value}_reload_failed", error=str(e))
+            
+            logger.info(
+                "model_gateway.reload_complete",
+                active_providers=[p.value for p in self._clients.keys()]
+            )
+    
+    async def test_connection(self, provider: ModelProvider, api_key: str) -> dict:
+        """
+        测试提供商连接
+        
+        Args:
+            provider: 提供商枚举
+            api_key: API Key
+        
+        Returns:
+            {"success": bool, "latency_ms": float, "error": str | None}
+        """
+        registry_info = PROVIDER_REGISTRY.get(provider)
+        if not registry_info:
+            return {"success": False, "latency_ms": 0.0, "error": "Unknown provider"}
+        
+        try:
+            start_time = time.time()
+            
+            # 创建临时客户端
+            default_model = registry_info["profiles"].get(ModelProfile.BALANCED)
+            base_url = registry_info["default_base_url"]
+            
+            test_client = ChatOpenAI(
+                model=default_model,
+                api_key=api_key,
+                base_url=base_url,
+                temperature=0.7,
+                timeout=30,
+                max_retries=1,
+            )
+            
+            # 发送最小化测试请求
+            from langchain_core.messages import HumanMessage
+            response = await test_client.ainvoke(
+                [HumanMessage(content="Hello")],
+                max_tokens=5
+            )
+            
+            latency_ms = (time.time() - start_time) * 1000
+            
+            return {
+                "success": True,
+                "latency_ms": round(latency_ms, 2),
+                "error": None
+            }
+            
+        except Exception as e:
+            logger.error(f"model_gateway.test_{provider.value}_failed", error=str(e))
+            return {
+                "success": False,
+                "latency_ms": 0.0,
+                "error": str(e)
+            }
     
     def _get_model_for_profile(self, profile: ModelProfile, provider: ModelProvider) -> str:
         """根据配置档获取模型名称"""
-        model_map = {
-            (ModelProvider.QWEN, ModelProfile.HIGH_QUALITY): "qwen-max",
-            (ModelProvider.QWEN, ModelProfile.BALANCED): "qwen-plus",
-            (ModelProvider.QWEN, ModelProfile.COST_EFFECTIVE): "qwen-turbo",
-            (ModelProvider.QWEN, ModelProfile.EMBEDDING): settings.QWEN_EMBEDDING_MODEL,
-            (ModelProvider.KIMI, ModelProfile.HIGH_QUALITY): "moonshot-v1-32k",
-            (ModelProvider.KIMI, ModelProfile.BALANCED): "moonshot-v1-8k",
-            (ModelProvider.KIMI, ModelProfile.COST_EFFECTIVE): "moonshot-v1-8k",
-        }
-        return model_map.get((provider, profile), settings.QWEN_DEFAULT_MODEL)
+        registry_info = PROVIDER_REGISTRY.get(provider)
+        if registry_info:
+            return registry_info["profiles"].get(profile, "unknown")
+        return "unknown"
     
     def _select_provider(self, preferred: Optional[ModelProvider] = None) -> ModelProvider:
         """选择模型提供商"""
@@ -128,6 +292,10 @@ class ModelGateway:
         if fallback in self._clients:
             logger.warning("model_gateway.using_fallback", fallback=fallback.value)
             return fallback
+        
+        # 最后尝试任何可用的提供商
+        if self._clients:
+            return list(self._clients.keys())[0]
         
         raise ModelException("没有可用的模型提供商")
 
@@ -208,80 +376,81 @@ class ModelGateway:
         Returns:
             ModelResponse: 模型响应
         """
-        start_time = time.time()
-        effective_profile = self._apply_budget_policy(model_profile)
-        selected_provider = self._select_provider(provider)
-        client = self._clients[selected_provider]
-        
-        # 根据profile选择模型
-        model_name = self._get_model_for_profile(effective_profile, selected_provider)
-        
-        try:
-            # 构建调用参数
-            kwargs = {
-                "model": model_name,
-            }
-            if temperature is not None:
-                kwargs["temperature"] = temperature
-            if tools:
-                kwargs["tools"] = tools
+        async with self._lock:
+            start_time = time.time()
+            effective_profile = self._apply_budget_policy(model_profile)
+            selected_provider = self._select_provider(provider)
+            client = self._clients[selected_provider]
             
-            run_metadata = self._build_run_metadata(
-                model_profile=effective_profile,
-                route=route,
-                session_id=session_id,
-                extra=metadata,
-            )
+            # 根据profile选择模型
+            model_name = self._get_model_for_profile(effective_profile, selected_provider)
+            
             try:
-                response = await client.ainvoke(
-                    messages,
-                    config={"metadata": run_metadata},
-                    **kwargs,
+                # 构建调用参数
+                kwargs = {
+                    "model": model_name,
+                }
+                if temperature is not None:
+                    kwargs["temperature"] = temperature
+                if tools:
+                    kwargs["tools"] = tools
+                
+                run_metadata = self._build_run_metadata(
+                    model_profile=effective_profile,
+                    route=route,
+                    session_id=session_id,
+                    extra=metadata,
                 )
-            except TypeError:
-                # Backward compatibility for clients not supporting config kwarg.
-                response = await client.ainvoke(messages, **kwargs)
-            
-            latency_ms = (time.time() - start_time) * 1000
-            
-            # 统计token使用情况
-            token_usage = {
-                "prompt_tokens": response.usage_metadata.get("input_tokens", 0) if response.usage_metadata else 0,
-                "completion_tokens": response.usage_metadata.get("output_tokens", 0) if response.usage_metadata else 0,
-                "total_tokens": response.usage_metadata.get("total_tokens", 0) if response.usage_metadata else 0,
-            }
-            
-            # 估算成本（简化计算，实际需要根据模型定价调整）
-            cost = self._estimate_cost(model_name, token_usage)
-            self._update_cost(cost)
-            
-            logger.info(
-                "model_gateway.generate_success",
-                provider=selected_provider.value,
-                model=model_name,
-                model_profile=effective_profile.value,
-                latency_ms=latency_ms,
-                token_usage=token_usage,
-                cost=cost,
-            )
-            
-            return ModelResponse(
-                content=response.content,
-                model=model_name,
-                provider=selected_provider,
-                latency_ms=latency_ms,
-                token_usage=token_usage,
-                finish_reason="stop",
-            )
-            
-        except Exception as e:
-            logger.error(
-                "model_gateway.generate_failed",
-                provider=selected_provider.value,
-                model=model_name,
-                error=str(e),
-            )
-            raise ModelException(f"模型生成失败: {str(e)}")
+                try:
+                    response = await client.ainvoke(
+                        messages,
+                        config={"metadata": run_metadata},
+                        **kwargs,
+                    )
+                except TypeError:
+                    # Backward compatibility for clients not supporting config kwarg.
+                    response = await client.ainvoke(messages, **kwargs)
+                
+                latency_ms = (time.time() - start_time) * 1000
+                
+                # 统计token使用情况
+                token_usage = {
+                    "prompt_tokens": response.usage_metadata.get("input_tokens", 0) if response.usage_metadata else 0,
+                    "completion_tokens": response.usage_metadata.get("output_tokens", 0) if response.usage_metadata else 0,
+                    "total_tokens": response.usage_metadata.get("total_tokens", 0) if response.usage_metadata else 0,
+                }
+                
+                # 估算成本（简化计算，实际需要根据模型定价调整）
+                cost = self._estimate_cost(model_name, token_usage)
+                self._update_cost(cost)
+                
+                logger.info(
+                    "model_gateway.generate_success",
+                    provider=selected_provider.value,
+                    model=model_name,
+                    model_profile=effective_profile.value,
+                    latency_ms=latency_ms,
+                    token_usage=token_usage,
+                    cost=cost,
+                )
+                
+                return ModelResponse(
+                    content=response.content,
+                    model=model_name,
+                    provider=selected_provider,
+                    latency_ms=latency_ms,
+                    token_usage=token_usage,
+                    finish_reason="stop",
+                )
+                
+            except Exception as e:
+                logger.error(
+                    "model_gateway.generate_failed",
+                    provider=selected_provider.value,
+                    model=model_name,
+                    error=str(e),
+                )
+                raise ModelException(f"模型生成失败: {str(e)}")
     
     async def generate_stream(
         self,
@@ -383,7 +552,7 @@ class ModelGateway:
                 )
                 model = settings.QWEN_EMBEDDING_MODEL
             else:
-                # Kimi暂不支持独立的embedding API，使用Qwen作为回退
+                # Kimi、GLM暂不支持独立的embedding API，使用Qwen作为回退
                 client = openai.AsyncOpenAI(
                     api_key=settings.QWEN_API_KEY,
                     base_url=settings.QWEN_BASE_URL,
@@ -437,17 +606,12 @@ class ModelGateway:
         """
         估算调用成本（RMB）
         
-        注意：这里使用简化定价，实际应根据最新定价调整
+        从 PROVIDER_REGISTRY 获取定价信息
         """
-        # 每千token价格（元）
-        pricing = {
-            "qwen-max": {"input": 0.04, "output": 0.12},
-            "qwen-plus": {"input": 0.004, "output": 0.012},
-            "qwen-turbo": {"input": 0.002, "output": 0.006},
-            "text-embedding-v3": {"input": 0.0005, "output": 0},
-            "moonshot-v1-8k": {"input": 0.012, "output": 0.012},
-            "moonshot-v1-32k": {"input": 0.024, "output": 0.024},
-        }
+        # 查找模型定价
+        pricing = {}
+        for registry_info in PROVIDER_REGISTRY.values():
+            pricing.update(registry_info.get("pricing", {}))
         
         model_pricing = pricing.get(model, {"input": 0.01, "output": 0.03})
         

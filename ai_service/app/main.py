@@ -222,6 +222,7 @@ from app.api.routes import (
     health,
     evaluation,
     metrics,
+    config,
 )
 
 # API路由注册
@@ -301,6 +302,12 @@ app.include_router(
     health.router,
     prefix=f"{settings.API_V1_STR}",
     tags=["health"],
+)
+
+app.include_router(
+    config.router,
+    prefix=f"{settings.API_V1_STR}/config",
+    tags=["config"],
 )
 
 

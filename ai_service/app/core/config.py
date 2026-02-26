@@ -72,8 +72,13 @@ class Settings(BaseSettings):
     KIMI_BASE_URL: str = "https://api.moonshot.cn/v1"
     KIMI_DEFAULT_MODEL: str = "moonshot-v1-8k"
     
+    # GLM配置
+    GLM_API_KEY: Optional[str] = None
+    GLM_BASE_URL: str = "https://open.bigmodel.cn/api/paas/v4"
+    GLM_DEFAULT_MODEL: str = "glm-4-flash"
+    
     # 默认模型路由
-    DEFAULT_MODEL_PROVIDER: str = "qwen"  # qwen 或 kimi
+    DEFAULT_MODEL_PROVIDER: str = "qwen"  # qwen, kimi, glm
     FALLBACK_MODEL_PROVIDER: str = "kimi"
     
     # 模型成本配置（用于预算控制）
