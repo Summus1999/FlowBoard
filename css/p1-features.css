@@ -1,0 +1,719 @@
+/* P1 功能样式汇总 */
+
+/* ========== 复盘系统 ========== */
+.review-section {
+    margin-top: 24px;
+}
+
+.review-header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.review-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.review-type {
+    font-size: 12px;
+    padding: 2px 10px;
+    background: var(--accent-color);
+    color: white;
+    border-radius: 10px;
+}
+
+.review-date {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.review-stats {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 12px;
+}
+
+.review-stat {
+    text-align: center;
+}
+
+.review-stat-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent-color);
+}
+
+.review-stat-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.review-preview {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+.review-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.review-content {
+    max-height: 60vh;
+    overflow: auto;
+    padding: 20px;
+}
+
+/* ========== 面试 AI 复盘 ========== */
+.interview-transcript-area {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.interview-transcript-area h4 {
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.transcript-box {
+    background: var(--bg-primary);
+    border-radius: 8px;
+    padding: 16px;
+    min-height: 120px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.interview-analysis {
+    line-height: 1.8;
+}
+
+.interview-analysis h3 {
+    color: var(--accent-color);
+    margin: 16px 0 8px;
+}
+
+.interview-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.interview-item.analyzed {
+    border-left: 3px solid var(--accent-color);
+}
+
+/* ========== 番茄钟 ========== */
+.pomodoro-panel {
+    position: fixed;
+    right: -360px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 320px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    z-index: 200;
+    transition: right 0.3s ease;
+    padding: 20px;
+}
+
+.pomodoro-panel.active {
+    right: 24px;
+}
+
+.pomodoro-float-btn {
+    position: fixed;
+    bottom: 90px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #ef4444;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    transition: transform 0.2s;
+}
+
+.pomodoro-float-btn:hover {
+    transform: scale(1.1);
+}
+
+.pomodoro-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.pomodoro-mode {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.pomodoro-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.pomodoro-close:hover {
+    background: var(--card-bg);
+}
+
+.pomodoro-display {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 20px;
+}
+
+.pomodoro-ring {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.pomodoro-ring .ring-bg {
+    fill: none;
+    stroke: var(--card-bg);
+    stroke-width: 8;
+}
+
+.pomodoro-ring .ring-progress {
+    fill: none;
+    stroke: #ef4444;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear;
+}
+
+.pomodoro-time {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+    font-weight: 700;
+    font-family: 'SF Mono', monospace;
+}
+
+.pomodoro-info {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.pomodoro-stats {
+    font-size: 20px;
+    margin-top: 8px;
+}
+
+.pomodoro-controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.pomodoro-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 16px;
+    transition: var(--transition);
+}
+
+.pomodoro-btn:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+.pomodoro-btn.primary {
+    background: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+    width: auto;
+    padding: 0 24px;
+}
+
+.pomodoro-task-select {
+    width: 100%;
+    padding: 10px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+}
+
+/* 专注模式 */
+body.focus-mode .sidebar,
+body.focus-mode .stats-header {
+    display: none;
+}
+
+body.focus-mode .main-content {
+    margin-left: 0;
+}
+
+/* ========== 命令面板 ========== */
+.command-palette {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2000;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 15vh;
+}
+
+.command-palette.active {
+    display: flex;
+}
+
+.command-palette-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.command-palette-container {
+    position: relative;
+    width: 600px;
+    max-width: 90vw;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.command-palette-input-wrapper {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    gap: 12px;
+}
+
+.command-palette-input-wrapper > i {
+    color: var(--text-muted);
+    font-size: 18px;
+}
+
+.command-palette-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 18px;
+    outline: none;
+}
+
+.command-palette-input::placeholder {
+    color: var(--text-muted);
+}
+
+.command-palette-shortcut {
+    font-size: 11px;
+    padding: 4px 8px;
+    background: var(--card-bg);
+    border-radius: 4px;
+    color: var(--text-muted);
+}
+
+.command-palette-results {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.command-palette-empty {
+    padding: 40px;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.command-palette-group-title {
+    padding: 8px 20px;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: var(--bg-primary);
+}
+
+.command-palette-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.command-palette-item:hover,
+.command-palette-item.selected {
+    background: var(--accent-color);
+    color: white;
+}
+
+.command-palette-item > i {
+    width: 20px;
+    text-align: center;
+}
+
+.command-palette-item-content {
+    flex: 1;
+}
+
+.command-palette-item-title {
+    font-size: 14px;
+}
+
+.command-palette-item-title mark {
+    background: transparent;
+    color: inherit;
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+.command-palette-item-subtitle {
+    font-size: 12px;
+    opacity: 0.7;
+    margin-top: 2px;
+}
+
+.command-palette-item-shortcut {
+    font-size: 11px;
+    padding: 2px 8px;
+    background: var(--card-bg);
+    border-radius: 4px;
+}
+
+.command-palette-footer {
+    display: flex;
+    gap: 16px;
+    padding: 12px 20px;
+    border-top: 1px solid var(--border-color);
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.command-palette-footer kbd {
+    padding: 2px 6px;
+    background: var(--card-bg);
+    border-radius: 4px;
+    font-family: inherit;
+}
+
+/* ========== 通知中心 ========== */
+.notification-bell {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.notification-bell:hover {
+    background: var(--card-bg);
+}
+
+.notification-bell i {
+    font-size: 20px;
+    color: var(--text-secondary);
+}
+
+.notification-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 18px;
+    height: 18px;
+    background: #ef4444;
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notification-center {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2000;
+    display: none;
+}
+
+.notification-center.active {
+    display: block;
+}
+
+.notification-center-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.notification-center-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 380px;
+    height: 100%;
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border-color);
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+}
+
+.notification-center-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.notification-center-header h3 {
+    font-size: 16px;
+}
+
+.notification-center-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.notification-center-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.notification-center-tabs button {
+    flex: 1;
+    padding: 12px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 13px;
+    border-bottom: 2px solid transparent;
+    transition: var(--transition);
+}
+
+.notification-center-tabs button.active,
+.notification-center-tabs button:hover {
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
+}
+
+.notification-center-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+.notification-empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+}
+
+.notification-empty i {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.notification-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.notification-item:hover {
+    background: var(--card-hover);
+}
+
+.notification-item.read {
+    opacity: 0.6;
+}
+
+.notification-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.notification-icon.info {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+}
+
+.notification-icon.success {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+.notification-icon.warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.notification-icon.error {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.notification-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.notification-title {
+    font-weight: 500;
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.notification-body {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.notification-meta {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.notification-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.notification-item:hover .notification-actions {
+    opacity: 1;
+}
+
+.notification-actions button {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: var(--bg-primary);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.notification-actions button:hover {
+    color: var(--accent-color);
+}
+
+/* 通知 Toast */
+.notification-toast {
+    position: fixed;
+    top: 24px;
+    right: -400px;
+    width: 320px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    padding: 16px;
+    z-index: 3000;
+    transition: right 0.3s ease;
+    cursor: pointer;
+}
+
+.notification-toast.show {
+    right: 24px;
+}
+
+.notification-toast-content strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.notification-toast-content p {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 0;
+}

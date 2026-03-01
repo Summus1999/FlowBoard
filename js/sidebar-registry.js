@@ -17,13 +17,19 @@
         items: [
             { page: 'dashboard', title: '我的主页', icon: 'fas fa-th-large', sectionId: 'core', order: 10, source: 'builtin' },
             { page: 'news', title: '资讯中心', icon: 'fas fa-newspaper', sectionId: 'core', order: 20, source: 'builtin' },
+            { page: 'ai-chat', title: 'AI 助手', icon: 'fas fa-robot', sectionId: 'core', order: 25, source: 'builtin', onEnter: 'initAIChatPage' },
             { page: 'notes', title: '笔记记录', icon: 'fas fa-sticky-note', sectionId: 'tools', order: 10, source: 'builtin', onEnter: 'initNotes' },
             { page: 'calendar', title: '日程管理', icon: 'fas fa-calendar-alt', sectionId: 'tools', order: 20, source: 'builtin', onEnter: 'initCalendar' },
+            { page: 'tasks', title: '任务看板', icon: 'fas fa-columns', sectionId: 'tools', order: 25, source: 'builtin', onEnter: 'initTaskBoard' },
             { page: 'growth', title: '个人提升', icon: 'fas fa-chart-line', sectionId: 'tools', order: 30, source: 'builtin', onEnter: 'initGrowth' },
+            { page: 'knowledge', title: '知识库', icon: 'fas fa-book', sectionId: 'tools', order: 35, source: 'builtin', onEnter: 'initKnowledgeBase' },
             { page: 'interview', title: '面试追踪', icon: 'fas fa-microphone', sectionId: 'tools', order: 40, source: 'builtin', onEnter: 'initInterview' },
             { page: 'leetcode', title: 'LeetCode', icon: 'fas fa-code', sectionId: 'tools', order: 50, source: 'builtin', onEnter: 'initLeetCode' },
             { page: 'github', title: 'GitHub', icon: 'fab fa-github', sectionId: 'tools', order: 60, source: 'builtin', onEnter: 'initGithub' },
-            { page: 'apps', title: '应用中心', icon: 'fas fa-th-large', sectionId: 'tools', order: 70, source: 'builtin', onEnter: 'initAppCenter' }
+            { page: 'apps', title: '应用中心', icon: 'fas fa-th-large', sectionId: 'tools', order: 70, source: 'builtin', onEnter: 'initAppCenter' },
+            { page: 'habits', title: '习惯追踪', icon: 'fas fa-calendar-check', sectionId: 'tools', order: 80, source: 'builtin', onEnter: 'initHabitTracker' },
+            { page: 'snippets', title: '代码片段', icon: 'fas fa-code', sectionId: 'tools', order: 90, source: 'builtin', onEnter: 'initCodeSnippets' },
+            { page: 'bookmarks', title: '书签', icon: 'fas fa-bookmark', sectionId: 'tools', order: 100, source: 'builtin', onEnter: 'initBookmarks' }
         ]
     };
 

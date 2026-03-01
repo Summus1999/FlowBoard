@@ -554,7 +554,16 @@ const modal = document.getElementById('addPasswordModal');
 // 初始化
 // ========================================
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // 初始化 IndexedDB 并迁移旧数据
+    try {
+        await flowboardDB.init();
+        await FlowBoardMigration.migrateAll();
+        console.log('[App] 数据库初始化完成');
+    } catch (error) {
+        console.error('[App] 数据库初始化失败:', error);
+    }
+    
     initNavigation();
     loadPasswordsFromStorage();
     
@@ -563,6 +572,19 @@ document.addEventListener('DOMContentLoaded', () => {
         initAiSettings();
     } else {
         console.warn('AI 设置模块未加载');
+    }
+    
+    // 初始化 P0 + P1 新功能
+    if (typeof initNewFeatures === 'function') {
+        initNewFeatures();
+    }
+    
+    // 初始化 P3 功能
+    if (typeof MultiWindowManager !== 'undefined') {
+        MultiWindowManager.init();
+    }
+    if (typeof EfficiencyTools !== 'undefined') {
+        EfficiencyTools.init();
     }
     renderPasswordCards();
     updatePasswordCount();
@@ -2504,6 +2526,146 @@ function updateUserCardDisplay(profile) {
 }
 
 console.log('FlowBoard 已加载完成 🚀');
+
+// ========================================
+// P0 + P1 新功能初始化入口
+// ========================================
+
+// 全局初始化（在 DOMContentLoaded 中调用）
+function initNewFeatures() {
+    // P0 功能初始化
+    if (typeof initAIChat === 'function') initAIChat();
+    if (typeof initKnowledgeBase === 'function') initKnowledgeBase();
+    
+    // P1 功能初始化
+    if (typeof ReviewUI !== 'undefined') ReviewUI.init();
+    if (typeof InterviewAI !== 'undefined') InterviewAI.init();
+    if (typeof PomodoroTimer !== 'undefined') PomodoroTimer.init();
+    if (typeof CommandPalette !== 'undefined') CommandPalette.init();
+    if (typeof NotificationManager !== 'undefined') NotificationManager.init();
+    
+    // P2 功能初始化
+    if (typeof DashboardV2 !== 'undefined') DashboardV2.init();
+    if (typeof BackupManager !== 'undefined') BackupManager.init();
+    if (typeof AnnualReport !== 'undefined') AnnualReport.init();
+    
+    console.log('[App] 新功能初始化完成');
+}
+
+// AI 助手页面初始化
+function initAIChatPage() {
+    if (typeof initAIChat === 'function') {
+        initAIChat();
+    }
+    
+    // 加载最近对话列表
+    setTimeout(async () => {
+        const container = document.getElementById('aiRecentChatsList');
+        if (!container) return;
+        
+        await ChatState.loadSessions();
+        const sessions = ChatState.sessions.slice(0, 5);
+        
+        if (sessions.length === 0) {
+            container.innerHTML = '<p class="empty-hint">暂无对话记录</p>';
+            return;
+        }
+        
+        container.innerHTML = sessions.map(s => `
+            <div class="recent-chat-item" onclick="AIChatUI.open(); AIChatUI.onSwitchSession('${s.id}')">
+                <i class="fas fa-comment"></i>
+                <div class="recent-chat-info">
+                    <span class="recent-chat-title">${AIChatUI.escapeHtml(s.title)}</span>
+                    <span class="recent-chat-time">${AIChatUI.formatTime(s.updatedAt)}</span>
+                </div>
+            </div>
+        `).join('');
+    }, 100);
+}
+
+// 知识库页面初始化
+function initKnowledgeBase() {
+    if (typeof initKnowledgeBase === 'function') {
+        // 避免递归调用，直接执行初始化逻辑
+        KnowledgeBaseUI.init();
+        KnowledgeBaseUI.renderDocList();
+        KnowledgeBaseUI.updateStats();
+        
+        // 初始化 RAG 引擎
+        if (window.ragEngine) {
+            ragEngine.init().then(() => {
+                console.log('[KnowledgeBase] RAG 引擎初始化完成');
+            }).catch(err => {
+                console.error('[KnowledgeBase] RAG 引擎初始化失败:', err);
+            });
+        }
+    }
+}
+
+// 任务看板初始化
+function initTaskBoard() {
+    if (typeof TaskBoardUI !== 'undefined') {
+        TaskBoardUI.init();
+    }
+}
+
+// P2 功能初始化入口
+function initHabitTracker() {
+    if (typeof HabitTracker !== 'undefined') {
+        HabitTracker.init();
+    }
+}
+
+function initCodeSnippets() {
+    if (typeof CodeSnippets !== 'undefined') {
+        CodeSnippets.init();
+    }
+}
+
+function initBookmarks() {
+    if (typeof BookmarkManager !== 'undefined') {
+        BookmarkManager.init();
+    }
+}
+
+// P3 功能初始化入口（在设置页面等调用）
+function initPluginSystem() {
+    if (typeof PluginSystem !== 'undefined') {
+        PluginSystem.init();
+    }
+}
+
+function initAutomationEngine() {
+    if (typeof AutomationEngine !== 'undefined') {
+        AutomationEngine.init();
+    }
+}
+
+// 面试追踪增强初始化
+const originalInitInterview = window.initInterview;
+window.initInterview = function() {
+    // 调用原有的初始化
+    if (typeof originalInitInterview === 'function') {
+        originalInitInterview();
+    }
+    // 添加 AI 复盘功能
+    if (typeof InterviewAUI !== 'undefined') {
+        InterviewAUI.init();
+        InterviewAUI.renderRecordingList();
+    }
+};
+
+// 个人提升页面增强初始化
+const originalInitGrowth = window.initGrowth;
+window.initGrowth = function() {
+    if (typeof originalInitGrowth === 'function') {
+        originalInitGrowth();
+    }
+    // 添加复盘功能
+    if (typeof ReviewUI !== 'undefined') {
+        ReviewUI.renderReviewSection();
+    }
+};
 
 
 // ========================================

@@ -20,6 +20,14 @@
     <link rel="stylesheet" href="css/growth.css">
     <link rel="stylesheet" href="css/interview.css">
     <link rel="stylesheet" href="css/apps.css">
+    <!-- P0 新功能样式 -->
+    <link rel="stylesheet" href="css/ai-chat.css">
+    <link rel="stylesheet" href="css/knowledge-base.css">
+    <link rel="stylesheet" href="css/task-board.css">
+    <!-- P1 新功能样式 -->
+    <link rel="stylesheet" href="css/p1-features.css">
+    <!-- P2/P3 新功能样式 -->
+    <link rel="stylesheet" href="css/p2-p3-features.css">
     <!-- Monaco Editor -->
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"></script>
 </head>
@@ -899,6 +907,141 @@
                             </div>
                         </div>
                         
+                        <!-- 插件管理 -->
+                        <div class="settings-card">
+                            <h3><i class="fas fa-puzzle-piece"></i> 插件管理</h3>
+                            <div id="pluginManager">
+                                <p class="loading">加载中...</p>
+                            </div>
+                            <button class="btn-secondary" onclick="initPluginSystem()">
+                                <i class="fas fa-cog"></i> 管理插件
+                            </button>
+                        </div>
+                        
+                        <!-- 自动化工作流 -->
+                        <div class="settings-card">
+                            <h3><i class="fas fa-magic"></i> 自动化</h3>
+                            <div id="workflowManager">
+                                <p class="loading">加载中...</p>
+                            </div>
+                            <button class="btn-secondary" onclick="initAutomationEngine()">
+                                <i class="fas fa-cog"></i> 管理工作流
+                            </button>
+                        </div>
+                        
+                        <!-- 工作区管理 -->
+                        <div class="settings-card">
+                            <h3><i class="fas fa-window-restore"></i> 工作区</h3>
+                            <div class="workspace-actions">
+                                <button class="btn-secondary" onclick="MultiWindowManager.saveWorkspace()">
+                                    <i class="fas fa-save"></i> 保存当前工作区
+                                </button>
+                                <button class="btn-secondary" onclick="MultiWindowManager.applyPresetWorkspace('study')">
+                                    <i class="fas fa-graduation-cap"></i> 学习模式
+                                </button>
+                                <button class="btn-secondary" onclick="MultiWindowManager.applyPresetWorkspace('review')">
+                                    <i class="fas fa-chart-line"></i> 复盘模式
+                                </button>
+                            </div>
+                            <div id="workspaceList" class="workspace-list"></div>
+                        </div>
+                        
+                    </div>
+                </div>
+
+                <!-- AI 助手页面 -->
+                <div class="page" id="page-ai-chat">
+                    <div class="page-header">
+                        <h2><i class="fas fa-robot"></i> AI 助手</h2>
+                        <div class="page-actions">
+                            <button class="btn-secondary" onclick="AIChatUI.toggle()">
+                                <i class="fas fa-expand"></i> 打开对话面板
+                            </button>
+                        </div>
+                    </div>
+                    <div class="ai-chat-page-content">
+                        <div class="ai-quick-actions">
+                            <h3>快速开始</h3>
+                            <div class="quick-action-grid">
+                                <button class="quick-action-card" onclick="AIChatUI.open(); setTimeout(() => ChatState.createSession('知识问答'), 100);">
+                                    <i class="fas fa-brain"></i>
+                                    <span>知识问答</span>
+                                    <p>基于知识库回答问题</p>
+                                </button>
+                                <button class="quick-action-card" onclick="LearningPlanUI.showGenerateModal()">
+                                    <i class="fas fa-clipboard-list"></i>
+                                    <span>制定计划</span>
+                                    <p>AI 生成学习计划</p>
+                                </button>
+                                <button class="quick-action-card" onclick="AIChatUI.open(); setTimeout(() => ChatState.createSession('代码辅助'), 100);">
+                                    <i class="fas fa-code"></i>
+                                    <span>代码辅助</span>
+                                    <p>编程问题解答</p>
+                                </button>
+                                <button class="quick-action-card" onclick="AIChatUI.open(); setTimeout(() => ChatState.createSession('内容总结'), 100);">
+                                    <i class="fas fa-compress-alt"></i>
+                                    <span>内容总结</span>
+                                    <p>长文提炼要点</p>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="ai-recent-chats">
+                            <h3>最近对话</h3>
+                            <div id="aiRecentChatsList" class="recent-chats-list">
+                                <!-- 动态加载 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 知识库页面 -->
+                <div class="page" id="page-knowledge">
+                    <div class="page-header">
+                        <h2><i class="fas fa-book"></i> 知识库</h2>
+                        <div class="page-actions">
+                            <button class="btn-secondary" onclick="KnowledgeBaseUI.renderDocList()">
+                                <i class="fas fa-refresh"></i> 刷新
+                            </button>
+                        </div>
+                    </div>
+                    <div class="knowledge-container">
+                        <div class="knowledge-stats">
+                            <div class="kb-stat-card">
+                                <span class="kb-stat-value" id="kbStatTotal">0</span>
+                                <span class="kb-stat-label">文档数</span>
+                            </div>
+                            <div class="kb-stat-card">
+                                <span class="kb-stat-value" id="kbStatChunks">0</span>
+                                <span class="kb-stat-label">分块数</span>
+                            </div>
+                        </div>
+                        <div class="knowledge-upload" id="kbDropZone">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <h3>拖拽文件到此处上传</h3>
+                            <p>支持 PDF、TXT、Markdown 格式</p>
+                            <button class="btn-primary">
+                                <i class="fas fa-folder-open"></i> 选择文件
+                            </button>
+                            <input type="file" id="kbFileInput" multiple accept=".pdf,.txt,.md" style="display: none;">
+                        </div>
+                        <div class="knowledge-list" id="kbDocList">
+                            <!-- 文档列表 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 任务看板页面 -->
+                <div class="page" id="page-tasks">
+                    <div class="page-header">
+                        <h2><i class="fas fa-columns"></i> 任务看板</h2>
+                        <div class="page-actions">
+                            <button class="btn-secondary" onclick="TaskBoardUI.loadTasks()">
+                                <i class="fas fa-refresh"></i> 刷新
+                            </button>
+                        </div>
+                    </div>
+                    <div class="task-board-container" id="taskBoard">
+                        <!-- 看板列 -->
                     </div>
                 </div>
 
@@ -919,6 +1062,45 @@
                         <div class="apps-grid" id="appsGrid">
                             <!-- 应用列表将通过 JS 动态生成 -->
                         </div>
+                    </div>
+                </div>
+
+                <!-- 习惯追踪页面 -->
+                <div class="page" id="page-habits">
+                    <div class="page-header">
+                        <h2><i class="fas fa-calendar-check"></i> 习惯追踪</h2>
+                        <button class="btn-primary" onclick="HabitTracker.showAddModal()">
+                            <i class="fas fa-plus"></i> 添加习惯
+                        </button>
+                    </div>
+                    <div id="habitTracker" class="habits-container">
+                        <p class="loading">加载中...</p>
+                    </div>
+                </div>
+
+                <!-- 代码片段页面 -->
+                <div class="page" id="page-snippets">
+                    <div class="page-header">
+                        <h2><i class="fas fa-code"></i> 代码片段</h2>
+                        <button class="btn-primary" onclick="CodeSnippets.showAddModal()">
+                            <i class="fas fa-plus"></i> 新建片段
+                        </button>
+                    </div>
+                    <div id="codeSnippets" class="snippets-container">
+                        <p class="loading">加载中...</p>
+                    </div>
+                </div>
+
+                <!-- 书签页面 -->
+                <div class="page" id="page-bookmarks">
+                    <div class="page-header">
+                        <h2><i class="fas fa-bookmark"></i> 书签收藏</h2>
+                        <button class="btn-primary" onclick="BookmarkManager.showAddModal()">
+                            <i class="fas fa-plus"></i> 添加书签
+                        </button>
+                    </div>
+                    <div id="bookmarkManager" class="bookmarks-container">
+                        <p class="loading">加载中...</p>
                     </div>
                 </div>
 
@@ -1608,6 +1790,32 @@
     <script src="js/app-center.js"></script>
     <script src="js/sidebar-registry.js"></script>
     <script src="js/ai-settings.js"></script>
+    <!-- P0 新功能 -->
+    <script src="js/db-core.js"></script>
+    <script src="js/llm-client.js"></script>
+    <script src="js/embedding-engine.js"></script>
+    <script src="js/ai-chat.js"></script>
+    <script src="js/knowledge-base.js"></script>
+    <script src="js/learning-plan.js"></script>
+    <script src="js/task-board.js"></script>
+    <!-- P1 新功能 -->
+    <script src="js/review-system.js"></script>
+    <script src="js/interview-ai.js"></script>
+    <script src="js/pomodoro.js"></script>
+    <script src="js/command-palette.js"></script>
+    <script src="js/notification-center.js"></script>
+    <!-- P2 新功能 -->
+    <script src="js/habit-tracker.js"></script>
+    <script src="js/backup-manager.js"></script>
+    <script src="js/code-snippets.js"></script>
+    <script src="js/dashboard-v2.js"></script>
+    <script src="js/annual-report.js"></script>
+    <!-- P3 新功能 -->
+    <script src="js/plugin-system.js"></script>
+    <script src="js/automation-engine.js"></script>
+    <script src="js/multiwindow.js"></script>
+    <script src="js/bookmarks.js"></script>
+    <script src="js/efficiency-tools.js"></script>
     <script src="js/app.js"></script>
     <script src="js/leetcode.js"></script>
     <script src="js/notes.js"></script>
