@@ -59,15 +59,15 @@ async def readiness_check(
         }
 
 
-@router.get("/metrics")
-async def get_metrics(
+@router.get("/cost")
+async def get_cost_metrics(
     trace_id: str = Depends(get_trace_id),
     request_id: str = Depends(get_request_id),
 ):
     """
-    获取服务指标
+    获取成本指标
     
-    包括成本统计等
+    包括模型调用成本统计、预算使用情况等
     """
     gateway = get_model_gateway()
     cost_stats = gateway.get_cost_stats()

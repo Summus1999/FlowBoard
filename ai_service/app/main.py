@@ -305,23 +305,6 @@ app.include_router(
 )
 
 
-# 启动事件
-@app.on_event("startup")
-async def startup_event():
-    """启动事件"""
-    logger.info(
-        "application.started",
-        version=settings.VERSION,
-        debug=settings.DEBUG,
-    )
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """关闭事件"""
-    logger.info("application.stopped")
-
-
 if __name__ == "__main__":
     import uvicorn
     

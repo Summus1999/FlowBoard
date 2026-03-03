@@ -56,6 +56,7 @@ htmlcov/
 # Alembic
 alembic/versions/*.py
 !alembic/versions/.gitkeep
+!alembic/versions/001_initial_migration.py
 
 # Docker
 .dockerignore

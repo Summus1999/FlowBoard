@@ -3,6 +3,7 @@ Configuration module
 Supports environment variables and .env files
 """
 
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import List, Optional
@@ -110,7 +111,9 @@ class Settings(BaseSettings):
     INDEX_VERSION_RETENTION: int = 5
     
     # Security
-    SECRET_KEY: str = Field(default="change-me-in-production")
+    SECRET_KEY: str = Field(
+        default_factory=lambda: os.environ.get("SECRET_KEY") or "dev-secret-key-not-for-production"
+    )
     API_TOKEN: Optional[str] = Field(default=None, description="Bearer token for remote access")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7
     SECURITY_SOURCE_WHITELIST: List[str] = Field(default_factory=list)

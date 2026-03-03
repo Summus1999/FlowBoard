@@ -65,7 +65,7 @@ def check_error(state: GraphState) -> Literal["error", "continue"]:
     return "continue"
 
 
-def should_continue_execution(state: GraphState) -> Literal["tools", "memory", "end"]:
+def should_continue_execution(state: GraphState) -> Literal["execute_tools", "memory_write", "end"]:
     """
     决定是否继续执行
     """
@@ -74,6 +74,6 @@ def should_continue_execution(state: GraphState) -> Literal["tools", "memory", "
     
     # 计划类意图需要执行工具
     if intent == "plan" and confirmed:
-        return "tools"
+        return "execute_tools"
     
-    return "memory"
+    return "memory_write"
