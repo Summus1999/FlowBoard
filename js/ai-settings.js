@@ -203,36 +203,15 @@ function renderAiSettingsUI() {
             </div>
             
             <div class="ai-providers-divider">
-                <span>默认模型路由</span>
+                <span>调用优先级（拖拽排序，从上到下优先级递减）</span>
             </div>
             
-            <!-- 默认路由配置 -->
-            <div class="setting-item">
-                <div class="setting-info">
-                    <span class="setting-name">主力模型</span>
-                    <span class="setting-desc">默认使用的 AI 模型</span>
-                </div>
-                <div class="setting-control">
-                    <select id="aiDefaultProvider" class="ai-select">
-                        ${Object.entries(AI_PROVIDERS).map(([key, provider]) => `
-                            <option value="${key}" ${aiSettingsState.defaultProvider === key ? 'selected' : ''}>${provider.name}</option>
-                        `).join('')}
-                    </select>
-                </div>
+            <!-- Priority ordering UI -->
+            <div class="ai-priority-list" id="aiPriorityList">
+                ${_buildPriorityListHTML()}
             </div>
-            
-            <div class="setting-item">
-                <div class="setting-info">
-                    <span class="setting-name">降级模型</span>
-                    <span class="setting-desc">主力模型不可用时使用</span>
-                </div>
-                <div class="setting-control">
-                    <select id="aiFallbackProvider" class="ai-select">
-                        ${Object.entries(AI_PROVIDERS).map(([key, provider]) => `
-                            <option value="${key}" ${aiSettingsState.fallbackProvider === key ? 'selected' : ''}>${provider.name}</option>
-                        `).join('')}
-                    </select>
-                </div>
+            <div class="ai-priority-hint" style="font-size: 12px; color: #888; padding: 4px 16px;">
+                拖拽调整顺序。第一个为主力模型，后续为降级候选。仅已启用且配置了 API Key 的提供商参与调度。
             </div>
             
             <div class="ai-providers-divider">
@@ -276,6 +255,125 @@ function renderAiSettingsUI() {
             </div>
         </div>
     `;
+}
+
+/**
+ * Build the drag-sortable priority list HTML.
+ */
+function _buildPriorityListHTML() {
+    // Determine initial order from PriorityLLMManager or fallback to all providers
+    let order = [];
+    if (typeof priorityLLMManager !== 'undefined' && priorityLLMManager.priorityList?.length > 0) {
+        order = [...priorityLLMManager.priorityList];
+    }
+    // Ensure all known providers are represented
+    const allKeys = Object.keys(AI_PROVIDERS);
+    for (const k of allKeys) {
+        if (!order.includes(k)) order.push(k);
+    }
+
+    return order.map((key, idx) => {
+        const provider = AI_PROVIDERS[key] || { name: key, icon: 'fa-solid fa-circle' };
+        const providerCfg = aiSettingsState.providers[key] || {};
+        const isUsable = providerCfg.enabled && providerCfg.apiKey;
+        return `
+            <div class="ai-priority-item ${isUsable ? 'usable' : 'disabled'}"
+                 data-provider="${key}" draggable="true"
+                 style="display:flex; align-items:center; gap:10px; padding:10px 16px;
+                        border:1px solid ${isUsable ? '#4ade8030' : '#66666630'};
+                        border-radius:8px; margin:4px 0; cursor:grab;
+                        background: ${isUsable ? '#4ade8008' : 'transparent'};
+                        opacity: ${isUsable ? '1' : '0.5'};">
+                <span style="font-weight:600; color:#888; min-width:20px;">${idx + 1}</span>
+                <i class="${provider.icon}" style="font-size:16px;"></i>
+                <span style="flex:1;">${provider.name}</span>
+                ${isUsable
+                    ? '<span style="font-size:11px; color:#4ade80;">可用</span>'
+                    : '<span style="font-size:11px; color:#888;">未启用</span>'}
+                <i class="fas fa-grip-vertical" style="color:#666; cursor:grab;"></i>
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Initialize drag-and-drop for the priority list.
+ */
+function _initPriorityDragDrop() {
+    const container = document.getElementById('aiPriorityList');
+    if (!container) return;
+
+    let draggedEl = null;
+
+    container.querySelectorAll('.ai-priority-item').forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+            draggedEl = item;
+            item.style.opacity = '0.4';
+            e.dataTransfer.effectAllowed = 'move';
+        });
+
+        item.addEventListener('dragend', () => {
+            if (draggedEl) draggedEl.style.opacity = '';
+            draggedEl = null;
+            // Remove all drag-over highlights
+            container.querySelectorAll('.ai-priority-item').forEach(el => {
+                el.style.borderTop = '';
+            });
+        });
+
+        item.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            if (draggedEl && draggedEl !== item) {
+                item.style.borderTop = '2px solid #3b82f6';
+            }
+        });
+
+        item.addEventListener('dragleave', () => {
+            item.style.borderTop = '';
+        });
+
+        item.addEventListener('drop', (e) => {
+            e.preventDefault();
+            item.style.borderTop = '';
+            if (draggedEl && draggedEl !== item) {
+                container.insertBefore(draggedEl, item);
+                _syncPriorityFromDOM();
+            }
+        });
+    });
+
+    // Allow drop at end of list
+    container.addEventListener('dragover', (e) => e.preventDefault());
+    container.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (draggedEl && !e.target.closest('.ai-priority-item')) {
+            container.appendChild(draggedEl);
+            _syncPriorityFromDOM();
+        }
+    });
+}
+
+/**
+ * Read current DOM order and update the PriorityLLMManager + re-render indices.
+ */
+function _syncPriorityFromDOM() {
+    const container = document.getElementById('aiPriorityList');
+    if (!container) return;
+
+    const items = container.querySelectorAll('.ai-priority-item');
+    const newOrder = [];
+    items.forEach((el, idx) => {
+        newOrder.push(el.dataset.provider);
+        // Update the index number
+        const numEl = el.querySelector('span');
+        if (numEl) numEl.textContent = idx + 1;
+    });
+
+    // Persist to PriorityLLMManager
+    if (typeof priorityLLMManager !== 'undefined') {
+        priorityLLMManager.setPriorityList(newOrder);
+    }
 }
 
 /**
@@ -384,22 +482,6 @@ function bindAiSettingsEvents() {
         });
     });
     
-    // 默认提供商选择
-    const defaultProviderSelect = document.getElementById('aiDefaultProvider');
-    if (defaultProviderSelect) {
-        defaultProviderSelect.addEventListener('change', (e) => {
-            aiSettingsState.defaultProvider = e.target.value;
-        });
-    }
-    
-    // 降级提供商选择
-    const fallbackProviderSelect = document.getElementById('aiFallbackProvider');
-    if (fallbackProviderSelect) {
-        fallbackProviderSelect.addEventListener('change', (e) => {
-            aiSettingsState.fallbackProvider = e.target.value;
-        });
-    }
-    
     // 月度预算
     const monthlyBudgetInput = document.getElementById('aiMonthlyBudget');
     if (monthlyBudgetInput) {
@@ -426,6 +508,9 @@ function bindAiSettingsEvents() {
             }
         });
     }
+
+    // Initialize priority drag-and-drop
+    _initPriorityDragDrop();
 }
 
 /**
@@ -572,23 +657,46 @@ async function saveAiConfig() {
     }
     
     try {
-        // 1. 保存到 Electron 加密存储
-        const saveResult = await window.electronAPI.saveAiConfig({
+        // Sync priority order from DOM before saving
+        _syncPriorityFromDOM();
+
+        // Derive defaultProvider / fallbackProvider from priority list
+        if (typeof priorityLLMManager !== 'undefined') {
+            const ordered = priorityLLMManager.getOrderedProviders();
+            if (ordered.length > 0) aiSettingsState.defaultProvider = ordered[0];
+            if (ordered.length > 1) aiSettingsState.fallbackProvider = ordered[1];
+        }
+
+        // 1. Save to Electron encrypted storage
+        const configPayload = {
             serviceUrl: aiSettingsState.serviceUrl,
             apiToken: aiSettingsState.apiToken,
             providers: aiSettingsState.providers,
             defaultProvider: aiSettingsState.defaultProvider,
             fallbackProvider: aiSettingsState.fallbackProvider,
             monthlyBudget: aiSettingsState.monthlyBudget
-        });
-        
-        if (!saveResult.success) {
-            throw new Error(saveResult.error || '保存失败');
+        };
+
+        if (window.electronAPI?.saveAiConfig) {
+            const saveResult = await window.electronAPI.saveAiConfig(configPayload);
+            if (!saveResult.success) {
+                throw new Error(saveResult.error || '保存失败');
+            }
+        } else {
+            // Fallback: save to IndexedDB
+            await flowboardDB.setKV('llm_config', configPayload);
         }
-        
-        console.log('AI 配置已保存到本地存储');
-        
-        // 2. 同步到后端
+
+        // 2. Save priority config
+        if (typeof priorityLLMManager !== 'undefined') {
+            await priorityLLMManager.savePriorityConfig();
+            // Reload config into llmManager
+            await priorityLLMManager.loadConfig();
+        }
+
+        console.log('AI config saved');
+
+        // 3. Sync to backend
         await syncConfigToBackend();
         
         showNotification('AI 配置已保存', 'success');

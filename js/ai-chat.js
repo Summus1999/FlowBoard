@@ -385,6 +385,19 @@ const AIChatUI = {
                         ${isStreaming ? '<span class="typing-cursor"></span>' : this.renderMarkdown(message.content)}
                     </div>
                     ${!isUser && !isError ? `
+                        ${message.intent && INTENT_META[message.intent] ? `
+                            <span class="ai-chat-intent-badge" style="
+                                display: inline-flex; align-items: center; gap: 4px;
+                                font-size: 11px; padding: 2px 8px; border-radius: 10px;
+                                color: ${INTENT_META[message.intent].color};
+                                background: ${INTENT_META[message.intent].color}12;
+                                margin-bottom: 4px;
+                            ">
+                                <i class="fas ${INTENT_META[message.intent].icon}"></i>
+                                ${INTENT_META[message.intent].label}
+                                ${message.provider ? `· ${LLM_PROVIDERS[message.provider]?.name || message.provider}` : ''}
+                            </span>
+                        ` : ''}
                         <div class="ai-chat-message-actions">
                             <button class="ai-chat-msg-btn" onclick="AIChatUI.onCopyMessage('${message.id}')" title="复制">
                                 <i class="fas fa-copy"></i>
@@ -440,8 +453,15 @@ const AIChatUI = {
 
     updateModelBadge() {
         const badge = document.getElementById('aiChatModelBadge');
-        const provider = LLM_PROVIDERS[llmManager.activeProvider];
-        badge.textContent = provider ? provider.name : llmManager.activeProvider;
+        const ordered = priorityLLMManager.getOrderedProviders();
+        if (ordered.length > 0) {
+            const topProvider = LLM_PROVIDERS[ordered[0]];
+            badge.textContent = topProvider ? topProvider.name : ordered[0];
+            badge.title = `优先级: ${ordered.map(p => LLM_PROVIDERS[p]?.name || p).join(' > ')}`;
+        } else {
+            badge.textContent = '未配置';
+            badge.title = '请在设置中配置 AI 提供商';
+        }
     },
 
     // 事件处理
@@ -480,37 +500,31 @@ const AIChatUI = {
         sendBtn.disabled = true;
 
         try {
-            // 检查知识库模式
-            const useRag = document.getElementById('aiChatRagToggle').classList.contains('active');
-            let systemPrompt = '你是一个 helpful 的 AI 助手。';
-            let context = '';
-
-            if (useRag) {
-                // RAG 检索
-                const messages = await ChatState.getMessages(ChatState.currentSessionId);
-                const lastUserQuery = messages.filter(m => m.role === 'user').pop()?.content || '';
-                
-                showToast('正在检索知识库...');
-                const results = await ragEngine.retrieve(lastUserQuery, 3);
-                
-                if (results.length > 0) {
-                    context = results.map((r, i) => `[${i+1}] ${r.content}`).join('\n\n');
-                    systemPrompt = PromptTemplates.ragQA('', context);
-                }
-            }
-
-            // 构建消息历史
-            const messages = await ChatState.getMessages(ChatState.currentSessionId);
-            const history = messages.slice(-10).map(m => ({ // 只取最近10条
+            // Gather recent messages for context
+            const allMessages = await ChatState.getMessages(ChatState.currentSessionId);
+            const lastUserMsg = allMessages.filter(m => m.role === 'user').pop()?.content || '';
+            const recentHistory = allMessages.slice(-10).map(m => ({
                 role: m.role,
                 content: m.content
             }));
 
-            if (systemPrompt && context) {
-                history.unshift({ role: 'system', content: systemPrompt });
+            // Step 1: Intent classification
+            const routeResult = await IntentRouter.classify(lastUserMsg, recentHistory);
+            const intent = routeResult.intent;
+
+            // Step 2: Prepare agent-specific context
+            const agentCtx = await IntentRouter.prepareAgentContext(intent, lastUserMsg);
+
+            // Show route indicator
+            this._showRouteTag(intent, routeResult.method);
+
+            // Step 3: Build final message payload
+            const history = [...recentHistory];
+            if (agentCtx.systemPrompt) {
+                history.unshift({ role: 'system', content: agentCtx.systemPrompt });
             }
 
-            // 创建 AI 消息占位
+            // Step 4: Create AI message placeholder
             const aiMsgId = flowboardDB.generateId('msg_');
             const aiMsg = {
                 id: aiMsgId,
@@ -518,36 +532,47 @@ const AIChatUI = {
                 role: 'assistant',
                 content: '',
                 timestamp: Date.now(),
-                isStreaming: true
+                isStreaming: true,
+                intent
             };
             await flowboardDB.put('chatMessages', aiMsg);
             this.appendMessage(aiMsg);
 
-            // 流式调用
-            const client = llmManager.getClient();
+            // Step 5: Stream with priority failover
+            let usedProvider = null;
             let fullContent = '';
-            
             ChatState.abortController = new AbortController();
 
-            for await (const chunk of client.chatStream(history)) {
+            const { stream, provider } = await priorityLLMManager.streamWithFailover(history);
+            usedProvider = provider;
+
+            for await (const chunk of stream) {
                 if (ChatState.abortController.signal.aborted) break;
-                
                 fullContent += chunk.content;
                 this.updateStreamingMessage(aiMsgId, fullContent);
             }
 
-            // 保存完整响应
+            // Step 6: Save final response
             await flowboardDB.put('chatMessages', {
                 ...aiMsg,
                 content: fullContent,
-                isStreaming: false
+                isStreaming: false,
+                provider: usedProvider,
+                intent
             });
             this.finalizeStreamingMessage(aiMsgId, fullContent);
 
+            // Update model badge to reflect actual provider used
+            if (usedProvider) {
+                const badge = document.getElementById('aiChatModelBadge');
+                if (badge) {
+                    badge.textContent = LLM_PROVIDERS[usedProvider]?.name || usedProvider;
+                }
+            }
+
         } catch (error) {
-            console.error('[AIChat] 流式响应失败:', error);
-            
-            // 添加错误消息
+            console.error('[AIChat] Stream response failed:', error);
+
             await ChatState.addMessage(
                 ChatState.currentSessionId,
                 'assistant',
@@ -555,13 +580,38 @@ const AIChatUI = {
                 { isError: true }
             );
             this.renderMessages();
-            
             showToast('AI 响应失败: ' + error.message);
         } finally {
             ChatState.isStreaming = false;
             ChatState.abortController = null;
             sendBtn.disabled = false;
         }
+    },
+
+    /**
+     * Show a transient route indicator tag in the message area.
+     */
+    _showRouteTag(intent, method) {
+        const meta = INTENT_META[intent];
+        if (!meta) return;
+
+        const container = document.getElementById('aiChatMessages');
+        if (!container) return;
+
+        // Remove previous tag
+        container.querySelectorAll('.ai-route-tag').forEach(el => el.remove());
+
+        const tag = document.createElement('div');
+        tag.className = 'ai-route-tag';
+        tag.style.cssText = `
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 12px; margin: 4px 16px; border-radius: 12px;
+            font-size: 12px; color: ${meta.color};
+            background: ${meta.color}15; border: 1px solid ${meta.color}30;
+        `;
+        tag.innerHTML = `<i class="fas ${meta.icon}"></i> 正在使用${meta.label}模式`;
+        container.appendChild(tag);
+        this.scrollToBottom();
     },
 
     async onNewChat() {
@@ -691,12 +741,11 @@ const AIChatUI = {
     }
 };
 
-// 初始化入口
+// Init entry
 function initAIChat() {
-    // 初始化 LLM 管理器
-    llmManager.init().then(() => {
+    priorityLLMManager.init().then(() => {
         AIChatUI.init();
-        console.log('[AIChat] AI 对话助手初始化完成');
+        console.log('[AIChat] AI chat initialized, providers:', priorityLLMManager.getOrderedProviders());
     });
 }
 

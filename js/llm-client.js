@@ -430,9 +430,178 @@ ${question}
 `
 };
 
-// 导出
+/**
+ * Priority-aware LLM Manager
+ * Supports ordered provider list with automatic failover and per-provider timeout.
+ */
+class PriorityLLMManager extends LLMManager {
+    constructor() {
+        super();
+        // Ordered provider list (highest priority first)
+        this.priorityList = [];
+        // Per-provider timeout in ms (default 30s)
+        this.timeouts = {};
+        // Per-provider max retries
+        this.retries = {};
+        // Last failover notification (avoid spamming)
+        this._lastFailoverTs = 0;
+        // Callback for UI notifications
+        this.onFailover = null;
+    }
+
+    async init() {
+        await super.init();
+        await this.loadPriorityConfig();
+    }
+
+    async loadPriorityConfig() {
+        try {
+            const saved = await flowboardDB.getKV('llm_priority_config');
+            if (saved) {
+                this.priorityList = saved.priorityList || [];
+                this.timeouts = saved.timeouts || {};
+                this.retries = saved.retries || {};
+            }
+        } catch (e) {
+            console.warn('[PriorityLLMManager] Failed to load priority config:', e.message);
+        }
+
+        // Ensure priorityList is populated with all available providers
+        if (this.priorityList.length === 0) {
+            this.priorityList = this._buildDefaultPriority();
+        }
+    }
+
+    async savePriorityConfig() {
+        await flowboardDB.setKV('llm_priority_config', {
+            priorityList: this.priorityList,
+            timeouts: this.timeouts,
+            retries: this.retries
+        });
+    }
+
+    _buildDefaultPriority() {
+        const available = this.getAvailableProviders();
+        if (available.length > 0) return available;
+        return Object.keys(LLM_PROVIDERS);
+    }
+
+    /**
+     * Set the priority order. First element = highest priority.
+     */
+    setPriorityList(orderedProviders) {
+        this.priorityList = orderedProviders;
+    }
+
+    setTimeout(provider, ms) {
+        this.timeouts[provider] = ms;
+    }
+
+    setRetries(provider, count) {
+        this.retries[provider] = count;
+    }
+
+    /**
+     * Get an ordered list of usable providers (enabled + has API key).
+     */
+    getOrderedProviders() {
+        const available = new Set(this.getAvailableProviders());
+        const ordered = this.priorityList.filter(p => available.has(p));
+        // Append any available provider not in priorityList
+        for (const p of available) {
+            if (!ordered.includes(p)) ordered.push(p);
+        }
+        return ordered;
+    }
+
+    /**
+     * Non-streaming call with automatic failover across providers.
+     */
+    async chatWithFailover(messages, options = {}) {
+        const providers = this.getOrderedProviders();
+        if (providers.length === 0) {
+            throw new Error('没有可用的 AI 提供商，请在设置中配置 API Key');
+        }
+
+        let lastError = null;
+        for (const provider of providers) {
+            const maxRetry = this.retries[provider] || 1;
+            for (let attempt = 0; attempt < maxRetry; attempt++) {
+                try {
+                    const client = this.getClient(provider);
+                    const result = await client.chat(messages, options);
+                    // Record which provider was actually used
+                    result.provider = provider;
+                    return result;
+                } catch (e) {
+                    lastError = e;
+                    console.warn(`[PriorityLLM] ${provider} attempt ${attempt + 1} failed:`, e.message);
+                }
+            }
+            // Notify failover
+            this._notifyFailover(provider, providers);
+        }
+
+        throw lastError || new Error('所有 AI 提供商均不可用');
+    }
+
+    /**
+     * Streaming call with automatic failover across providers.
+     * Returns { stream: AsyncGenerator, provider: string }
+     */
+    async streamWithFailover(messages, options = {}) {
+        const providers = this.getOrderedProviders();
+        if (providers.length === 0) {
+            throw new Error('没有可用的 AI 提供商，请在设置中配置 API Key');
+        }
+
+        let lastError = null;
+        for (const provider of providers) {
+            try {
+                const client = this.getClient(provider);
+                // Test the stream by getting the first chunk
+                const stream = client.chatStream(messages, options);
+                return { stream, provider };
+            } catch (e) {
+                lastError = e;
+                console.warn(`[PriorityLLM] ${provider} stream failed:`, e.message);
+                this._notifyFailover(provider, providers);
+            }
+        }
+
+        throw lastError || new Error('所有 AI 提供商均不可用');
+    }
+
+    _notifyFailover(failedProvider, allProviders) {
+        const now = Date.now();
+        if (now - this._lastFailoverTs < 3000) return;
+        this._lastFailoverTs = now;
+
+        const failedName = LLM_PROVIDERS[failedProvider]?.name || failedProvider;
+        const nextIdx = allProviders.indexOf(failedProvider) + 1;
+        const nextProvider = nextIdx < allProviders.length ? allProviders[nextIdx] : null;
+        const nextName = nextProvider ? (LLM_PROVIDERS[nextProvider]?.name || nextProvider) : null;
+
+        const msg = nextName
+            ? `${failedName} 不可用，正在切换到 ${nextName}`
+            : `${failedName} 不可用`;
+
+        if (this.onFailover) {
+            this.onFailover(failedProvider, nextProvider, msg);
+        }
+        if (typeof showToast === 'function') {
+            showToast(msg);
+        }
+    }
+}
+
+// Exports
 window.LLM_PROVIDERS = LLM_PROVIDERS;
 window.LLMClient = LLMClient;
 window.LLMManager = LLMManager;
+window.PriorityLLMManager = PriorityLLMManager;
 window.PromptTemplates = PromptTemplates;
-window.llmManager = new LLMManager();
+
+// Use PriorityLLMManager as the global singleton
+window.llmManager = new PriorityLLMManager();
+window.priorityLLMManager = window.llmManager;
