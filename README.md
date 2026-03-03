@@ -131,6 +131,31 @@
 
 详细说明见 [.github/workflows/README.md](.github/workflows/README.md)
 
+## 🧪 测试
+
+FlowBoard 包含完整的测试套件，覆盖前端和后端核心模块：
+
+```bash
+# 运行所有测试
+npm test
+
+# 仅前端测试
+npm run test:unit:frontend
+
+# 仅后端测试
+npm run test:unit:backend
+```
+
+测试文档：
+- [测试运行指南](./tests/RUN_TESTS.md) - 如何运行测试
+- [测试配置说明](./tests/CONFIG.md) - 详细的配置文件说明
+- [测试计划](./tests/TEST_PLAN.md) - 完整测试用例设计
+
+当前测试覆盖：
+- **前端**: 41 个测试（Jest + jsdom）
+- **后端**: 30 个测试（pytest）
+- **总计**: 71 个测试
+
 ## 快速开始
 
 ### 环境要求
