@@ -142,12 +142,6 @@ const CodeSnippets = {
         const categories = this.groupByCategory();
         
         container.innerHTML = `
-            <div class="snippets-header">
-                <h3>代码片段</h3>
-                <button class="btn-primary" onclick="CodeSnippets.showAddModal()">
-                    <i class="fas fa-plus"></i> 新建片段
-                </button>
-            </div>
             <div class="snippets-toolbar">
                 <div class="snippets-search">
                     <i class="fas fa-search"></i>

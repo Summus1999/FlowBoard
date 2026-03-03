@@ -51,3 +51,7 @@ build/*
 !build/installer.nsh
 
 # 资源文件（保留 SVG 和图标文件）
+
+# AI Agent Skills（本地技能文件，无需上传）
+.agents/
+.qoder/

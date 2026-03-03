@@ -1,0 +1,235 @@
+{
+  "version": 1,
+  "skills": {
+    "acquisition-channel-advisor": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "e4822153d319cb62532f5415f279ef20ede684335fe98363b841f6a8ea68d4f1"
+    },
+    "ai-shaped-readiness-advisor": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "8850577628cd5408e8cbadeb37f057bc26f4850a4b9a6537c8ca1a098c737f04"
+    },
+    "altitude-horizon-framework": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "02b3371380d4e7ea433a488d1310565f37a6b006680bcaa2a5490233e72969a6"
+    },
+    "business-health-diagnostic": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "5aefbd0f028f689f5336433f85295312e42f3fcd978952e0ccb55a0f85bc3027"
+    },
+    "company-research": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "4f5bb5d298e71f71f1b70fee1c334d0e8605d692a3c09bd5bfa59eec810f106a"
+    },
+    "context-engineering-advisor": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "f5eb57ab9ed1d6635ac501b344bef3569db248d3008bd6ac8b6b2b384eff5d75"
+    },
+    "customer-journey-map": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "02b4f19cfd5e465d09fdb1c27f8ade64db0427ee876fca5129f6c54d4d98916a"
+    },
+    "customer-journey-mapping-workshop": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "8d70c98cadaf0ddc20407183ed2d1848bfdbe8eab55211fb17bc60c0d98151f3"
+    },
+    "director-readiness-advisor": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "4041de855094ab82dbecfd148d8cca0bdee9cefc83b0ac8b9800bcf204f8aec5"
+    },
+    "discovery-interview-prep": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "0b0c27edb4989e6f870c58bcc7550a0923c0ed78ee4aa458648e10facf2065b1"
+    },
+    "discovery-process": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "f0bdcfa6844664de997b0a3c16d00851c354400cec5a9ccdffb17fac5002183e"
+    },
+    "eol-message": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "755554eb69dba3cf22a2188b8c7eef56275e88e448252c2028d16b682c037c39"
+    },
+    "epic-breakdown-advisor": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "b67dc53d1f4455b9c71a3449ecf2805ab3752a4edf775204048f0cc2d872c0f1"
+    },
+    "epic-hypothesis": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "10f6f48c54e5301d21a7745e6c440d5c3988a596ffa45abe2cd5f7f5c863d63a"
+    },
+    "executive-onboarding-playbook": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "1c6aa97a4a00d4e85b453ac41da7c8b69c591d14f0b3783f419039f92e6b5d46"
+    },
+    "feature-investment-advisor": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "f62d00beb082c6d9156d7ecd161ee72538769dbc2cd08644bc6a607cb94e865e"
+    },
+    "finance-based-pricing-advisor": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "ace3cd2e74409ae28ddaf639fd84eee12b74396c9b6ec2be41981104fe195756"
+    },
+    "finance-metrics-quickref": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "44f6eac91e415220ced71676a5569df5f41c8f7c1c8830c4e0197f9a81e1e0a6"
+    },
+    "jobs-to-be-done": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "8c0fd45698c670dbe5113e6234670326c0ee8ebd6d283e43cba3a9dd37c08351"
+    },
+    "lean-ux-canvas": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "4a030aba06203e3cbf02fa3433fc2e0bfaf71134731b8333eb1c7ab33df3d635"
+    },
+    "opportunity-solution-tree": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "47ade9c870989750af1df5d1a4b5e6b8173c0056050454d6a2506def63e0fe47"
+    },
+    "pestel-analysis": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "4c34d7e725c8f426e512c4b3895886418e9f458914f0e8ebba6a286dda9d27ed"
+    },
+    "pol-probe": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "51c29886a701ddf3ca36fbcbb320f18a3213ec69e7c16fc4b6288f3376076775"
+    },
+    "pol-probe-advisor": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "19383255d8dce0febcf5cabbdc2e479ce9e5f884c10de65f66fa72cbaca43295"
+    },
+    "positioning-statement": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "029b69051d5b33754bb2bf6db7842e8f09207239476438e2b4bf977cace76a89"
+    },
+    "positioning-workshop": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "c63d1efd3c3ecca85772886d43b51aa3a21b2b2a6a7adb2deab7f938426d3d09"
+    },
+    "prd-development": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "7548fabc12541899f50f8cb1feae0616ca0b307c05a5784d61b00a0138fa16e6"
+    },
+    "press-release": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "ea996afbc58f3d1de3bd2466ecd5b6c884e7be16aa13f715aaca16000e3aaf11"
+    },
+    "prioritization-advisor": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "32a61ffb9d88a551d3b6e608c593e66d1c2d921842a49c26be47e7a6d05bb628"
+    },
+    "problem-framing-canvas": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "47b3f0bcc3d0b42143c01f2fcc78eefa84f74767833e8bff07ce04ef1c3608de"
+    },
+    "problem-statement": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "d19440f663a9ee91ca753dcf3b8cc06f469da3300bead1fa9f9efc8b4fd9cd3d"
+    },
+    "product-strategy-session": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "36de0b30cdb6eeb9b453cf62f4a0ba39a510ac75cb14a8650792f13177135c7e"
+    },
+    "proto-persona": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "1e057221b6e33f2b6718a4f26bd9c9bd956d3205cb9db24353d85030b5542618"
+    },
+    "recommendation-canvas": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "9fea819a23b45246c28f677dac491f9d4c3fe929901d93e866e086d4b9b52711"
+    },
+    "roadmap-planning": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "c4b5f77b8cee36b89861ef46fa0890463bb1ab5efb80b50511a83fe4a65344ae"
+    },
+    "saas-economics-efficiency-metrics": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "72689151bbf1f93a859d9c927124121e64205bd662fff74b4b0e7bf0908450b0"
+    },
+    "saas-revenue-growth-metrics": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "7ba500ba5eb080d8aa5ccca9ff860a0f6fab323ef94941897a02a20c0334a6dc"
+    },
+    "skill-authoring-workflow": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "11d723e856b9f0875063d8e15521cea32918dc633953634be234acc03007a535"
+    },
+    "storyboard": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "96bc2e0b20d1cebb8b376455dc5e1a022d150947cb8ba42074972b50da31ba2f"
+    },
+    "tam-sam-som-calculator": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "22f92495317cce2f74d08db119c0158f50b57feab71aa65de76f01e0ee9d2c80"
+    },
+    "user-story": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "b169b063757cd056bcbeb0d67911e1755cfc0acd811407b1ff583ed038d94819"
+    },
+    "user-story-mapping": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "43f15d862b6ea842cca2ffebb13fdebe6771dcccc2ba172bd37e744892eb8f90"
+    },
+    "user-story-mapping-workshop": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "631355af80092b8decd61c8b3e71e13a9d8ae0abcd8c6bc8b248b156d4ec3137"
+    },
+    "user-story-splitting": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "338ee531be5ae039ce8c710cc3089cdabe767ae4f9cd73f38b0946f3ca942906"
+    },
+    "vp-cpo-readiness-advisor": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "c5477c8ce97b058afe47470898b6ab26b3fa1b8f9a22b0b7b3c02c3b853a4708"
+    },
+    "workshop-facilitation": {
+      "source": "deanpeters/product-manager-skills",
+      "sourceType": "github",
+      "computedHash": "49c1afdb8ad15e6a9cfd0acd18e04b3b190186875bfacdefecb488cc86d290e0"
+    }
+  }
+}

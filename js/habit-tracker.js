@@ -31,12 +31,6 @@ const HabitTracker = {
         if (!container) return;
 
         container.innerHTML = `
-            <div class="habit-header">
-                <h3>习惯追踪</h3>
-                <button class="btn-primary" onclick="HabitTracker.showAddModal()">
-                    <i class="fas fa-plus"></i> 添加习惯
-                </button>
-            </div>
             <div class="habit-list">
                 ${this.habits.map(h => this.renderHabitCard(h)).join('')}
             </div>
