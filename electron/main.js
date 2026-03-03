@@ -98,11 +98,14 @@ const readConfig = () => {
     return {};
 };
 
-// 保存配置
+// 保存配置（合并到现有配置）
 const saveConfig = (config) => {
     const configPath = getConfigPath();
     try {
-        fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+        // 读取现有配置并合并
+        const existingConfig = readConfig();
+        const mergedConfig = { ...existingConfig, ...config };
+        fs.writeFileSync(configPath, JSON.stringify(mergedConfig, null, 2));
     } catch (error) {
         console.error('保存配置失败:', error);
     }
@@ -1459,16 +1462,36 @@ ipcMain.handle('ai-config-save', async (event, config) => {
     try {
         const configPath = getConfigPath();
         const existingConfig = readConfig();
-        
-        // 加密 API Keys
+        const existingAiConfig = existingConfig.aiConfig || {};
+        const existingProviders = existingAiConfig.providers || {};
+
+        // 加密 API Keys，保留已有的值如果新值为空
         const encryptedProviders = {};
         for (const [provider, providerConfig] of Object.entries(config.providers || {})) {
+            const newApiKey = providerConfig.apiKey;
+            const existingEncryptedKey = existingProviders[provider]?.apiKey || '';
+
+            // 如果新的 apiKey 为空，保留已有的加密值
+            let finalEncryptedKey;
+            if (newApiKey) {
+                finalEncryptedKey = encryptApiKey(newApiKey);
+            } else {
+                finalEncryptedKey = existingEncryptedKey;
+            }
+
             encryptedProviders[provider] = {
-                apiKey: encryptApiKey(providerConfig.apiKey),
+                apiKey: finalEncryptedKey,
                 enabled: providerConfig.enabled
             };
         }
-        
+
+        // 保留配置中已有但未在新配置中提及的 providers
+        for (const [provider, providerConfig] of Object.entries(existingProviders)) {
+            if (!encryptedProviders[provider]) {
+                encryptedProviders[provider] = providerConfig;
+            }
+        }
+
         const aiConfig = {
             serviceUrl: config.serviceUrl || AI_SERVICE_URL_DEFAULT,
             apiToken: config.apiToken || '',
@@ -1477,11 +1500,11 @@ ipcMain.handle('ai-config-save', async (event, config) => {
             fallbackProvider: config.fallbackProvider || 'kimi',
             monthlyBudget: config.monthlyBudget || 150.0
         };
-        
+
         // 合并到现有配置
         existingConfig.aiConfig = aiConfig;
         saveConfig(existingConfig);
-        
+
         console.log('AI 配置已保存');
         return { success: true };
     } catch (error) {

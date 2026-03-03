@@ -654,17 +654,51 @@ async function testProviderConnection(provider) {
 }
 
 /**
+ * 同步所有 API Key 输入框的值到 aiSettingsState
+ */
+function _syncApiKeysFromDOM() {
+    document.querySelectorAll('.api-key-input').forEach(input => {
+        const provider = input.dataset.provider;
+        if (!provider) return;
+
+        if (!aiSettingsState.providers[provider]) {
+            aiSettingsState.providers[provider] = {};
+        }
+
+        // 只有当输入框有值时才更新，避免空值覆盖
+        const inputValue = input.value.trim();
+        if (inputValue) {
+            aiSettingsState.providers[provider].apiKey = inputValue;
+        }
+    });
+
+    // 同步启用状态
+    document.querySelectorAll('.provider-toggle').forEach(toggle => {
+        const provider = toggle.dataset.provider;
+        if (!provider) return;
+
+        if (!aiSettingsState.providers[provider]) {
+            aiSettingsState.providers[provider] = {};
+        }
+        aiSettingsState.providers[provider].enabled = toggle.checked;
+    });
+}
+
+/**
  * 保存 AI 配置
  */
 async function saveAiConfig() {
     const saveBtn = document.getElementById('aiSaveConfigBtn');
-    
+
     if (saveBtn) {
         saveBtn.disabled = true;
         saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 保存中...';
     }
-    
+
     try {
+        // 同步 DOM 中的 API Keys 和启用状态
+        _syncApiKeysFromDOM();
+
         // Sync priority order from DOM before saving
         _syncPriorityFromDOM();
 
