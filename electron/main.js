@@ -1491,29 +1491,29 @@ ipcMain.handle('ai-config-save', async (event, config) => {
 });
 
 /**
- * 加载 AI 配置（返回掩码版本）
+ * 加载 AI 配置（返回解密后的真实 API Key）
  */
 ipcMain.handle('ai-config-load', async () => {
     try {
         const existingConfig = readConfig();
         const aiConfig = existingConfig.aiConfig || {};
-        
-        // 解密并掩码 API Keys
-        const maskedProviders = {};
+
+        // 解密 API Keys（返回真实的 key 用于 AI 调用）
+        const decryptedProviders = {};
         for (const [provider, providerConfig] of Object.entries(aiConfig.providers || {})) {
             const decryptedKey = decryptApiKey(providerConfig.apiKey);
-            maskedProviders[provider] = {
-                apiKey: maskApiKey(decryptedKey),
+            decryptedProviders[provider] = {
+                apiKey: decryptedKey,
                 enabled: providerConfig.enabled
             };
         }
-        
+
         return {
             success: true,
             config: {
                 serviceUrl: aiConfig.serviceUrl || AI_SERVICE_URL_DEFAULT,
                 apiToken: aiConfig.apiToken || '',
-                providers: maskedProviders,
+                providers: decryptedProviders,
                 defaultProvider: aiConfig.defaultProvider || 'qwen',
                 fallbackProvider: aiConfig.fallbackProvider || 'kimi',
                 monthlyBudget: aiConfig.monthlyBudget || 150.0

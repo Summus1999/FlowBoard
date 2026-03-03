@@ -260,6 +260,7 @@ class LLMManager {
                 qwen: { enabled: false, apiKey: '' },
                 kimi: { enabled: false, apiKey: '' },
                 glm: { enabled: false, apiKey: '' },
+                silflow: { enabled: false, apiKey: '' },
                 openai: { enabled: false, apiKey: '' }
             },
             defaultProvider: 'qwen',
