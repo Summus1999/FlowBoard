@@ -3183,8 +3183,14 @@ async function getWeather(forceRefresh = false) {
         await fetchWeatherData(resolvedLocation.lat, resolvedLocation.lon);
     } catch (error) {
         console.warn('天气定位失败:', error?.message || error);
+        // 定位失败时使用默认位置（北京）获取天气
         currentLocation = DEFAULT_WEATHER_LOCATION;
-        updateWeatherError();
+        try {
+            await fetchWeatherData(DEFAULT_WEATHER_LOCATION.lat, DEFAULT_WEATHER_LOCATION.lon);
+        } catch (fetchError) {
+            console.warn('获取默认位置天气失败:', fetchError?.message || fetchError);
+            updateWeatherError();
+        }
     }
 }
 

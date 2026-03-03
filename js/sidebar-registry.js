@@ -16,6 +16,7 @@
         ],
         items: [
             { page: 'dashboard', title: '我的主页', icon: 'fas fa-th-large', sectionId: 'core', order: 10, source: 'builtin' },
+            { page: 'passwords', title: '账户密码', icon: 'fas fa-lock', sectionId: 'core', order: 15, source: 'builtin' },
             { page: 'news', title: '资讯中心', icon: 'fas fa-newspaper', sectionId: 'core', order: 20, source: 'builtin' },
             { page: 'ai-chat', title: 'AI 助手', icon: 'fas fa-robot', sectionId: 'core', order: 25, source: 'builtin', onEnter: 'initAIChatPage' },
             { page: 'notes', title: '笔记记录', icon: 'fas fa-sticky-note', sectionId: 'tools', order: 10, source: 'builtin', onEnter: 'initNotes' },
