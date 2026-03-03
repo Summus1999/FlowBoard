@@ -30,7 +30,7 @@ const NotificationManager = {
                 <i class="fas fa-bell"></i>
                 <span class="notification-badge" id="notifBadge" style="display: none;">0</span>
             `;
-            bell.onclick = () => this.toggleCenter();
+            bell.addEventListener('click', () => this.toggleCenter());
             header.appendChild(bell);
         }
 
@@ -77,11 +77,17 @@ const NotificationManager = {
         document.getElementById('notificationCenter')?.classList.remove('active');
     },
 
-    switchTab(tab) {
-        document.querySelectorAll('.notification-center-tabs button').forEach(btn => {
-            btn.classList.remove('active');
+    switchTab(tab, btn) {
+        document.querySelectorAll('.notification-center-tabs button').forEach(b => {
+            b.classList.remove('active');
         });
-        event.target.classList.add('active');
+        if (btn) {
+            btn.classList.add('active');
+        } else {
+            // 通过 tab 属性找到对应的按钮
+            const activeBtn = document.querySelector(`.notification-center-tabs button[data-tab="${tab}"]`);
+            activeBtn?.classList.add('active');
+        }
         this.currentTab = tab;
         this.renderNotifications();
     },
@@ -292,10 +298,23 @@ const NotificationManager = {
     },
 
     // 智能提醒循环
+    reminderIntervalId: null,
+    
     startReminderLoop() {
+        // 清理已有的定时器
+        if (this.reminderIntervalId) {
+            clearInterval(this.reminderIntervalId);
+        }
         // 每分钟检查一次
-        setInterval(() => this.checkReminders(), 60000);
+        this.reminderIntervalId = setInterval(() => this.checkReminders(), 60000);
         this.checkReminders();
+    },
+    
+    stopReminderLoop() {
+        if (this.reminderIntervalId) {
+            clearInterval(this.reminderIntervalId);
+            this.reminderIntervalId = null;
+        }
     },
 
     async checkReminders() {

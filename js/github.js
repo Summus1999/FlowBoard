@@ -368,6 +368,7 @@ async function fetchTotalStars(username, totalRepos) {
 
 function renderLoading() {
     const container = document.getElementById('githubRepos');
+    if (!container) return;
     container.innerHTML = `
         <div class="github-loading">
             <i class="fas fa-spinner fa-spin"></i>
@@ -378,17 +379,22 @@ function renderLoading() {
 
 function renderError(message) {
     const container = document.getElementById('githubRepos');
-    container.innerHTML = `
-        <div class="github-error">
-            <i class="fas fa-exclamation-circle"></i>
-            <p>${message}</p>
-        </div>
-    `;
+    if (container) {
+        container.innerHTML = `
+            <div class="github-error">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>${message}</p>
+            </div>
+        `;
+    }
     
     // 重置统计
-    document.getElementById('githubRepoCount').textContent = '-';
-    document.getElementById('githubFollowers').textContent = '-';
-    document.getElementById('githubStars').textContent = '-';
+    const repoCount = document.getElementById('githubRepoCount');
+    const followers = document.getElementById('githubFollowers');
+    const stars = document.getElementById('githubStars');
+    if (repoCount) repoCount.textContent = '-';
+    if (followers) followers.textContent = '-';
+    if (stars) stars.textContent = '-';
 }
 
 function updateGithubStats(userData, totalStars) {

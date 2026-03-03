@@ -788,7 +788,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     initNavigation();
-    await loadPasswordsFromStorage();
+    try {
+        await loadPasswordsFromStorage();
+    } catch (e) {
+        console.error('加载密码数据失败:', e);
+    }
     
     // 初始化 AI 设置模块
     if (typeof initAiSettings === 'function') {
@@ -1446,9 +1450,18 @@ function editPassword(id) {
     editingPasswordId = id;
     
     // 填充表单数据
-    document.getElementById('platformName').value = item.platform;
-    document.getElementById('username').value = item.username;
-    document.getElementById('password').value = item.password === '********' ? '' : item.password;
+    const platformInput = document.getElementById('platformName');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    
+    if (!platformInput || !usernameInput || !passwordInput) {
+        showToast('表单元素未找到');
+        return;
+    }
+    
+    platformInput.value = item.platform;
+    usernameInput.value = item.username;
+    passwordInput.value = item.password === '********' ? '' : item.password;
     
     // 设置分类选中状态
     document.querySelectorAll('.cat-option').forEach(btn => {
@@ -2005,7 +2018,7 @@ async function initAutoLaunchSettings() {
     const toggleMinimizeOnClose = document.getElementById('toggleMinimizeOnClose');
     if (toggleMinimizeOnClose) {
         const savedMinimizeOnClose = localStorage.getItem('minimizeOnClose');
-        toggleMinimizeOnClose.checked = savedMinimizeOnClose !== 'false'; // 默认开启
+        toggleMinimizeOnClose.checked = savedMinimizeOnClose === 'true' || savedMinimizeOnClose === null; // 默认开启
         toggleMinimizeOnClose.addEventListener('change', (e) => {
             localStorage.setItem('minimizeOnClose', e.target.checked);
             showToast(e.target.checked ? '关闭时最小化到托盘' : '关闭时退出应用');
@@ -2111,7 +2124,11 @@ async function savePassword() {
         showToast('账户添加成功');
     }
 
-    await savePasswordsToStorage();
+    try {
+        await savePasswordsToStorage();
+    } catch (e) {
+        console.error('保存密码失败:', e);
+    }
 
     // 刷新显示
     renderPasswordCards();
@@ -2308,12 +2325,31 @@ document.addEventListener('keydown', (e) => {
 });
 
 // 实时时间更新
+let timeUpdateInterval = null;
+
 function updateTime() {
     const now = new Date();
     // 可以在这里添加时间显示逻辑
 }
 
-setInterval(updateTime, 1000);
+function startTimeUpdate() {
+    if (!timeUpdateInterval) {
+        timeUpdateInterval = setInterval(updateTime, 1000);
+    }
+}
+
+function stopTimeUpdate() {
+    if (timeUpdateInterval) {
+        clearInterval(timeUpdateInterval);
+        timeUpdateInterval = null;
+    }
+}
+
+// 页面加载时启动
+startTimeUpdate();
+
+// 页面卸载时清理
+window.addEventListener('beforeunload', stopTimeUpdate);
 
 // ========================================
 // 热榜中心点击跳转
@@ -2807,9 +2843,9 @@ function initAIChatPage() {
 }
 
 // 知识库页面初始化
-function initKnowledgeBase() {
-    if (typeof initKnowledgeBase === 'function') {
-        // 避免递归调用，直接执行初始化逻辑
+function initKnowledgeBasePage() {
+    // 避免递归调用，直接执行初始化逻辑
+    if (typeof KnowledgeBaseUI !== 'undefined') {
         KnowledgeBaseUI.init();
         KnowledgeBaseUI.renderDocList();
         KnowledgeBaseUI.updateStats();

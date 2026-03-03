@@ -143,33 +143,7 @@ const STORE_SCHEMA = {
         ]
     },
     
-    // P2 功能存储
-    // 复盘报告 (功能5)
-    reviews: {
-        keyPath: 'id',
-        indexes: [
-            { name: 'type', keyPath: 'type' },
-            { name: 'createdAt', keyPath: 'createdAt' }
-        ]
-    },
-    studyRecords: {
-        keyPath: 'id',
-        indexes: [
-            { name: 'date', keyPath: 'date' }
-        ]
-    },
-    interviewRecordings: {
-        keyPath: 'id',
-        indexes: [
-            { name: 'startTime', keyPath: 'startTime' }
-        ]
-    },
-    interviewAnalyses: {
-        keyPath: 'id',
-        indexes: [
-            { name: 'recordingId', keyPath: 'recordingId' }
-        ]
-    },
+    // P2 功能存储（延续P1，无需重复定义已在P1中定义的存储）
     
     // 习惯追踪 (功能10)
     habits: {

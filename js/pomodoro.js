@@ -130,6 +130,11 @@ const PomodoroTimer = {
     },
 
     start() {
+        // 确保先清理已有的定时器
+        if (this.state.timerId) {
+            clearInterval(this.state.timerId);
+        }
+        
         this.state.isRunning = true;
         this.state.startTime = Date.now();
         
@@ -214,24 +219,28 @@ const PomodoroTimer = {
     },
 
     async recordPomodoro() {
-        const record = {
-            id: flowboardDB.generateId('pomo_'),
-            startTime: this.state.startTime,
-            endTime: Date.now(),
-            duration: this.settings.workTime,
-            taskId: document.getElementById('pomodoroTaskSelect')?.value,
-            createdAt: Date.now()
-        };
+        try {
+            const record = {
+                id: flowboardDB.generateId('pomo_'),
+                startTime: this.state.startTime,
+                endTime: Date.now(),
+                duration: this.settings.workTime,
+                taskId: document.getElementById('pomodoroTaskSelect')?.value,
+                createdAt: Date.now()
+            };
 
-        await flowboardDB.put('pomodoroRecords', record);
+            await flowboardDB.put('pomodoroRecords', record);
 
-        // 关联任务增加时间
-        if (record.taskId) {
-            const task = await flowboardDB.get('tasks', record.taskId);
-            if (task) {
-                task.actualHours = (task.actualHours || 0) + this.settings.workTime / 60;
-                await flowboardDB.put('tasks', task);
+            // 关联任务增加时间
+            if (record.taskId) {
+                const task = await flowboardDB.get('tasks', record.taskId);
+                if (task) {
+                    task.actualHours = (task.actualHours || 0) + this.settings.workTime / 60;
+                    await flowboardDB.put('tasks', task);
+                }
             }
+        } catch (e) {
+            console.error('记录番茄钟失败:', e);
         }
     },
 
@@ -258,7 +267,7 @@ const PomodoroTimer = {
 
         const timeDisplay = document.getElementById('pomodoroTime');
         if (timeDisplay) {
-            timeText.textContent = timeText;
+            timeDisplay.textContent = timeText;
         }
 
         // 更新圆环进度
