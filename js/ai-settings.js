@@ -28,6 +28,14 @@ const AI_PROVIDERS = {
         models: ['glm-4', 'glm-4-flash'],
         keyPrefix: '',
         docsUrl: 'https://open.bigmodel.cn/dev/api'
+    },
+    silflow: {
+        name: '硅基流动',
+        icon: 'fa-solid fa-bolt',
+        baseUrl: 'https://api.siliconflow.cn/v1',
+        models: ['deepseek-ai/DeepSeek-V3', 'Qwen/Qwen2.5-72B-Instruct', 'Qwen/Qwen2.5-7B-Instruct'],
+        keyPrefix: 'sk-',
+        docsUrl: 'https://docs.siliconflow.cn'
     }
 };
 

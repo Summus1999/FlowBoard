@@ -26,6 +26,13 @@ const LLM_PROVIDERS = {
         models: ['glm-4', 'glm-4-flash'],
         docs: 'https://open.bigmodel.cn/dev/api'
     },
+    silflow: {
+        name: '硅基流动',
+        baseUrl: 'https://api.siliconflow.cn/v1',
+        defaultModel: 'Qwen/Qwen2.5-72B-Instruct',
+        models: ['deepseek-ai/DeepSeek-V3', 'Qwen/Qwen2.5-72B-Instruct', 'Qwen/Qwen2.5-7B-Instruct'],
+        docs: 'https://docs.siliconflow.cn'
+    },
     openai: {
         name: 'OpenAI',
         baseUrl: 'https://api.openai.com/v1',

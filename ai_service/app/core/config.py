@@ -78,6 +78,11 @@ class Settings(BaseSettings):
     GLM_BASE_URL: str = "https://open.bigmodel.cn/api/paas/v4"
     GLM_DEFAULT_MODEL: str = "glm-4-flash"
     
+    # Model gateway - Silicon Flow
+    SILFLOW_API_KEY: Optional[str] = None
+    SILFLOW_BASE_URL: str = "https://api.siliconflow.cn/v1"
+    SILFLOW_DEFAULT_MODEL: str = "Qwen/Qwen2.5-72B-Instruct"
+    
     # Model routing
     DEFAULT_MODEL_PROVIDER: str = "qwen"
     FALLBACK_MODEL_PROVIDER: str = "kimi"

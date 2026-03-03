@@ -26,6 +26,7 @@ class ModelProvider(str, Enum):
     QWEN = "qwen"
     KIMI = "kimi"
     GLM = "glm"
+    SILFLOW = "silflow"
 
 
 class ModelProfile(str, Enum):
@@ -99,6 +100,21 @@ PROVIDER_REGISTRY = {
         "pricing": {
             "glm-4": {"input": 0.1, "output": 0.1},
             "glm-4-flash": {"input": 0.001, "output": 0.001},
+        }
+    },
+    ModelProvider.SILFLOW: {
+        "name": "硅基流动",
+        "config_key_prefix": "SILFLOW",
+        "default_base_url": "https://api.siliconflow.cn/v1",
+        "profiles": {
+            ModelProfile.HIGH_QUALITY: "deepseek-ai/DeepSeek-V3",
+            ModelProfile.BALANCED: "Qwen/Qwen2.5-72B-Instruct",
+            ModelProfile.COST_EFFECTIVE: "Qwen/Qwen2.5-7B-Instruct",
+        },
+        "pricing": {
+            "deepseek-ai/DeepSeek-V3": {"input": 0.001, "output": 0.002},
+            "Qwen/Qwen2.5-72B-Instruct": {"input": 0.0004, "output": 0.0004},
+            "Qwen/Qwen2.5-7B-Instruct": {"input": 0.0001, "output": 0.0001},
         }
     },
 }
