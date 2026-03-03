@@ -17,7 +17,7 @@ FlowBoard 是一个 Electron 桌面应用，AI 能力由本地 ai_service 提供
 | 向量数据库 | ChromaDB (嵌入式) | pip install 即用，支持 HNSW + cosine |
 | 缓存 | 内存 TTL 缓存 | 替代 Redis，单进程桌面场景足够 |
 | LLM 编排 | LangGraph + LangChain | 不变 |
-| 模型网关 | ModelGateway (OpenAI 兼容) | 支持 Qwen / Kimi / GLM，注册表扩展 |
+| 模型网关 | ModelGateway (OpenAI 兼容) | 支持 Qwen / Kimi / GLM / 硅基流动，注册表扩展 |
 | API 框架 | FastAPI | 不变 |
 
 所有数据存储在 `ai_service/local_data/` 目录:
@@ -61,9 +61,13 @@ local_data/
 |  | 状态: o 未配置                                |   |
 |  +----------------------------------------------+   |
 |                                                     |
-|  -- 默认模型路由 ---------------------------------- |
-|  主力模型:   [v Qwen    ]                           |
-|  降级模型:   [v Kimi    ]                           |
+|  +- 硅基流动 -----------------------------------+   |
+|  | API Key: [sk-***...***      ] [眼睛] [测试]   |   |
+|  | 状态: * 已连接                                |   |
+|  +----------------------------------------------+   |
+|                                                     |
+|  -- 调用优先级（拖拽排序）-------------------------- |
+|  1. Qwen  2. Kimi  3. 硅基流动  ... 任一可用即可   |
 |                                                     |
 |  -- 预算控制 -------------------------------------- |
 |  月度预算(元):  [150.00]                            |
@@ -102,6 +106,14 @@ const AI_PROVIDERS = {
         models: ['glm-4', 'glm-4-flash'],
         keyPrefix: '',
         docsUrl: 'https://open.bigmodel.cn/dev/api'
+    },
+    silflow: {
+        name: '硅基流动',
+        icon: 'fa-solid fa-bolt',
+        baseUrl: 'https://api.siliconflow.cn/v1',
+        models: ['deepseek-ai/DeepSeek-V3', 'Qwen/Qwen2.5-72B-Instruct', 'Qwen/Qwen2.5-7B-Instruct'],
+        keyPrefix: 'sk-',
+        docsUrl: 'https://docs.siliconflow.cn'
     }
 };
 ```
@@ -171,6 +183,10 @@ const AI_PROVIDERS = {
       "glm": {
         "apiKey": "<safeStorage encrypted base64>",
         "enabled": false
+      },
+      "silflow": {
+        "apiKey": "<safeStorage encrypted base64>",
+        "enabled": true
       }
     },
     "defaultProvider": "qwen",

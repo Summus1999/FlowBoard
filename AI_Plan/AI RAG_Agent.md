@@ -59,7 +59,7 @@
 - 数据层：PostgreSQL 16 + pgvector（统一结构化数据与向量索引）
 - 缓存与队列：Redis（缓存 + Redis Streams 任务队列）
 - 对象存储：本地文件系统（默认）+ 阿里云 OSS（可选备份）
-- 模型网关：统一 Model Gateway，适配 Qwen/Kimi，可热切换
+- 模型网关：统一 Model Gateway，适配 Qwen/Kimi/GLM/硅基流动，可热切换
 
 这套方案是当前约束下的最优解：主流、可维护、可扩展、满足企业级工程要求，同时在单用户场景可控成本内运行。
 
@@ -151,7 +151,7 @@ transcribe(audio_uri, asr_profile)
 
 ### 4.1.3 模型路由策略
 
-1. 默认路径：Qwen 主路由，Kimi 备路由
+1. 默认路径：按优先级路由（Qwen/Kimi/GLM/硅基流动），任一可用即可
 2. 异常降级：RAG 失败或超时时走直接问答并附风险提示
 3. 成本控制：按能力路由
    - 规划/拆解：高质量模型

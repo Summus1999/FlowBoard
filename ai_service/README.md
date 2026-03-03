@@ -6,7 +6,7 @@ FlowBoard AI后端服务 - 基于FastAPI + LangGraph + LangChain的企业级RAG 
 
 - **框架**: FastAPI + Uvicorn
 - **AI编排**: LangGraph (工作流) + LangChain (组件)
-- **模型网关**: 支持Qwen(阿里) + Kimi(Moonshot)
+- **模型网关**: 支持 Qwen(阿里) + Kimi(Moonshot) + GLM(智谱) + 硅基流动
 - **数据层**: PostgreSQL 16 + pgvector
 - **缓存/队列**: Redis
 - **观测评测**: LangSmith (可选)
@@ -165,14 +165,18 @@ ai_service/
 
 ### 模型网关
 
-支持双供应商路由：
-- **主路由**: Qwen (阿里通义千问)
-- **备路由**: Kimi (Moonshot)
+支持多供应商路由（任一可用即可成功）：
+- **通义千问** (Qwen)
+- **Kimi** (Moonshot)
+- **智谱 GLM**
+- **硅基流动** (Silicon Flow)
 
-配置环境变量：
+配置环境变量（至少配置一个）：
 ```bash
 QWEN_API_KEY=your_key
 KIMI_API_KEY=your_key
+GLM_API_KEY=your_key
+SILFLOW_API_KEY=your_key
 DEFAULT_MODEL_PROVIDER=qwen
 FALLBACK_MODEL_PROVIDER=kimi
 ```

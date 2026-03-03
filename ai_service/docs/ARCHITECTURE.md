@@ -30,9 +30,9 @@
          ▼                       ▼                       ▼
 ┌────────────────┐  ┌──────────────────┐  ┌────────────────────┐
 │ Model Gateway  │  │ Retrieval Layer  │  │  LangSmith         │
-│ - Qwen/Kimi    │  │ - Hybrid Search  │  │  - Trace/Eval      │
-│ - Routing      │  │ - Rerank         │  │  - Prompt Version  │
-│ - Cost Control │  │ - Citation       │  │                    │
+│ Qwen/Kimi/GLM  │  │ - Hybrid Search  │  │  - Trace/Eval      │
+│ 硅基流动       │  │ - Rerank         │  │  - Prompt Version  │
+│ Routing/Cost   │  │ - Citation       │  │                    │
 └────────────────┘  └──────────────────┘  └────────────────────┘
          │                       │
          └───────────┬───────────┘
@@ -175,11 +175,11 @@ memory_write
 
 ### 模型扩展
 
-- `model_gateway.py` 已预留扩展点
-- 添加新的Provider只需：
-  1. 添加配置
-  2. 实现客户端初始化
-  3. 添加到路由策略
+- `model_gateway.py` 使用注册表模式，已支持 Qwen、Kimi、GLM、硅基流动
+- 添加新的 Provider 只需：
+  1. 在 `ModelProvider` 枚举和 `PROVIDER_REGISTRY` 添加配置
+  2. 在 `config.py` 添加对应环境变量
+  3. 前端 `AI_PROVIDERS` 添加配置
 
 ## 安全设计
 

@@ -52,7 +52,9 @@
   - 通义千问 (Qwen)
   - Kimi (Moonshot)
   - 智谱 GLM
+  - 硅基流动 (Silicon Flow)
   - 每个提供商支持：启用/禁用切换、API Key 输入、显示/隐藏切换、连接测试
+  - 拖拽排序调用优先级，任一可用即可成功
 - **默认模型路由**：主力模型、降级模型选择
 - **预算控制**：月度预算设置、已用/剩余显示
 
@@ -129,10 +131,17 @@
 
 如需添加新的 Provider（如 DeepSeek、豆包），只需：
 
-1. **后端**：在 `model_gateway.py` 的 `PROVIDER_REGISTRY` 添加配置
-2. **前端**：在 `ai-settings.js` 的 `AI_PROVIDERS` 添加配置
+1. **后端**：在 `model_gateway.py` 的 `ModelProvider` 枚举和 `PROVIDER_REGISTRY` 添加配置
+2. **后端**：在 `config.py` 添加对应环境变量
+3. **前端**：在 `ai-settings.js` 的 `AI_PROVIDERS` 和 `llm-client.js` 的 `LLM_PROVIDERS` 添加配置
 
 即可自动支持新的模型提供商。
+
+---
+
+## 更新记录
+
+- 2026-03-03：新增硅基流动 (Silicon Flow) 作为第四路由源，支持多源任一可用即成功
 
 ---
 

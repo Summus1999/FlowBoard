@@ -179,6 +179,49 @@ data: {"trace_id":"...","request_id":"..."}
 
 ---
 
+### Config（模型提供商配置）
+
+支持 Qwen、Kimi、GLM、硅基流动，任一可用即可成功。需 localhost 或 Bearer Token 认证。
+
+#### GET /config/providers
+获取所有提供商状态
+
+**响应**:
+```json
+{
+  "providers": {
+    "qwen": {"enabled": true, "connected": true, "model": "qwen-plus"},
+    "kimi": {"enabled": true, "connected": true, "model": "moonshot-v1-8k"},
+    "glm": {"enabled": false, "connected": false, "model": "glm-4-flash"},
+    "silflow": {"enabled": true, "connected": true, "model": "Qwen/Qwen2.5-72B-Instruct"}
+  },
+  "default_provider": "qwen",
+  "fallback_provider": "kimi",
+  "monthly_budget": 150.0,
+  "cost_used": 23.4
+}
+```
+
+#### POST /config/providers
+更新提供商配置（热更新）
+
+
+#### POST /config/providers/test
+测试指定 Provider 连接
+
+**请求体**:
+```json
+{
+  "provider": "silflow",
+  "api_key": "sk-xxx"
+}
+```
+
+#### GET /config/providers/registry
+获取提供商注册表（不含敏感信息）
+
+---
+
 ### Health
 
 #### GET /health

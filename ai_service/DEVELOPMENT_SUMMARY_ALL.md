@@ -879,9 +879,11 @@ ANALYZE rag_chunks;
 ### 环境变量配置
 
 ```bash
-# API Keys
+# API Keys (at least one required)
 QWEN_API_KEY=your_qwen_api_key
 KIMI_API_KEY=your_kimi_api_key
+GLM_API_KEY=your_glm_api_key
+SILFLOW_API_KEY=your_silflow_api_key
 
 # Database
 DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/flowboard_ai
@@ -902,6 +904,6 @@ SECRET_KEY=your_secret_key_for_jwt
 
 ---
 
-**文档版本**: v1.3 
-**最后更新**: 2026-02-24  
-**项目状态**: 第1-6期已完成 ✅
+**文档版本**: v1.4  
+**最后更新**: 2026-03-03  
+**项目状态**: 第1-6期已完成 ✅，已支持硅基流动作为第四模型提供商

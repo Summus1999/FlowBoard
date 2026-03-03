@@ -49,8 +49,8 @@ pip install -r requirements.txt
 # 复制示例配置
 cp .env.example .env
 
-# 编辑 .env 文件，添加API密钥
-# 至少需要配置 QWEN_API_KEY 或 KIMI_API_KEY
+# 编辑 .env 文件，添加 API 密钥
+# 至少配置一个：QWEN_API_KEY、KIMI_API_KEY、GLM_API_KEY 或 SILFLOW_API_KEY
 ```
 
 ### 4. 初始化数据库（1分钟）
@@ -175,13 +175,16 @@ pg_isready -h localhost -p 5432
 
 ### 模型调用失败
 
-检查API密钥配置：
+检查 API 密钥配置（至少配置一个提供商）：
 ```bash
 # 检查环境变量
 echo $QWEN_API_KEY
+echo $KIMI_API_KEY
+echo $GLM_API_KEY
+echo $SILFLOW_API_KEY
 
-# 或检查.env文件
-cat .env | grep QWEN
+# 或检查 .env 文件
+cat .env | grep _API_KEY
 ```
 
 ### 端口被占用
