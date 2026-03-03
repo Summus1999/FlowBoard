@@ -343,6 +343,209 @@ const defaultNewsData = [
         category: 'social',
         hot: 950000,
         url: 'https://www.toutiao.com/article/234567'
+    },
+    // 科技资讯
+    {
+        id: 501,
+        title: '华为Mate 70系列发布：麒麟芯片性能提升30%',
+        source: '腾讯科技',
+        time: '30分钟前',
+        category: 'tech',
+        hot: 1450000,
+        url: 'https://tech.qq.com/a/20260101/001234.htm'
+    },
+    {
+        id: 502,
+        title: '小米汽车SU8曝光：续航突破1000公里',
+        source: '新浪汽车',
+        time: '1小时前',
+        category: 'tech',
+        hot: 1320000,
+        url: 'https://auto.sina.com.cn/news/2026-01-01/doc-12345678'
+    },
+    {
+        id: 503,
+        title: '英伟达RTX 5090显卡发布：性能翻倍',
+        source: '极客公园',
+        time: '2小时前',
+        category: 'tech',
+        hot: 1180000,
+        url: 'https://www.geekpark.net/news/123456'
+    },
+    {
+        id: 504,
+        title: 'iPhone 17 Pro Max渲染图曝光：外观大改',
+        source: 'MacRumors',
+        time: '3小时前',
+        category: 'tech',
+        hot: 1050000,
+        url: 'https://www.macrumors.com/2026/01/01/iphone-17-pro-max/'
+    },
+    // AI资讯
+    {
+        id: 601,
+        title: 'DeepSeek-V4发布：中文能力超越GPT-5',
+        source: '量子位',
+        time: '20分钟前',
+        category: 'ai',
+        hot: 1680000,
+        url: 'https://www.qbitai.com/article/123456'
+    },
+    {
+        id: 602,
+        title: '字节跳动发布豆包大模型3.0：多模态能力增强',
+        source: '机器之心',
+        time: '1小时前',
+        category: 'ai',
+        hot: 920000,
+        url: 'https://www.jiqizhixin.com/article/654321'
+    },
+    {
+        id: 603,
+        title: '百度文心一言4.0上线：推理能力大幅提升',
+        source: 'AI科技评论',
+        time: '2小时前',
+        category: 'ai',
+        hot: 780000,
+        url: 'https://www.aitechtalk.com/news/123456'
+    },
+    {
+        id: 604,
+        title: '阿里通义千问3.0发布：代码能力行业领先',
+        source: 'InfoQ',
+        time: '4小时前',
+        category: 'ai',
+        hot: 650000,
+        url: 'https://www.infoq.cn/article/123456'
+    },
+    // 财经资讯
+    {
+        id: 701,
+        title: 'A股三大指数全线上涨：沪指突破3500点',
+        source: '东方财富',
+        time: '15分钟前',
+        category: 'finance',
+        hot: 1520000,
+        url: 'https://finance.eastmoney.com/a/202601011234567890'
+    },
+    {
+        id: 702,
+        title: '央行降准0.5个百分点：释放流动性1万亿',
+        source: '财新网',
+        time: '1小时前',
+        category: 'finance',
+        hot: 1280000,
+        url: 'https://finance.caixin.com/2026-01-01/101234567'
+    },
+    {
+        id: 703,
+        title: '特斯拉股价大涨：市值突破8000亿美元',
+        source: '华尔街见闻',
+        time: '2小时前',
+        category: 'finance',
+        hot: 980000,
+        url: 'https://wallstreetcn.com/articles/1234567'
+    },
+    {
+        id: 704,
+        title: '黄金突破3000美元：创历史新高',
+        source: '金十数据',
+        time: '3小时前',
+        category: 'finance',
+        hot: 850000,
+        url: 'https://www.jin10.com/article/123456'
+    },
+    {
+        id: 705,
+        title: '房地产新政出台：首套房利率下调',
+        source: '第一财经',
+        time: '4小时前',
+        category: 'finance',
+        hot: 720000,
+        url: 'https://www.yicai.com/news/1234567'
+    },
+    // 娱乐资讯
+    {
+        id: 801,
+        title: '《哪吒3》定档春节：预告片播放量破亿',
+        source: '猫眼电影',
+        time: '30分钟前',
+        category: 'entertainment',
+        hot: 2100000,
+        url: 'https://maoyan.com/news/123456'
+    },
+    {
+        id: 802,
+        title: '周杰伦新专辑发布：数字销量破千万',
+        source: 'QQ音乐',
+        time: '2小时前',
+        category: 'entertainment',
+        hot: 1850000,
+        url: 'https://y.qq.com/n/yqq/news/123456'
+    },
+    {
+        id: 803,
+        title: '《繁花》第二季官宣：原班人马回归',
+        source: '豆瓣',
+        time: '3小时前',
+        category: 'entertainment',
+        hot: 1420000,
+        url: 'https://movie.douban.com/news/123456'
+    },
+    {
+        id: 804,
+        title: '杨幂新剧开播：首日收视率破3',
+        source: '新浪娱乐',
+        time: '5小时前',
+        category: 'entertainment',
+        hot: 980000,
+        url: 'https://ent.sina.com.cn/tv/2026-01-01/doc-12345678'
+    },
+    // 社会热点
+    {
+        id: 901,
+        title: '全国多地迎来降雪：春运出行需注意',
+        source: '中国天气',
+        time: '1小时前',
+        category: 'social',
+        hot: 1150000,
+        url: 'https://weather.com.cn/news/123456'
+    },
+    {
+        id: 902,
+        title: '医保新规实施：门诊报销比例提高',
+        source: '健康时报',
+        time: '2小时前',
+        category: 'social',
+        hot: 890000,
+        url: 'https://health.people.com.cn/n1/2026/0101/c123456'
+    },
+    {
+        id: 903,
+        title: '春节放假安排公布：共8天假期',
+        source: '中国政府网',
+        time: '3小时前',
+        category: 'social',
+        hot: 780000,
+        url: 'http://www.gov.cn/zhengce/2026-01/01/content_1234567'
+    },
+    {
+        id: 904,
+        title: '全国铁路春运启动：预计发送旅客4.5亿人次',
+        source: '央视新闻',
+        time: '4小时前',
+        category: 'social',
+        hot: 650000,
+        url: 'https://news.cctv.com/2026/01/01/ARTI123456'
+    },
+    {
+        id: 905,
+        title: '新修订《公司法》正式实施：保护中小股东权益',
+        source: '法制日报',
+        time: '5小时前',
+        category: 'social',
+        hot: 520000,
+        url: 'https://www.legaldaily.com.cn/2026-01/01/content_123456'
     }
 ];
 
@@ -430,20 +633,40 @@ function normalizePasswordRecord(item, index = 0) {
     };
 }
 
-function savePasswordsToStorage() {
+async function savePasswordsToStorage() {
     try {
+        // 同时保存到 localStorage 和 IndexedDB
         localStorage.setItem(PASSWORD_STORAGE_KEY, JSON.stringify(passwordData));
+        if (window.flowboardDB) {
+            for (const pwd of passwordData) {
+                await flowboardDB.put('passwords', pwd);
+            }
+        }
     } catch (error) {
         console.error('保存账户数据失败:', error);
     }
 }
 
-function loadPasswordsFromStorage() {
+async function loadPasswordsFromStorage() {
     try {
+        // 优先从 IndexedDB 读取
+        if (window.flowboardDB) {
+            const dbPasswords = await flowboardDB.getAll('passwords');
+            if (dbPasswords && dbPasswords.length > 0) {
+                passwordData = dbPasswords
+                    .map((item, index) => normalizePasswordRecord(item, index))
+                    .filter(Boolean);
+                // 同步到 localStorage
+                localStorage.setItem(PASSWORD_STORAGE_KEY, JSON.stringify(passwordData));
+                return;
+            }
+        }
+
+        // 降级到 localStorage
         const raw = localStorage.getItem(PASSWORD_STORAGE_KEY);
         if (!raw) {
             passwordData = DEFAULT_PASSWORD_DATA.map((item) => ({ ...item }));
-            savePasswordsToStorage();
+            await savePasswordsToStorage();
             return;
         }
 
@@ -459,11 +682,11 @@ function loadPasswordsFromStorage() {
         passwordData = normalized.length > 0
             ? normalized
             : DEFAULT_PASSWORD_DATA.map((item) => ({ ...item }));
-        savePasswordsToStorage();
+        await savePasswordsToStorage();
     } catch (error) {
         console.error('加载账户数据失败:', error);
         passwordData = DEFAULT_PASSWORD_DATA.map((item) => ({ ...item }));
-        savePasswordsToStorage();
+        await savePasswordsToStorage();
     }
 }
 
@@ -563,9 +786,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         console.error('[App] 数据库初始化失败:', error);
     }
-    
+
     initNavigation();
-    loadPasswordsFromStorage();
+    await loadPasswordsFromStorage();
     
     // 初始化 AI 设置模块
     if (typeof initAiSettings === 'function') {
@@ -1245,12 +1468,12 @@ function editPassword(id) {
     modal.classList.add('active');
 }
 
-function deletePassword(id) {
+async function deletePassword(id) {
     if (confirm('确定要删除这个账户吗？')) {
         const index = passwordData.findIndex(p => p.id === id);
         if (index > -1) {
             passwordData.splice(index, 1);
-            savePasswordsToStorage();
+            await savePasswordsToStorage();
             renderPasswordCards();
             updatePasswordCount();
             renderPasswordPreview();
@@ -1620,7 +1843,7 @@ function filterNews(category) {
         filtered = newsData.filter(item => resolveNewsCategory(item) === normalizedFilter);
     }
 
-    const displayData = filtered.slice(0, 8);
+    const displayData = filtered.slice(0, 15);
 
     if (displayData.length === 0) {
         listEl.innerHTML = `
@@ -1837,7 +2060,7 @@ function closeAddPasswordModal() {
     editingPasswordId = null;
 }
 
-function savePassword() {
+async function savePassword() {
     const platform = document.getElementById('platformName').value.trim();
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
@@ -1888,15 +2111,15 @@ function savePassword() {
         showToast('账户添加成功');
     }
 
-    savePasswordsToStorage();
-    
+    await savePasswordsToStorage();
+
     // 刷新显示
     renderPasswordCards();
     updatePasswordCount();
     renderPasswordPreview();
     updateSecurityScore();
     closeAddPasswordModal();
-    
+
     // 清空表单
     document.getElementById('platformName').value = '';
     document.getElementById('username').value = '';
@@ -2938,7 +3161,12 @@ async function getWeather(forceRefresh = false) {
     updateWeatherLoading(true);
 
     try {
-        const resolvedLocation = await resolveWeatherLocation();
+        const locationPromise = resolveWeatherLocation();
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('定位超时')), 15000);
+        });
+
+        const resolvedLocation = await Promise.race([locationPromise, timeoutPromise]);
         currentLocation = resolvedLocation;
 
         const cacheKey = buildWeatherLocationKey(resolvedLocation);
@@ -2954,7 +3182,8 @@ async function getWeather(forceRefresh = false) {
 
         await fetchWeatherData(resolvedLocation.lat, resolvedLocation.lon);
     } catch (error) {
-        console.warn('天气定位失败:', error.message || error);
+        console.warn('天气定位失败:', error?.message || error);
+        currentLocation = DEFAULT_WEATHER_LOCATION;
         updateWeatherError();
     }
 }
@@ -2995,14 +3224,22 @@ async function resolveManualWeatherLocation(preference) {
 async function resolveAutoWeatherLocation() {
     let gpsLocation = null;
     if (navigator.geolocation) {
-        gpsLocation = await getGpsLocation();
-        if (gpsLocation && gpsLocation.accuracy <= GPS_ACCURACY_THRESHOLD_METERS) {
-            return gpsLocation;
+        try {
+            gpsLocation = await getGpsLocation();
+            if (gpsLocation && gpsLocation.accuracy <= GPS_ACCURACY_THRESHOLD_METERS) {
+                return gpsLocation;
+            }
+        } catch (_error) {
+            console.warn('GPS定位失败，尝试IP定位');
         }
     }
 
-    const ipLocation = await getLocationByIP();
-    if (ipLocation) return ipLocation;
+    try {
+        const ipLocation = await getLocationByIP();
+        if (ipLocation) return ipLocation;
+    } catch (_error) {
+        console.warn('IP定位失败');
+    }
 
     if (gpsLocation) {
         return {
@@ -3017,9 +3254,14 @@ async function resolveAutoWeatherLocation() {
 }
 
 function getGpsLocation() {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+            reject(new Error('GPS定位超时'));
+        }, 8000);
+
         navigator.geolocation.getCurrentPosition(
             (position) => {
+                clearTimeout(timeoutId);
                 const lat = toFiniteNumber(position.coords.latitude);
                 const lon = toFiniteNumber(position.coords.longitude);
                 if (lat === null || lon === null) {
@@ -3035,11 +3277,15 @@ function getGpsLocation() {
                     accuracy: toFiniteNumber(position.coords.accuracy) || Number.MAX_SAFE_INTEGER
                 });
             },
-            () => resolve(null),
+            (error) => {
+                clearTimeout(timeoutId);
+                console.warn('GPS定位错误:', error?.message || '未知错误');
+                resolve(null);
+            },
             {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 300000
+                enableHighAccuracy: false,
+                timeout: 7000,
+                maximumAge: 600000
             }
         );
     });

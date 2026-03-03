@@ -177,6 +177,21 @@
     color: var(--text-primary);
 }
 
+.language-filter {
+    padding: 10px 12px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    cursor: pointer;
+    min-width: 120px;
+}
+
+.language-filter option {
+    background: var(--card-bg);
+    color: var(--text-primary);
+}
+
 .snippet-category {
     margin-bottom: 24px;
 }

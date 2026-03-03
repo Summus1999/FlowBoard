@@ -23,12 +23,6 @@ const BookmarkManager = {
         const grouped = this.groupByCategory();
 
         container.innerHTML = `
-            <div class="bookmark-header">
-                <h3>书签收藏</h3>
-                <button class="btn-primary" onclick="BookmarkManager.showAddModal()">
-                    <i class="fas fa-plus"></i> 添加书签
-                </button>
-            </div>
             <div class="bookmark-toolbar">
                 <div class="bookmark-search">
                     <i class="fas fa-search"></i>

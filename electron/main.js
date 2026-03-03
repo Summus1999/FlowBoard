@@ -1288,6 +1288,81 @@ ipcMain.handle('check-apps-availability', async (event, appConfigs) => {
 const AI_CONFIG_KEY = 'aiConfig';
 const AI_SERVICE_URL_DEFAULT = 'http://localhost:8000';
 
+// 直接测试各厂商API的配置
+const AI_PROVIDER_CONFIGS = {
+    qwen: {
+        name: '通义千问',
+        baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+        testModel: 'qwen-turbo'
+    },
+    kimi: {
+        name: 'Kimi',
+        baseUrl: 'https://api.moonshot.cn/v1',
+        testModel: 'moonshot-v1-8k'
+    },
+    glm: {
+        name: '智谱 GLM',
+        baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+        testModel: 'glm-4-flash'
+    },
+    silflow: {
+        name: '硅基流动',
+        baseUrl: 'https://api.siliconflow.cn/v1',
+        testModel: 'Qwen/Qwen2.5-7B-Instruct'
+    },
+    openai: {
+        name: 'OpenAI',
+        baseUrl: 'https://api.openai.com/v1',
+        testModel: 'gpt-3.5-turbo'
+    }
+};
+
+/**
+ * 直接测试厂商API连接
+ */
+async function directTestProvider(provider, apiKey) {
+    const config = AI_PROVIDER_CONFIGS[provider];
+    if (!config) {
+        return { success: false, error: `未知的提供商: ${provider}` };
+    }
+
+    const startTime = Date.now();
+    try {
+        const response = await fetch(`${config.baseUrl}/chat/completions`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: config.testModel,
+                messages: [{ role: 'user', content: 'Hi' }],
+                max_tokens: 5
+            }),
+            signal: AbortSignal.timeout(15000)
+        });
+
+        const latencyMs = Date.now() - startTime;
+
+        if (!response.ok) {
+            const errorText = await response.text().catch(() => '');
+            let errorMsg = `HTTP ${response.status}`;
+            try {
+                const errorJson = JSON.parse(errorText);
+                errorMsg = errorJson.error?.message || errorJson.message || errorMsg;
+            } catch (_e) {
+                if (errorText) errorMsg = errorText.slice(0, 100);
+            }
+            return { success: false, error: errorMsg, latencyMs };
+        }
+
+        return { success: true, latencyMs };
+    } catch (error) {
+        const latencyMs = Date.now() - startTime;
+        return { success: false, error: error.message, latencyMs };
+    }
+}
+
 function getAiConfig() {
     const cfg = readConfig().aiConfig || {};
     return {
@@ -1451,28 +1526,11 @@ ipcMain.handle('ai-config-load', async () => {
 });
 
 /**
- * 测试 AI 提供商连接
+ * 测试 AI 提供商连接 - 直接调用厂商API
  */
 ipcMain.handle('ai-config-test', async (event, provider, apiKey) => {
-    try {
-        const aiCfg = getAiConfig();
-        const response = await fetch(`${aiCfg.serviceUrl}/api/v1/config/providers/test`, {
-            method: 'POST',
-            headers: buildAuthHeaders(aiCfg.apiToken),
-            body: JSON.stringify({ provider, api_key: apiKey }),
-            signal: AbortSignal.timeout(30000)
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            return { success: false, error: errorData.detail || `HTTP ${response.status}` };
-        }
-
-        const result = await response.json();
-        return { success: result.success, latencyMs: result.latency_ms, error: result.error };
-    } catch (error) {
-        return { success: false, error: error.message };
-    }
+    // 直接测试厂商API，不依赖后端服务
+    return await directTestProvider(provider, apiKey);
 });
 
 /**
