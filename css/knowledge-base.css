@@ -39,14 +39,14 @@
     padding: 48px;
     text-align: center;
     cursor: pointer;
-    transition: var(--transition);
+    transition: border-color 0.3s ease, background 0.3s ease;
     margin-bottom: 24px;
 }
 
 .knowledge-upload:hover,
 .knowledge-upload.dragover {
     border-color: var(--accent-color);
-    background: rgba(59, 130, 246, 0.05);
+    background: rgba(59, 130, 246, 0.1);
 }
 
 .knowledge-upload i {
@@ -90,7 +90,7 @@
     gap: 16px;
     padding: 16px 20px;
     border-bottom: 1px solid var(--border-color);
-    transition: var(--transition);
+    transition: background 0.2s ease;
 }
 
 .kb-doc-item:last-child {
@@ -141,12 +141,12 @@
 
 .kb-doc-status.indexed {
     background: rgba(34, 197, 94, 0.15);
-    color: #22c55e;
+    color: var(--color-success);
 }
 
 .kb-doc-status.processing {
     background: rgba(245, 158, 11, 0.15);
-    color: #f59e0b;
+    color: var(--color-warning);
 }
 
 .kb-doc-actions {
@@ -168,7 +168,7 @@
     border-radius: 6px;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: var(--transition);
+    transition: color 0.2s ease, background 0.2s ease;
 }
 
 .kb-doc-btn:hover {

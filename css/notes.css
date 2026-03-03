@@ -46,7 +46,7 @@
     color: var(--text-primary);
     font-size: 14px;
     outline: none;
-    transition: var(--transition);
+    transition: border-color 0.3s ease;
 }
 
 .notes-search input:focus {
@@ -74,7 +74,7 @@
     color: var(--text-secondary);
     font-size: 12px;
     cursor: pointer;
-    transition: var(--transition);
+    transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -103,7 +103,7 @@
     padding: 14px;
     border-radius: 10px;
     cursor: pointer;
-    transition: var(--transition);
+    transition: background 0.3s ease, border-color 0.3s ease;
     margin-bottom: 8px;
     border: 1px solid transparent;
 }
@@ -162,29 +162,29 @@
 
 .note-item-category.work {
     background: rgba(22, 119, 255, 0.2);
-    color: #1677FF;
+    color: var(--accent-color);
 }
 
 .note-item-category.study {
     background: rgba(7, 193, 96, 0.2);
-    color: #07C160;
+    color: var(--color-success);
 }
 
 .note-item-category.life {
     background: rgba(251, 114, 153, 0.2);
-    color: #FB7299;
+    color: var(--color-warning);
 }
 
 .note-item-category.idea {
     background: rgba(255, 161, 22, 0.2);
-    color: #FFA116;
+    color: var(--accent-secondary);
 }
 
 .note-item.active .note-item-category.work,
 .note-item.active .note-item-category.study,
 .note-item.active .note-item-category.life,
 .note-item.active .note-item-category.idea {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--card-hover);
     color: white;
 }
 
@@ -193,7 +193,7 @@
     display: flex;
     gap: 4px;
     opacity: 0;
-    transition: opacity 0.2s;
+    transition: opacity 0.2s ease;
 }
 
 .note-item:hover .note-item-actions {
@@ -215,7 +215,7 @@
 }
 
 .note-item-action:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--card-hover);
 }
 
 /* 空状态 */
@@ -310,7 +310,7 @@
     color: var(--text-secondary);
     font-size: 13px;
     cursor: pointer;
-    transition: var(--transition);
+    transition: background 0.3s ease, color 0.3s ease;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -348,7 +348,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: var(--transition);
+    transition: border-color 0.3s ease;
 }
 
 .note-editor-toolbar button:hover {
@@ -495,7 +495,7 @@
 }
 
 .note-preview-pane pre {
-    background: #282c34;
+    background: var(--bg-primary);
     padding: 16px;
     border-radius: 8px;
     overflow-x: auto;
@@ -505,7 +505,7 @@
 .note-preview-pane pre code {
     background: transparent;
     padding: 0;
-    color: #abb2bf;
+    color: var(--text-secondary);
     font-size: 13px;
     line-height: 1.6;
 }
@@ -601,7 +601,7 @@
     color: var(--text-primary);
     font-size: 14px;
     outline: none;
-    transition: var(--transition);
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .note-form-group input:focus,

@@ -8,7 +8,7 @@
     --sidebar-width: 220px;
     --header-height: 100px;
     --border-radius: 12px;
-    --transition: all 0.3s ease;
+    --transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
     
     /* 深海蓝主题 (默认) */
     --bg-primary: #0a1628;
@@ -26,6 +26,23 @@
     --accent-secondary: #60a5fa;
     --glass-blur: blur(20px);
     --shadow-color: rgba(0, 0, 0, 0.3);
+    
+    /* z-index 层级管理 */
+    --z-base: 1;
+    --z-sidebar: 10;
+    --z-dropdown: 100;
+    --z-sticky: 200;
+    --z-modal-backdrop: 500;
+    --z-modal: 1000;
+    --z-popover: 2000;
+    --z-tooltip: 3000;
+    --z-toast: 10000;
+    
+    /* 状态颜色 */
+    --color-success: #22c55e;
+    --color-warning: #f59e0b;
+    --color-error: #ef4444;
+    --color-info: #3b82f6;
 }
 
 /* 极光紫主题 */

@@ -19,26 +19,26 @@
 /* 录音按钮 */
 .btn-record {
     padding: 12px 24px;
-    background: #ef4444;
+    background: var(--color-error);
     border: none;
     border-radius: 8px;
     color: white;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: var(--transition);
+    transition: background 0.3s ease, transform 0.2s ease;
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
 .btn-record:hover {
-    background: #dc2626;
+    background: var(--color-error);
     transform: scale(1.02);
 }
 
 .btn-record.recording {
-    background: #22c55e;
+    background: var(--color-success);
     animation: pulse 1.5s infinite;
 }
 
@@ -79,7 +79,7 @@
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    background: #22c55e;
+    background: var(--color-success);
     margin: 0 auto 12px;
     position: relative;
 }
@@ -92,13 +92,13 @@
     right: -4px;
     bottom: -4px;
     border-radius: 50%;
-    border: 2px solid #22c55e;
+    border: 2px solid var(--color-success);
     opacity: 0;
     transition: opacity 0.3s;
 }
 
 .interview-recording-status.recording .status-indicator {
-    background: #ef4444;
+    background: var(--color-error);
     animation: pulse-red 1.5s infinite;
 }
 
@@ -165,7 +165,7 @@
     border-radius: 10px;
     margin-bottom: 10px;
     cursor: pointer;
-    transition: var(--transition);
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .interview-item:hover {
@@ -272,7 +272,7 @@
     background: var(--bg-primary);
     border-radius: 8px;
     cursor: pointer;
-    transition: var(--transition);
+    transition: background 0.2s ease;
 }
 
 .checklist-item:hover {
@@ -288,7 +288,7 @@
 .checklist-item span {
     font-size: 14px;
     color: var(--text-secondary);
-    transition: var(--transition);
+    transition: text-decoration 0.2s ease, color 0.2s ease;
 }
 
 .checklist-item input[type="checkbox"]:checked + span {
@@ -328,7 +328,7 @@
     font-size: 14px;
     cursor: pointer;
     outline: none;
-    transition: var(--transition);
+    transition: opacity 0.2s ease;
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;

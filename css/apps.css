@@ -17,7 +17,7 @@
 
 .apps-reorder-btn.active {
     background: var(--accent-color);
-    color: #fff;
+    color: var(--text-primary);
     border-color: var(--accent-color);
 }
 
@@ -40,7 +40,8 @@
     align-items: center;
     gap: 10px;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, box-shadow;
     text-align: center;
     position: relative;
 }
@@ -118,7 +119,7 @@
     justify-content: center;
     font-size: 26px;
     color: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 12px var(--shadow-color);
     transition: transform 0.3s ease;
 }
 
@@ -190,7 +191,7 @@
     align-items: center;
     justify-content: center;
     font-size: 12px;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
 .app-action-btn:hover {
@@ -200,7 +201,7 @@
 }
 
 .app-action-btn.delete:hover {
-    background: #ef4444;
+    background: var(--color-error);
 }
 
 /* 空状态 */
@@ -287,7 +288,7 @@
     justify-content: center;
     gap: 6px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
 .icon-mode-tab:hover {
@@ -295,7 +296,7 @@
 }
 
 .icon-mode-tab.active {
-    background: rgba(59, 130, 246, 0.12);
+    background: rgba(59, 130, 246, 0.15);
     border-color: var(--accent-color);
     color: var(--accent-color);
 }
@@ -348,7 +349,7 @@
     justify-content: center;
     font-size: 18px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
 .icon-option:hover {
@@ -359,7 +360,7 @@
 
 .icon-option.selected {
     border-color: var(--accent-color);
-    background: rgba(59, 130, 246, 0.1);
+    background: rgba(59, 130, 246, 0.15);
 }
 
 /* ========================================

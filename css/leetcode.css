@@ -79,7 +79,7 @@
     color: var(--text-primary);
     font-size: 14px;
     outline: none;
-    transition: var(--transition);
+    transition: border-color 0.3s ease;
 }
 
 .search-box input:focus {
@@ -106,7 +106,7 @@
     color: var(--text-secondary);
     font-size: 12px;
     cursor: pointer;
-    transition: var(--transition);
+    transition: background 0.2s ease;
 }
 
 .filter-tab:hover {
@@ -117,7 +117,7 @@
 .filter-tab.active {
     background: var(--accent-color);
     border-color: var(--accent-color);
-    color: white;
+    color: var(--text-primary);
 }
 
 /* 状态筛选 */
@@ -139,7 +139,7 @@
     color: var(--text-secondary);
     font-size: 12px;
     cursor: pointer;
-    transition: var(--transition);
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
 .status-btn:hover {
@@ -154,13 +154,13 @@
 }
 
 .status-btn[data-status="solved"].active {
-    background: #22c55e;
-    border-color: #22c55e;
+    background: var(--color-success);
+    border-color: var(--color-success);
 }
 
 .status-btn[data-status="unsolved"].active {
-    background: #6b7280;
-    border-color: #6b7280;
+    background: var(--text-muted);
+    border-color: var(--text-muted);
 }
 
 /* 题目列表 */
@@ -178,7 +178,7 @@
     padding: 12px;
     border-radius: 8px;
     cursor: pointer;
-    transition: var(--transition);
+    transition: border-color 0.3s ease;
     margin-bottom: 4px;
 }
 
@@ -205,7 +205,7 @@
 }
 
 .problem-status.solved {
-    color: #22c55e;
+    color: var(--color-success);
 }
 
 .problem-status.unsolved {
@@ -213,7 +213,7 @@
 }
 
 .problem-status.attempted {
-    color: #f59e0b;
+    color: var(--color-warning);
 }
 
 .problem-info {
@@ -245,17 +245,17 @@
 
 .problem-item-difficulty.easy {
     background: rgba(34, 197, 94, 0.2);
-    color: #22c55e;
+    color: var(--color-success);
 }
 
 .problem-item-difficulty.medium {
     background: rgba(245, 158, 11, 0.2);
-    color: #f59e0b;
+    color: var(--color-warning);
 }
 
 .problem-item-difficulty.hard {
     background: rgba(239, 68, 68, 0.2);
-    color: #ef4444;
+    color: var(--color-error);
 }
 
 /* 右侧主内容区 */
@@ -317,17 +317,17 @@
 
 .problem-difficulty.easy {
     background: rgba(34, 197, 94, 0.2);
-    color: #22c55e;
+    color: var(--color-success);
 }
 
 .problem-difficulty.medium {
     background: rgba(245, 158, 11, 0.2);
-    color: #f59e0b;
+    color: var(--color-warning);
 }
 
 .problem-difficulty.hard {
     background: rgba(239, 68, 68, 0.2);
-    color: #ef4444;
+    color: var(--color-error);
 }
 
 .problem-actions {
@@ -355,7 +355,7 @@
 }
 
 .btn-icon.active {
-    background: #f59e0b;
+    background: var(--color-warning);
     color: white;
 }
 
@@ -483,9 +483,9 @@
     width: 100%;
     height: 100%;
     padding: 16px;
-    background: #1e1e1e;
+    background: var(--bg-primary);
     border: none;
-    color: #d4d4d4;
+    color: var(--text-secondary);
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 14px;
     line-height: 1.6;
@@ -550,7 +550,7 @@
 }
 
 .console-line.success {
-    color: #22c55e;
+    color: var(--color-success);
 }
 
 .console-line.error {
@@ -558,7 +558,7 @@
 }
 
 .console-line.info {
-    color: #3b82f6;
+    color: var(--accent-color);
 }
 
 .console-line.output {
@@ -623,12 +623,12 @@
 
 .data-source-badge.api {
     background: rgba(34, 197, 94, 0.2);
-    color: #22c55e;
+    color: var(--color-success);
 }
 
 .data-source-badge.local {
     background: rgba(245, 158, 11, 0.2);
-    color: #f59e0b;
+    color: var(--color-warning);
 }
 
 /* 页面头部数据状态 */
@@ -646,11 +646,11 @@
 }
 
 .leetcode-data-status.connected {
-    color: #22c55e;
+    color: var(--color-success);
 }
 
 .leetcode-data-status.local {
-    color: #f59e0b;
+    color: var(--color-warning);
 }
 
 /* 响应式适配 */

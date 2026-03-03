@@ -64,12 +64,12 @@
     padding: 14px;
     margin-bottom: 10px;
     cursor: grab;
-    transition: var(--transition);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
 }
 
 .task-card:hover {
     border-color: var(--accent-color);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px var(--shadow-color);
 }
 
 .task-card.dragging {
@@ -154,5 +154,5 @@
 }
 
 .task-card-actions button:last-child:hover {
-    color: #ef4444;
+    color: var(--color-error);
 }
