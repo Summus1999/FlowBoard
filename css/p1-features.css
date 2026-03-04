@@ -550,18 +550,52 @@ body.focus-mode .main-content {
     flex: 1;
     padding: 12px;
     background: transparent;
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.05) 0%,
+        rgba(255, 255, 255, 0.02) 50%,
+        rgba(0, 0, 0, 0.03) 100%
+    );
     border: none;
     color: var(--text-secondary);
     cursor: pointer;
     font-size: 13px;
     border-bottom: 2px solid transparent;
-    transition: background 0.2s ease, color 0.2s ease;
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 
+        inset 0 1px 1px rgba(255, 255, 255, 0.05),
+        inset 0 -1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.notification-center-tabs button:hover {
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.08) 0%,
+        rgba(255, 255, 255, 0.03) 50%,
+        rgba(0, 0, 0, 0.04) 100%
+    );
 }
 
 .notification-center-tabs button.active,
 .notification-center-tabs button:hover {
     color: var(--accent-color);
     border-bottom-color: var(--accent-color);
+}
+
+.notification-center-tabs button.active {
+    background-image: linear-gradient(
+        180deg,
+        rgba(59, 130, 246, 0.08) 0%,
+        rgba(59, 130, 246, 0.02) 50%,
+        rgba(0, 0, 0, 0.02) 100%
+    );
+}
+
+.notification-center-tabs button:active {
+    transform: scale(0.98);
+    box-shadow: 
+        inset 0 2px 3px rgba(0, 0, 0, 0.1),
+        inset 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 .notification-center-list {
@@ -675,16 +709,43 @@ body.focus-mode .main-content {
 .notification-actions button {
     width: 28px;
     height: 28px;
-    border: none;
+    border: 1px solid var(--border-color);
+    border-bottom-color: rgba(0, 0, 0, 0.15);
     background: var(--bg-primary);
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.08) 0%,
+        rgba(255, 255, 255, 0.02) 50%,
+        rgba(0, 0, 0, 0.06) 100%
+    );
     border-radius: 6px;
     color: var(--text-secondary);
     cursor: pointer;
     font-size: 12px;
+    box-shadow: 
+        0 1px 3px rgba(0, 0, 0, 0.1),
+        0 2px 4px rgba(0, 0, 0, 0.05),
+        inset 0 1px 1px rgba(255, 255, 255, 0.08),
+        inset 0 -1px 1px rgba(0, 0, 0, 0.06);
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .notification-actions button:hover {
     color: var(--accent-color);
+    transform: translateY(-1px);
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.12),
+        0 3px 6px rgba(0, 0, 0, 0.06),
+        inset 0 1px 2px rgba(255, 255, 255, 0.1),
+        inset 0 -1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.notification-actions button:active {
+    transform: translateY(1px) scale(0.95);
+    box-shadow: 
+        0 1px 2px rgba(0, 0, 0, 0.1),
+        inset 0 2px 3px rgba(0, 0, 0, 0.1),
+        inset 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 /* 通知 Toast */

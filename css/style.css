@@ -96,6 +96,164 @@
     box-sizing: border-box;
 }
 
+/* ========================================
+   硅胶感按钮基础样式 (MacBook Keyboard Style)
+   ======================================== */
+
+/* 按钮通用硅胶效果 - 适用于所有按钮元素 */
+button,
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-text,
+.btn-sm,
+.btn-lg,
+.tab-btn,
+.cat-btn,
+.filter-btn,
+.icon-btn,
+.close-btn,
+.pwd-action-btn,
+.todo-delete-btn,
+.nav-item-action-btn,
+.section-manage-btn,
+.nav-add-item-btn,
+.ai-icon-btn,
+.ai-toggle-btn,
+.topic-tag,
+.cat-option {
+    /* 硅胶质感基础 */
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.08) 0%,
+        rgba(255, 255, 255, 0.02) 50%,
+        rgba(0, 0, 0, 0.05) 100%
+    );
+    box-shadow: 
+        /* 外部柔和阴影 - 营造立体感 */
+        0 2px 4px rgba(0, 0, 0, 0.2),
+        0 4px 8px rgba(0, 0, 0, 0.1),
+        /* 顶部高光 - 模拟硅胶反光 */
+        inset 0 1px 1px rgba(255, 255, 255, 0.15),
+        /* 底部内阴影 - 凹陷效果 */
+        inset 0 -1px 2px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom-color: rgba(0, 0, 0, 0.2);
+    transition: 
+        transform 0.1s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 0.1s cubic-bezier(0.4, 0, 0.2, 1),
+        background 0.2s ease,
+        border-color 0.2s ease !important;
+}
+
+/* 按钮悬停效果 - 轻微上浮 */
+button:hover:not(:disabled),
+.btn:hover:not(:disabled),
+.btn-primary:hover:not(:disabled),
+.btn-secondary:hover:not(:disabled),
+.tab-btn:hover:not(:disabled),
+.cat-btn:hover:not(:disabled),
+.filter-btn:hover:not(:disabled),
+.icon-btn:hover:not(:disabled),
+.close-btn:hover:not(:disabled),
+.pwd-action-btn:hover:not(:disabled),
+.nav-item-action-btn:hover:not(:disabled),
+.section-manage-btn:hover:not(:disabled),
+.ai-icon-btn:hover:not(:disabled),
+.topic-tag:hover:not(:disabled),
+.cat-option:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 
+        0 4px 8px rgba(0, 0, 0, 0.25),
+        0 6px 12px rgba(0, 0, 0, 0.15),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* 按钮按下效果 - 硅胶凹陷感 */
+button:active:not(:disabled),
+.btn:active:not(:disabled),
+.btn-primary:active:not(:disabled),
+.btn-secondary:active:not(:disabled),
+.tab-btn:active:not(:disabled),
+.cat-btn:active:not(:disabled),
+.filter-btn:active:not(:disabled),
+.icon-btn:active:not(:disabled),
+.close-btn:active:not(:disabled),
+.pwd-action-btn:active:not(:disabled),
+.nav-item-action-btn:active:not(:disabled),
+.section-manage-btn:active:not(:disabled),
+.ai-icon-btn:active:not(:disabled),
+.topic-tag:active:not(:disabled),
+.cat-option:active:not(:disabled) {
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 
+        0 1px 2px rgba(0, 0, 0, 0.2),
+        0 2px 4px rgba(0, 0, 0, 0.1),
+        /* 按下时增强内凹效果 */
+        inset 0 2px 4px rgba(0, 0, 0, 0.2),
+        inset 0 1px 2px rgba(0, 0, 0, 0.15);
+    background-image: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.05) 0%,
+        rgba(0, 0, 0, 0.02) 50%,
+        rgba(255, 255, 255, 0.03) 100%
+    );
+}
+
+/* 禁用状态 */
+button:disabled,
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* 浅色主题下的硅胶按钮调整 */
+.theme-light button,
+.theme-light .btn,
+.theme-light .btn-primary,
+.theme-light .btn-secondary,
+.theme-light .tab-btn,
+.theme-light .cat-btn,
+.theme-light .filter-btn,
+.theme-light .icon-btn,
+.theme-light .close-btn,
+.theme-light .pwd-action-btn,
+.theme-light .ai-icon-btn,
+.theme-light .topic-tag,
+.theme-light .cat-option {
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(255, 255, 255, 0.7) 50%,
+        rgba(240, 240, 240, 0.9) 100%
+    );
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.08),
+        0 4px 8px rgba(0, 0, 0, 0.05),
+        inset 0 1px 1px rgba(255, 255, 255, 0.9),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom-color: rgba(0, 0, 0, 0.12);
+}
+
+.theme-light button:active:not(:disabled),
+.theme-light .btn:active:not(:disabled),
+.theme-light .btn-primary:active:not(:disabled),
+.theme-light .btn-secondary:active:not(:disabled) {
+    background-image: linear-gradient(
+        180deg,
+        rgba(235, 235, 235, 0.9) 0%,
+        rgba(245, 245, 245, 0.9) 50%,
+        rgba(255, 255, 255, 0.8) 100%
+    );
+    box-shadow: 
+        0 1px 2px rgba(0, 0, 0, 0.05),
+        inset 0 2px 4px rgba(0, 0, 0, 0.08),
+        inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
 html, body {
     height: 100%;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
@@ -391,19 +549,50 @@ body {
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    border: none;
+    border: 1px solid var(--border-color);
+    border-bottom-color: rgba(0, 0, 0, 0.2);
     background: var(--card-bg);
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.03) 50%,
+        rgba(0, 0, 0, 0.08) 100%
+    );
     color: var(--text-secondary);
     cursor: pointer;
-    transition: var(--transition);
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.15),
+        0 3px 6px rgba(0, 0, 0, 0.08),
+        inset 0 1px 1px rgba(255, 255, 255, 0.12),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .icon-btn:hover {
     background: var(--accent-color);
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.15) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        rgba(0, 0, 0, 0.1) 100%
+    );
     color: white;
+    transform: translateY(-1px);
+    box-shadow: 
+        0 4px 8px rgba(59, 130, 246, 0.3),
+        0 5px 10px rgba(59, 130, 246, 0.2),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.icon-btn:active {
+    transform: translateY(1px) scale(0.95);
+    box-shadow: 
+        0 1px 2px rgba(0, 0, 0, 0.2),
+        inset 0 2px 4px rgba(0, 0, 0, 0.2),
+        inset 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 /* ========================================
@@ -876,17 +1065,57 @@ body {
 .tab-btn {
     padding: 6px 12px;
     border-radius: 16px;
-    border: none;
+    border: 1px solid transparent;
+    border-bottom-color: rgba(0, 0, 0, 0.15);
     background: transparent;
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.06) 0%,
+        rgba(255, 255, 255, 0.02) 50%,
+        rgba(0, 0, 0, 0.04) 100%
+    );
     color: var(--text-secondary);
     font-size: 12px;
     cursor: pointer;
-    transition: var(--transition);
+    box-shadow: 
+        0 1px 2px rgba(0, 0, 0, 0.1),
+        0 2px 4px rgba(0, 0, 0, 0.05),
+        inset 0 1px 1px rgba(255, 255, 255, 0.08),
+        inset 0 -1px 1px rgba(0, 0, 0, 0.08);
+}
+
+.tab-btn:hover {
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.04) 50%,
+        rgba(0, 0, 0, 0.06) 100%
+    );
+    transform: translateY(-1px);
 }
 
 .tab-btn.active {
     background: #ef4444;
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.15) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        rgba(0, 0, 0, 0.1) 100%
+    );
     color: white;
+    box-shadow: 
+        0 2px 4px rgba(239, 68, 68, 0.3),
+        0 3px 6px rgba(239, 68, 68, 0.2),
+        inset 0 1px 1px rgba(255, 255, 255, 0.2),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.tab-btn:active {
+    transform: translateY(1px) scale(0.97);
+    box-shadow: 
+        0 1px 1px rgba(0, 0, 0, 0.1),
+        inset 0 2px 3px rgba(0, 0, 0, 0.15),
+        inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .news-list {
@@ -976,35 +1205,106 @@ body {
     gap: 8px;
     padding: 10px 20px;
     background: var(--accent-color);
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.15) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        rgba(0, 0, 0, 0.1) 100%
+    );
     color: white;
     border: none;
     border-radius: 10px;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition: var(--transition);
+    box-shadow: 
+        0 2px 4px rgba(59, 130, 246, 0.3),
+        0 4px 8px rgba(59, 130, 246, 0.2),
+        inset 0 1px 1px rgba(255, 255, 255, 0.25),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary:hover {
     background: var(--accent-secondary);
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.2) 0%,
+        rgba(255, 255, 255, 0.08) 50%,
+        rgba(0, 0, 0, 0.08) 100%
+    );
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: 
+        0 4px 12px rgba(59, 130, 246, 0.4),
+        0 6px 16px rgba(59, 130, 246, 0.25),
+        inset 0 1px 2px rgba(255, 255, 255, 0.3),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary:active {
+    transform: translateY(1px) scale(0.98);
+    background-image: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.05) 0%,
+        rgba(0, 0, 0, 0.02) 50%,
+        rgba(255, 255, 255, 0.05) 100%
+    );
+    box-shadow: 
+        0 1px 2px rgba(59, 130, 246, 0.3),
+        inset 0 2px 4px rgba(0, 0, 0, 0.25),
+        inset 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .btn-secondary {
     padding: 10px 20px;
     background: var(--card-bg);
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.03) 50%,
+        rgba(0, 0, 0, 0.08) 100%
+    );
     color: var(--text-secondary);
     border: 1px solid var(--border-color);
+    border-bottom-color: rgba(0, 0, 0, 0.25);
     border-radius: 10px;
     font-size: 14px;
     cursor: pointer;
-    transition: var(--transition);
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.15),
+        0 4px 8px rgba(0, 0, 0, 0.08),
+        inset 0 1px 1px rgba(255, 255, 255, 0.12),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.12);
 }
 
 .btn-secondary:hover {
     background: var(--card-hover);
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.15) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        rgba(0, 0, 0, 0.05) 100%
+    );
     color: var(--text-primary);
+    transform: translateY(-1px);
+    box-shadow: 
+        0 4px 8px rgba(0, 0, 0, 0.2),
+        0 6px 12px rgba(0, 0, 0, 0.1),
+        inset 0 1px 2px rgba(255, 255, 255, 0.18),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.btn-secondary:active {
+    transform: translateY(1px) scale(0.98);
+    background-image: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.08) 0%,
+        rgba(0, 0, 0, 0.03) 50%,
+        rgba(255, 255, 255, 0.05) 100%
+    );
+    box-shadow: 
+        0 1px 2px rgba(0, 0, 0, 0.15),
+        inset 0 2px 4px rgba(0, 0, 0, 0.18),
+        inset 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 
 /* ========================================
@@ -1028,18 +1328,52 @@ body {
     gap: 8px;
     padding: 10px 20px;
     background: var(--card-bg);
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.03) 50%,
+        rgba(0, 0, 0, 0.08) 100%
+    );
     border: 1px solid var(--border-color);
+    border-bottom-color: rgba(0, 0, 0, 0.2);
     border-radius: 10px;
     color: var(--text-secondary);
     font-size: 14px;
     cursor: pointer;
-    transition: var(--transition);
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.12),
+        0 4px 8px rgba(0, 0, 0, 0.06),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .cat-btn:hover, .cat-btn.active {
     background: var(--accent-color);
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.15) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        rgba(0, 0, 0, 0.1) 100%
+    );
     border-color: var(--accent-color);
     color: white;
+    box-shadow: 
+        0 3px 6px rgba(59, 130, 246, 0.3),
+        0 5px 10px rgba(59, 130, 246, 0.2),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.cat-btn:hover {
+    transform: translateY(-2px);
+}
+
+.cat-btn:active {
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 
+        0 1px 2px rgba(0, 0, 0, 0.15),
+        inset 0 2px 4px rgba(0, 0, 0, 0.2),
+        inset 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 .password-cards {
@@ -1169,19 +1503,50 @@ body {
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    border: none;
+    border: 1px solid var(--border-color);
+    border-bottom-color: rgba(0, 0, 0, 0.2);
     background: var(--card-bg);
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.03) 50%,
+        rgba(0, 0, 0, 0.08) 100%
+    );
     color: var(--text-secondary);
     cursor: pointer;
-    transition: var(--transition);
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.1),
+        0 3px 6px rgba(0, 0, 0, 0.05),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.08);
 }
 
 .pwd-action-btn:hover {
     background: var(--accent-color);
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.15) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        rgba(0, 0, 0, 0.1) 100%
+    );
     color: white;
+    transform: translateY(-1px);
+    box-shadow: 
+        0 3px 6px rgba(59, 130, 246, 0.3),
+        0 4px 8px rgba(59, 130, 246, 0.2),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.pwd-action-btn:active {
+    transform: translateY(1px) scale(0.95);
+    box-shadow: 
+        0 1px 2px rgba(0, 0, 0, 0.1),
+        inset 0 2px 4px rgba(0, 0, 0, 0.2),
+        inset 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 /* ========================================
@@ -1225,18 +1590,52 @@ body {
 .filter-btn {
     padding: 8px 16px;
     background: var(--card-bg);
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.03) 50%,
+        rgba(0, 0, 0, 0.08) 100%
+    );
     border: 1px solid var(--border-color);
+    border-bottom-color: rgba(0, 0, 0, 0.2);
     border-radius: 20px;
     color: var(--text-secondary);
     font-size: 13px;
     cursor: pointer;
-    transition: var(--transition);
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.1),
+        0 3px 6px rgba(0, 0, 0, 0.05),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.08);
 }
 
 .filter-btn:hover, .filter-btn.active {
     background: var(--accent-color);
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.15) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        rgba(0, 0, 0, 0.1) 100%
+    );
     border-color: var(--accent-color);
     color: white;
+    box-shadow: 
+        0 3px 6px rgba(59, 130, 246, 0.3),
+        0 4px 8px rgba(59, 130, 246, 0.2),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.filter-btn:hover {
+    transform: translateY(-1px);
+}
+
+.filter-btn:active {
+    transform: translateY(1px) scale(0.97);
+    box-shadow: 
+        0 1px 2px rgba(0, 0, 0, 0.1),
+        inset 0 2px 3px rgba(0, 0, 0, 0.15),
+        inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .news-grid {
@@ -1826,19 +2225,50 @@ body {
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    border: none;
+    border: 1px solid var(--border-color);
+    border-bottom-color: rgba(0, 0, 0, 0.2);
     background: var(--card-bg);
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.03) 50%,
+        rgba(0, 0, 0, 0.08) 100%
+    );
     color: var(--text-secondary);
     cursor: pointer;
-    transition: var(--transition);
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.12),
+        0 3px 6px rgba(0, 0, 0, 0.06),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .close-btn:hover {
     background: var(--accent-color);
+    background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.15) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        rgba(0, 0, 0, 0.1) 100%
+    );
     color: white;
+    transform: translateY(-1px);
+    box-shadow: 
+        0 3px 6px rgba(59, 130, 246, 0.3),
+        0 4px 8px rgba(59, 130, 246, 0.2),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.close-btn:active {
+    transform: translateY(1px) scale(0.95);
+    box-shadow: 
+        0 1px 2px rgba(0, 0, 0, 0.15),
+        inset 0 2px 4px rgba(0, 0, 0, 0.2),
+        inset 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 .modal-body {
