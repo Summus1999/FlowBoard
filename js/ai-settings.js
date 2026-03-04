@@ -385,6 +385,49 @@ function _syncPriorityFromDOM() {
 }
 
 /**
+ * 刷新优先级列表 UI，保持当前排序顺序但更新启用状态
+ */
+function _refreshPriorityList() {
+    const container = document.getElementById('aiPriorityList');
+    if (!container) return;
+
+    // 获取当前排序顺序
+    const currentOrder = [];
+    container.querySelectorAll('.ai-priority-item').forEach(el => {
+        currentOrder.push(el.dataset.provider);
+    });
+
+    // 重新构建 HTML，保持当前排序
+    const html = currentOrder.map((key, idx) => {
+        const provider = AI_PROVIDERS[key] || { name: key, icon: 'fa-solid fa-circle' };
+        const providerCfg = aiSettingsState.providers[key] || {};
+        const isUsable = providerCfg.enabled && providerCfg.apiKey;
+        return `
+            <div class="ai-priority-item ${isUsable ? 'usable' : 'disabled'}"
+                 data-provider="${key}" draggable="true"
+                 style="display:flex; align-items:center; gap:10px; padding:10px 16px;
+                        border:1px solid ${isUsable ? '#4ade8030' : '#66666630'};
+                        border-radius:8px; margin:4px 0; cursor:grab;
+                        background: ${isUsable ? '#4ade8008' : 'transparent'};
+                        opacity: ${isUsable ? '1' : '0.5'};">
+                <span style="font-weight:600; color:#888; min-width:20px;">${idx + 1}</span>
+                <i class="${provider.icon}" style="font-size:16px;"></i>
+                <span style="flex:1;">${provider.name}</span>
+                ${isUsable
+                    ? '<span style="font-size:11px; color:#4ade80;">可用</span>'
+                    : '<span style="font-size:11px; color:#888;">未启用</span>'}
+                <i class="fas fa-grip-vertical" style="color:#666; cursor:grab;"></i>
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = html;
+
+    // 重新绑定拖拽事件
+    _initPriorityDragDrop();
+}
+
+/**
  * 绑定 AI 设置事件
  */
 function bindAiSettingsEvents() {
@@ -452,6 +495,9 @@ function bindAiSettingsEvents() {
             } else {
                 if (badge) badge.remove();
             }
+            
+            // 刷新优先级列表，同步显示状态
+            _refreshPriorityList();
         });
     });
     
@@ -466,6 +512,9 @@ function bindAiSettingsEvents() {
             
             // 更新状态显示
             updateProviderStatus(provider, !!e.target.value);
+            
+            // 刷新优先级列表，同步显示状态
+            _refreshPriorityList();
         });
     });
     
@@ -740,6 +789,9 @@ async function saveAiConfig() {
 
         // 3. Sync to backend
         await syncConfigToBackend();
+        
+        // 4. 刷新优先级列表 UI
+        _refreshPriorityList();
         
         showNotification('AI 配置已保存', 'success');
     } catch (error) {
