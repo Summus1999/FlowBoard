@@ -503,10 +503,21 @@ const AIChatUI = {
             // Gather recent messages for context
             const allMessages = await ChatState.getMessages(ChatState.currentSessionId);
             const lastUserMsg = allMessages.filter(m => m.role === 'user').pop()?.content || '';
-            const recentHistory = allMessages.slice(-10).map(m => ({
-                role: m.role,
-                content: m.content
-            }));
+            
+            // Filter out empty assistant messages and incomplete streaming messages
+            const recentHistory = allMessages
+                .slice(-10)
+                .filter(m => {
+                    // Skip empty assistant messages
+                    if (m.role === 'assistant' && !m.content?.trim()) return false;
+                    // Skip incomplete streaming messages
+                    if (m.isStreaming) return false;
+                    return true;
+                })
+                .map(m => ({
+                    role: m.role,
+                    content: m.content?.trim() || ''
+                }));
 
             // Step 1: Intent classification
             const routeResult = await IntentRouter.classify(lastUserMsg, recentHistory);

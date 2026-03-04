@@ -21,6 +21,7 @@
     "create-icons:png": "node scripts/generate-png-icon.js",
     "test-rss": "node scripts/test-rss-sources.js",
     "clear-news-cache": "node scripts/clear-news-cache.js",
+    "clean-empty-messages": "node scripts/clean-empty-messages.js",
     "test": "npm run test:unit",
     "test:unit": "npm run test:unit:frontend && npm run test:unit:backend",
     "test:unit:frontend": "jest --config tests/setup/jest.config.js",
