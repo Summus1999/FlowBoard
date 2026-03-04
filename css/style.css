@@ -406,21 +406,6 @@ body {
     color: white;
 }
 
-/* 天气卡片 */
-.weather-card {
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.weather-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.weather-card.loading {
-    opacity: 0.7;
-}
-
 /* ========================================
    主内容区
    ======================================== */
@@ -481,7 +466,6 @@ body {
 .icon-password { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
 .icon-task { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; }
 .icon-message { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
-.icon-weather { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
 
 .stat-info {
     display: flex;

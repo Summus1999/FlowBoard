@@ -139,15 +139,6 @@
                         <span class="stat-label">待办任务</span>
                     </div>
                 </div>
-                <div class="stat-card weather-card" id="weatherCard" title="单击自动定位，双击设置城市">
-                    <div class="stat-icon icon-weather" id="weatherIcon">
-                        <i class="fas fa-cloud-sun"></i>
-                    </div>
-                    <div class="stat-info">
-                        <span class="stat-number" id="weatherTemp">--°</span>
-                        <span class="stat-label" id="weatherDesc">定位中...</span>
-                    </div>
-                </div>
             </header>
 
             <!-- 页面内容 -->
@@ -1572,34 +1563,6 @@
             <div class="modal-footer">
                 <button class="btn-secondary" onclick="closeProfileModal()">取消</button>
                 <button class="btn-primary" onclick="saveProfile()">
-                    <i class="fas fa-save"></i> 保存
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 天气城市设置模态框 -->
-    <div class="modal" id="weatherCityModal">
-        <div class="modal-overlay" onclick="closeWeatherCityModal()"></div>
-        <div class="modal-content" style="max-width: 420px;">
-            <div class="modal-header">
-                <h3><i class="fas fa-location-dot"></i> 设置天气城市</h3>
-                <button class="close-btn" onclick="closeWeatherCityModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>城市名称</label>
-                    <div class="input-with-icon">
-                        <i class="fas fa-city"></i>
-                        <input type="text" id="weatherCityModalInput" placeholder="例如：北京">
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" onclick="closeWeatherCityModal()">取消</button>
-                <button class="btn-primary" onclick="saveWeatherCityFromModal()">
                     <i class="fas fa-save"></i> 保存
                 </button>
             </div>
