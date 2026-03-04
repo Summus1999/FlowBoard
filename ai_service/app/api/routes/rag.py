@@ -1,12 +1,13 @@
 """
 RAG API路由
 处理文档索引、检索等
+支持传统检索和Sirchmunk代理式检索
 """
 
 import hashlib
 import os
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Literal
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
@@ -295,6 +296,14 @@ async def list_documents(
 async def search_documents(
     query: str,
     top_k: int = Query(5, ge=1, le=20),
+    mode: Literal["FAST", "DEEP", "FILENAME_ONLY", "traditional"] = Query(
+        default="traditional",
+        description="搜索模式: traditional(传统检索), FAST/DEEP/FILENAME_ONLY(Sirchmunk模式)"
+    ),
+    paths: Optional[List[str]] = Query(
+        default=None,
+        description="知识库路径列表（仅Sirchmunk模式）"
+    ),
     trace_id: str = Depends(get_trace_id),
     request_id: str = Depends(get_request_id),
     session_id: Optional[str] = None,
@@ -303,9 +312,55 @@ async def search_documents(
     """
     搜索文档
     
-    混合检索：稀疏检索 + 稠密检索 + RRF融合
+    支持两种检索模式：
+    - traditional: 传统混合检索（稀疏检索 + 稠密检索 + RRF融合）
+    - FAST/DEEP/FILENAME_ONLY: Sirchmunk代理式检索
     """
     validate_user_input(query)
+    
+    use_sirchmunk = getattr(settings, 'USE_SIRCHMUNK', False)
+    
+    # 如果指定了Sirchmunk模式且已启用
+    if mode != "traditional" and use_sirchmunk:
+        try:
+            from app.services.sirchmunk_retrieval_service import SirchmunkRetrievalService
+            
+            sirchmunk_service = SirchmunkRetrievalService()
+            await sirchmunk_service.initialize()
+            
+            result = await sirchmunk_service.search(
+                query=query,
+                paths=paths,
+                mode=mode,
+                top_k_files=top_k,
+            )
+            
+            return {
+                "trace_id": trace_id,
+                "request_id": request_id,
+                "query": query,
+                "mode": mode,
+                "results": [
+                    {
+                        "file_path": f.get("path", ""),
+                        "file_name": f.get("file_name", ""),
+                        "relevance_score": f.get("relevance_score", 0.0),
+                        "evidence": f.get("evidence", []),
+                        "summary": f.get("summary", ""),
+                    }
+                    for f in result.files
+                ],
+                "summary": result.summary,
+                "confidence": result.confidence if hasattr(result, 'confidence') else 0.8,
+                "result_count": len(result.files),
+                "search_engine": "sirchmunk",
+            }
+        except Exception as e:
+            logger.error("rag.sirchmunk_search_failed", error=str(e))
+            # 降级到传统检索
+            logger.warning("rag.falling_back_to_traditional_search")
+    
+    # 传统检索
     retrieval_service = get_retrieval_service()
     
     results = await retrieval_service.retrieve(
@@ -323,6 +378,7 @@ async def search_documents(
         "trace_id": trace_id,
         "request_id": request_id,
         "query": query,
+        "mode": "traditional",
         "results": [
             {
                 "chunk_id": r.chunk_id,
@@ -338,6 +394,7 @@ async def search_documents(
         ],
         "confidence": confidence,
         "result_count": len(results),
+        "search_engine": "traditional",
     }
 
 

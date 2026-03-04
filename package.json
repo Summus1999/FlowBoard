@@ -8,11 +8,12 @@
     "bootstrap:deps": "node scripts/ensure-node-deps.js",
     "start": "electron .",
     "dev": "set NODE_ENV=development && electron .",
-    "build": "electron-builder",
-    "build:win": "electron-builder --win",
-    "build:mac": "electron-builder --mac",
-    "build:all": "electron-builder --win --mac",
-    "build:linux": "electron-builder --linux",
+    "prepare:build": "node scripts/prepare-build.js",
+    "build": "npm run prepare:build && electron-builder",
+    "build:win": "npm run prepare:build -- --platform windows && electron-builder --win",
+    "build:mac": "npm run prepare:build -- --platform macos && electron-builder --mac",
+    "build:all": "npm run prepare:build && electron-builder --win --mac",
+    "build:linux": "npm run prepare:build -- --platform linux && electron-builder --linux",
     "pack": "electron-builder --dir",
     "postinstall": "electron-builder install-app-deps",
     "create-icons": "node scripts/create-icon.js",
@@ -44,6 +45,22 @@
       "js/**/*",
       "assets/**/*",
       "electron/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "ai_service",
+        "to": "ai_service",
+        "filter": [
+          "**/*",
+          "!**/__pycache__/**",
+          "!**/*.pyc",
+          "!**/.pytest_cache/**",
+          "!**/local_data/**",
+          "!**/.venv/**",
+          "!**/venv/**",
+          "!**/python/**"
+        ]
+      }
     ],
     "asar": true,
     "compression": "maximum",

@@ -9,6 +9,10 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const { XMLParser } = require('fast-xml-parser');
+const { AIServiceManager } = require('./ai-service-manager');
+
+// AI 服务管理器实例
+let aiServiceManager = null;
 
 // 保持对窗口对象的全局引用，防止被垃圾回收
 let mainWindow = null;
@@ -1687,14 +1691,60 @@ ipcMain.handle('ai-config-test', async (event, provider, apiKey) => {
  */
 ipcMain.handle('ai-service-status', async () => {
     const aiCfg = getAiConfig();
+    
+    // 使用 aiServiceManager 检查状态（如果可用）
+    if (aiServiceManager) {
+        const managerStatus = aiServiceManager.getStatus();
+        const isHealthy = await aiServiceManager.healthCheck();
+        return {
+            success: isHealthy,
+            url: aiCfg.serviceUrl,
+            managed: true,
+            ...managerStatus
+        };
+    }
+    
+    // 降级：直接检查 HTTP 端点
     try {
         const response = await fetch(`${aiCfg.serviceUrl}/api/v1/health`, {
             method: 'GET',
             signal: AbortSignal.timeout(5000)
         });
-        return { success: response.ok, status: response.status, url: aiCfg.serviceUrl };
+        return { success: response.ok, status: response.status, url: aiCfg.serviceUrl, managed: false };
     } catch (error) {
-        return { success: false, error: error.message, url: aiCfg.serviceUrl };
+        return { success: false, error: error.message, url: aiCfg.serviceUrl, managed: false };
+    }
+});
+
+/**
+ * 手动启动 AI 服务
+ */
+ipcMain.handle('ai-service-start', async () => {
+    if (!aiServiceManager) {
+        aiServiceManager = new AIServiceManager({ port: 8000 });
+    }
+    
+    try {
+        const started = await aiServiceManager.start();
+        return { success: started, status: aiServiceManager.getStatus() };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+});
+
+/**
+ * 停止 AI 服务
+ */
+ipcMain.handle('ai-service-stop', async () => {
+    if (!aiServiceManager) {
+        return { success: true, message: '服务未运行' };
+    }
+    
+    try {
+        await aiServiceManager.stop();
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: error.message };
     }
 });
 
@@ -1741,7 +1791,14 @@ ipcMain.handle('ai-config-sync-to-backend', async () => {
 // ====================
 
 // 当 Electron 完成初始化时创建窗口
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+    // 启动 AI 服务（后台运行，不阻塞 UI）
+    aiServiceManager = new AIServiceManager({ port: 8000 });
+    aiServiceManager.start().catch(err => {
+        console.error('[FlowBoard] AI 服务启动失败:', err.message);
+        // 不阻止应用启动，用户可以稍后手动配置
+    });
+    
     createMainWindow();
     createTray();
     setApplicationMenu();
@@ -1764,8 +1821,17 @@ app.on('window-all-closed', () => {
     }
 });
 
-app.on('before-quit', () => {
+app.on('before-quit', async () => {
     stopNewsUpdater();
+    
+    // 停止 AI 服务
+    if (aiServiceManager) {
+        try {
+            await aiServiceManager.stop();
+        } catch (err) {
+            console.error('[FlowBoard] AI 服务停止失败:', err.message);
+        }
+    }
 });
 
 // 在 macOS 上，当用户点击 dock 图标且没有其他窗口打开时，通常会重新创建一个窗口

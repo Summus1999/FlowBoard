@@ -20,6 +20,17 @@ from app.services.model_gateway import get_model_gateway, ModelProfile
 from app.services.prompt_version_manager import get_prompt_version_manager
 from app.security.output_auditor import audit_output
 
+# Sirchmunk检索服务（可选）
+_sirchmunk_service = None
+
+def get_sirchmunk_service():
+    """获取Sirchmunk检索服务单例"""
+    global _sirchmunk_service
+    if _sirchmunk_service is None and getattr(settings, 'USE_SIRCHMUNK', False):
+        from app.services.sirchmunk_retrieval_service import SirchmunkRetrievalService
+        _sirchmunk_service = SirchmunkRetrievalService()
+    return _sirchmunk_service
+
 logger = get_logger(__name__)
 LOW_CONFIDENCE_MESSAGE = (
     "当前答案置信度低于 90%，建议你点击引用核验关键结论，必要时让我继续补充检索。"
@@ -120,24 +131,113 @@ class QueryNormalizationRunnable(Runnable[str, str]):
 
 
 class RetrievalRunnable(Runnable[str, RAGContext]):
-    """检索Runnable"""
+    """检索Runnable - 支持传统检索和Sirchmunk检索"""
     
-    def __init__(self, db: AsyncSession, session_id: Optional[str] = None, trace_id: Optional[str] = None):
+    def __init__(
+        self,
+        db: AsyncSession,
+        session_id: Optional[str] = None,
+        trace_id: Optional[str] = None,
+        search_mode: str = "FAST",  # Sirchmunk模式: FAST, DEEP, FILENAME_ONLY
+        knowledge_paths: Optional[List[str]] = None,
+    ):
         self.db = db
         self.session_id = session_id
         self.trace_id = trace_id
+        self.search_mode = search_mode
+        self.knowledge_paths = knowledge_paths
         self.retrieval_service = get_retrieval_service()
+        self.use_sirchmunk = getattr(settings, 'USE_SIRCHMUNK', False)
     
     def invoke(self, input: str, config: Optional[RunnableConfig] = None) -> RAGContext:
         raise NotImplementedError("请使用ainvoke")
     
     async def ainvoke(self, input: str, config: Optional[RunnableConfig] = None) -> RAGContext:
-        """执行检索"""
-        logger.info("rag_chain.retrieval_start", query=input[:50])
+        """执行检索 - 根据配置选择传统或Sirchmunk检索"""
+        logger.info("rag_chain.retrieval_start", query=input[:50], use_sirchmunk=self.use_sirchmunk)
         
-        # 执行检索
+        if self.use_sirchmunk:
+            return await self._sirchmunk_retrieve(input)
+        else:
+            return await self._traditional_retrieve(input)
+    
+    async def _sirchmunk_retrieve(self, query: str) -> RAGContext:
+        """使用Sirchmunk代理式检索"""
+        sirchmunk_service = get_sirchmunk_service()
+        if not sirchmunk_service:
+            logger.warning("rag_chain.sirchmunk_not_initialized, falling back to traditional")
+            return await self._traditional_retrieve(query)
+        
+        try:
+            # 确保服务已初始化
+            await sirchmunk_service.initialize()
+            
+            # 执行Sirchmunk检索
+            result = await sirchmunk_service.search(
+                query=query,
+                paths=self.knowledge_paths,
+                mode=self.search_mode,
+                top_k_files=settings.RAG_TOP_K,
+            )
+            
+            # 转换为RAGContext格式
+            citations = []
+            context_parts = []
+            
+            for i, file_result in enumerate(result.files, 1):
+                ref_id = f"ref-{i}"
+                
+                # 合并文件中的所有证据片段
+                evidence_content = "\n".join([
+                    e.get("content", "") for e in file_result.get("evidence", [])
+                ])
+                
+                citation = Citation(
+                    ref_id=ref_id,
+                    chunk_id=f"sirchmunk_{file_result.get('path', '')}",
+                    content=evidence_content[:2000],  # 限制长度
+                    source=file_result.get("file_name", ""),
+                    section=None,
+                    page=None,
+                    score=file_result.get("relevance_score", 0.0),
+                )
+                citations.append(citation)
+                
+                context_parts.append(
+                    f"\n[{ref_id}] {file_result.get('file_name', '')}\n{evidence_content[:2000]}\n"
+                )
+            
+            context_text = "\n".join(context_parts)
+            
+            # 计算置信度
+            confidence = result.confidence if hasattr(result, 'confidence') else 0.8
+            
+            logger.info(
+                "rag_chain.sirchmunk_retrieval_complete",
+                result_count=len(result.files),
+                confidence=confidence,
+                mode=self.search_mode,
+            )
+            
+            return RAGContext(
+                query=query,
+                query_normalized=query,
+                retrieval_results=[],  # Sirchmunk不使用传统RetrievalResult
+                citations=citations,
+                context_text=context_text,
+                confidence=confidence,
+            )
+            
+        except Exception as e:
+            logger.error("rag_chain.sirchmunk_retrieval_failed", error=str(e))
+            # 降级到传统检索
+            logger.warning("rag_chain.falling_back_to_traditional")
+            return await self._traditional_retrieve(query)
+    
+    async def _traditional_retrieve(self, query: str) -> RAGContext:
+        """使用传统检索"""
         results = await self.retrieval_service.retrieve(
-            query=input,
+            query=query,
             db=self.db,
             session_id=self.session_id,
             trace_id=self.trace_id,
@@ -145,7 +245,7 @@ class RetrievalRunnable(Runnable[str, RAGContext]):
         )
         
         # 评估置信度
-        confidence = await self.retrieval_service.evaluate_confidence(input, results)
+        confidence = await self.retrieval_service.evaluate_confidence(query, results)
         
         # 构建引用
         citations = []
@@ -177,8 +277,8 @@ class RetrievalRunnable(Runnable[str, RAGContext]):
         )
         
         return RAGContext(
-            query=input,
-            query_normalized=input,
+            query=query,
+            query_normalized=query,
             retrieval_results=results,
             citations=citations,
             context_text=context,
@@ -338,6 +438,10 @@ class RAGChain:
     使用示例:
         chain = RAGChain(db=session)
         response = await chain.ainvoke("什么是Python？")
+        
+        # 使用Sirchmunk检索
+        chain = RAGChain(db=session, search_mode="DEEP")
+        response = await chain.ainvoke("什么是Python？")
     """
     
     def __init__(
@@ -346,6 +450,8 @@ class RAGChain:
         session_id: Optional[str] = None,
         trace_id: Optional[str] = None,
         skip_rerank: bool = False,
+        search_mode: str = "FAST",  # Sirchmunk模式
+        knowledge_paths: Optional[List[str]] = None,
     ):
         self.db = db
         self.session_id = session_id
@@ -353,7 +459,13 @@ class RAGChain:
         
         # 构建链条
         self.normalize_step = QueryNormalizationRunnable()
-        self.retrieval_step = RetrievalRunnable(db, session_id, trace_id)
+        self.retrieval_step = RetrievalRunnable(
+            db=db,
+            session_id=session_id,
+            trace_id=trace_id,
+            search_mode=search_mode,
+            knowledge_paths=knowledge_paths,
+        )
         self.rerank_step = None if skip_rerank else RerankRunnable()
         self.generation_step = AnswerGenerationRunnable()
     
@@ -471,6 +583,26 @@ def create_rag_chain(
     db: AsyncSession,
     session_id: Optional[str] = None,
     trace_id: Optional[str] = None,
+    search_mode: str = "FAST",
+    knowledge_paths: Optional[List[str]] = None,
 ) -> RAGChain:
-    """创建RAG链的工厂函数"""
-    return RAGChain(db=db, session_id=session_id, trace_id=trace_id)
+    """
+    创建RAG链的工厂函数
+    
+    Args:
+        db: 数据库会话
+        session_id: 会话ID
+        trace_id: 追踪ID
+        search_mode: Sirchmunk搜索模式 (FAST, DEEP, FILENAME_ONLY)
+        knowledge_paths: 知识库路径列表
+    
+    Returns:
+        RAGChain实例
+    """
+    return RAGChain(
+        db=db,
+        session_id=session_id,
+        trace_id=trace_id,
+        search_mode=search_mode,
+        knowledge_paths=knowledge_paths,
+    )

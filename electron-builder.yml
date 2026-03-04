@@ -9,6 +9,22 @@ files:
   - js/**/*
   - assets/**/*
   - electron/**/*
+extraResources:
+  - from: "ai_service"
+    to: "ai_service"
+    filter:
+      - "**/*"
+      - "!**/__pycache__/**"
+      - "!**/*.pyc"
+      - "!**/*.pyo"
+      - "!**/.pytest_cache/**"
+      - "!**/local_data/**"
+      - "!**/.venv/**"
+      - "!**/venv/**"
+      - "!**/python/**"
+      - "!**/tests/**"
+      - "!**/.git/**"
+      - "!**/.mypy_cache/**"
 asar: true
 compression: maximum
 win:

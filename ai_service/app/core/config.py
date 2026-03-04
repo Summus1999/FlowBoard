@@ -106,6 +106,36 @@ class Settings(BaseSettings):
     RAG_RETRIEVAL_TIMEOUT_MS: int = 1800
     RAG_DEGRADE_ON_TIMEOUT: bool = True
     
+    # Sirchmunk 配置 (新一代代理式检索)
+    USE_SIRCHMUNK: bool = Field(
+        default=False,
+        description="启用Sirchmunk代理式检索（设为True后新检索请求将使用Sirchmunk）"
+    )
+    SIRCHMUNK_WORK_PATH: str = Field(
+        default="./data/sirchmunk",
+        description="Sirchmunk工作目录（DuckDB + Parquet存储）"
+    )
+    SIRCHMUNK_DEFAULT_MODE: str = Field(
+        default="FAST",
+        description="Sirchmunk默认搜索模式: FAST, DEEP, FILENAME_ONLY"
+    )
+    SIRCHMUNK_CLUSTER_SIM_THRESHOLD: float = Field(
+        default=0.85,
+        description="知识聚类相似度阈值"
+    )
+    SIRCHMUNK_MAX_CONCURRENT_GREP: int = Field(
+        default=8,
+        description="ripgrep并发数限制"
+    )
+    SIRCHMUNK_CONTEXT_LINES: int = Field(
+        default=3,
+        description="ripgrep上下文行数"
+    )
+    SIRCHMUNK_KNOWLEDGE_PATHS: List[str] = Field(
+        default_factory=list,
+        description="Sirchmunk知识库路径列表"
+    )
+    
     # Docs
     DOCS_BASE_PATH: str = "./docs"
     INDEX_VERSION_RETENTION: int = 5

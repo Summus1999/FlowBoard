@@ -50,10 +50,37 @@ async def lifespan(app: FastAPI):
     else:
         logger.info("model_gateway.no_providers_configured")
     
+    # 初始化 Sirchmunk（如果启用）
+    sirchmunk_service = None
+    if getattr(settings, 'USE_SIRCHMUNK', False):
+        try:
+            from app.services.sirchmunk_retrieval_service import SirchmunkRetrievalService
+            sirchmunk_service = SirchmunkRetrievalService()
+            await sirchmunk_service.initialize()
+            logger.info(
+                "sirchmunk.initialized",
+                work_path=settings.SIRCHMUNK_WORK_PATH,
+                default_mode=settings.SIRCHMUNK_DEFAULT_MODE,
+            )
+        except Exception as e:
+            logger.warning(
+                "sirchmunk.initialization_failed",
+                error=str(e),
+                hint="Sirchmunk功能将不可用，请检查ripgrep-all是否已安装"
+            )
+    
     yield
     
     # 关闭时
     logger.info("application.shutting_down")
+    
+    # 清理 Sirchmunk 资源
+    if sirchmunk_service:
+        try:
+            await sirchmunk_service.cleanup()
+            logger.info("sirchmunk.cleanup_complete")
+        except Exception as e:
+            logger.warning("sirchmunk.cleanup_failed", error=str(e))
 
 
 # 创建FastAPI应用
