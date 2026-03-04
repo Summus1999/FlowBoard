@@ -23,21 +23,10 @@ const NEWS_CACHE_VERSION = 1;
 const NEWS_CACHE_FILE = 'news-cache-v1.json';
 const NEWS_UPDATE_INTERVAL_MS = 4 * 60 * 60 * 1000;
 const NEWS_FETCH_TIMEOUT_MS = 12000;
-const NEWS_MAX_ITEMS = 120;
-const NEWS_SOURCE_LIMIT = 40;
+const NEWS_MAX_ITEMS = 300;
+const NEWS_SOURCE_LIMIT = 60;
 const NEWS_FEED_SOURCES = [
-    {
-        id: 'ithome',
-        name: 'IT之家',
-        category: 'tech',
-        url: 'https://www.ithome.com/rss/'
-    },
-    {
-        id: 'cnbeta',
-        name: 'cnBeta',
-        category: 'tech',
-        url: 'https://rss.cnbeta.com/'
-    },
+    // ========== 国外科技/AI 资讯 ==========
     {
         id: 'hackernews',
         name: 'Hacker News',
@@ -51,11 +40,67 @@ const NEWS_FEED_SOURCES = [
         url: 'https://www.theverge.com/rss/index.xml'
     },
     {
+        id: 'techcrunch',
+        name: 'TechCrunch',
+        category: 'tech',
+        url: 'https://techcrunch.com/feed/'
+    },
+    {
+        id: 'wired',
+        name: 'WIRED',
+        category: 'tech',
+        url: 'https://www.wired.com/feed/rss'
+    },
+    {
+        id: 'arstechnica',
+        name: 'Ars Technica',
+        category: 'tech',
+        url: 'https://feeds.arstechnica.com/arstechnica/index'
+    },
+    {
+        id: 'mit-technology-review',
+        name: 'MIT Technology Review',
+        category: 'ai',
+        url: 'https://www.technologyreview.com/feed/'
+    },
+    {
+        id: 'venturebeat',
+        name: 'VentureBeat',
+        category: 'ai',
+        url: 'https://venturebeat.com/feed/'
+    },
+    {
+        id: 'zdnet',
+        name: 'ZDNet',
+        category: 'tech',
+        url: 'https://www.zdnet.com/news/rss.xml'
+    },
+    // ========== 国外财经资讯 ==========
+    {
         id: 'coindesk',
         name: 'CoinDesk',
         category: 'finance',
         url: 'https://www.coindesk.com/arc/outboundfeeds/rss/'
     },
+    {
+        id: 'cointelegraph',
+        name: 'Cointelegraph',
+        category: 'finance',
+        url: 'https://cointelegraph.com/rss'
+    },
+    {
+        id: 'bloomberg-tech',
+        name: 'Bloomberg Technology',
+        category: 'finance',
+        url: 'https://feeds.bloomberg.com/technology'
+    },
+    {
+        id: 'reuters-business',
+        name: 'Reuters Business',
+        category: 'finance',
+        url: 'https://www.reutersagency.com/feed/?best-topics=business&post_type=best'
+    },
+    // ========== 国外娱乐/综合资讯 ==========
     {
         id: 'bbc-entertainment',
         name: 'BBC Entertainment',
@@ -67,6 +112,87 @@ const NEWS_FEED_SOURCES = [
         name: 'BBC World',
         category: 'social',
         url: 'https://feeds.bbci.co.uk/news/world/rss.xml'
+    },
+    {
+        id: 'cnn-tech',
+        name: 'CNN Tech',
+        category: 'tech',
+        url: 'http://rss.cnn.com/rss/edition_technology.rss'
+    },
+    {
+        id: 'engadget',
+        name: 'Engadget',
+        category: 'tech',
+        url: 'https://www.engadget.com/rss.xml'
+    },
+    {
+        id: 'gizmodo',
+        name: 'Gizmodo',
+        category: 'tech',
+        url: 'https://gizmodo.com/feed'
+    },
+    {
+        id: 'mashable',
+        name: 'Mashable',
+        category: 'entertainment',
+        url: 'https://mashable.com/feed'
+    },
+    // ========== 国内科技资讯 ==========
+    {
+        id: 'ithome',
+        name: 'IT 之家',
+        category: 'tech',
+        url: 'https://www.ithome.com/rss/'
+    },
+    {
+        id: 'cnbeta',
+        name: 'cnBeta',
+        category: 'tech',
+        url: 'https://rss.cnbeta.com/'
+    },
+    {
+        id: '36kr',
+        name: '36 氪',
+        category: 'tech',
+        url: 'https://36kr.com/feed'
+    },
+    {
+        id: 'huxiu',
+        name: '虎嗅',
+        category: 'tech',
+        url: 'https://www.huxiu.com/article/rss.xml'
+    },
+    {
+        id: 'tmtpost',
+        name: '钛媒体',
+        category: 'tech',
+        url: 'https://www.tmtpost.com/feed'
+    },
+    {
+        id: 'geekpark',
+        name: '极客公园',
+        category: 'tech',
+        url: 'https://www.geekpark.net/rss'
+    },
+    // ========== 国内财经资讯 ==========
+    {
+        id: 'caixin',
+        name: '财新',
+        category: 'finance',
+        url: 'https://www.caixin.com/rss/finance.xml'
+    },
+    {
+        id: 'jintouwang',
+        name: '金投网',
+        category: 'finance',
+        url: 'https://news.cngold.org/rss/rss_news.xml'
+    },
+    // ========== 国内娱乐/综合资讯 ==========
+    {
+        id: 'ifeng',
+        name: '凤凰网',
+        category: 'entertainment',
+        url: 'https://i.ifeng.com/c/sitemap/entertainment'
     }
 ];
 const xmlParser = new XMLParser({

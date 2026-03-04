@@ -127,6 +127,186 @@ let passwordData = [
         icon: 'fas fa-music',
         color: 'linear-gradient(135deg, #000000, #1a1a2e)',
         strength: 'medium'
+    },
+    {
+        id: 13,
+        platform: '美团',
+        username: 'meituan_user',
+        password: '********',
+        category: 'finance',
+        icon: 'fas fa-utensils',
+        color: 'linear-gradient(135deg, #FFC300, #e6b000)',
+        strength: 'medium'
+    },
+    {
+        id: 14,
+        platform: '滴滴出行',
+        username: 'didi_user',
+        password: '********',
+        category: 'finance',
+        icon: 'fas fa-car',
+        color: 'linear-gradient(135deg, #FF7A00, #e66e00)',
+        strength: 'medium'
+    },
+    {
+        id: 15,
+        platform: '小红书',
+        username: 'xiaohongshu_user',
+        password: '********',
+        category: 'social',
+        icon: 'fas fa-book-open',
+        color: 'linear-gradient(135deg, #FF2442, #e6203c)',
+        strength: 'medium'
+    },
+    {
+        id: 16,
+        platform: '知乎',
+        username: 'zhihu_user',
+        password: '********',
+        category: 'social',
+        icon: 'fas fa-question-circle',
+        color: 'linear-gradient(135deg, #0084FF, #0073e0)',
+        strength: 'strong'
+    },
+    {
+        id: 17,
+        platform: '钉钉',
+        username: 'dingtalk_user',
+        password: '********',
+        category: 'work',
+        icon: 'fas fa-bell',
+        color: 'linear-gradient(135deg, #3370FF, #2a5fd9)',
+        strength: 'medium'
+    },
+    {
+        id: 18,
+        platform: '企业微信',
+        username: 'wecom_user',
+        password: '********',
+        category: 'work',
+        icon: 'fas fa-building',
+        color: 'linear-gradient(135deg, #2BAD31, #249629)',
+        strength: 'strong'
+    },
+    {
+        id: 19,
+        platform: '饿了么',
+        username: 'eleme_user',
+        password: '********',
+        category: 'finance',
+        icon: 'fas fa-hamburger',
+        color: 'linear-gradient(135deg, #0085FF, #0076e0)',
+        strength: 'medium'
+    },
+    {
+        id: 20,
+        platform: '拼多多',
+        username: 'pdd_user',
+        password: '********',
+        category: 'finance',
+        icon: 'fas fa-shopping-bag',
+        color: 'linear-gradient(135deg, #E02E24, #c92820)',
+        strength: 'medium'
+    },
+    {
+        id: 21,
+        platform: '携程旅行',
+        username: 'ctrip_user',
+        password: '********',
+        category: 'finance',
+        icon: 'fas fa-plane',
+        color: 'linear-gradient(135deg, #2577E3, #2069c8)',
+        strength: 'strong'
+    },
+    {
+        id: 22,
+        platform: '12306',
+        username: 'railway_user',
+        password: '********',
+        category: 'finance',
+        icon: 'fas fa-train',
+        color: 'linear-gradient(135deg, #FF6600, #e65c00)',
+        strength: 'strong'
+    },
+    {
+        id: 23,
+        platform: '飞书',
+        username: 'feishu_user',
+        password: '********',
+        category: 'work',
+        icon: 'fas fa-paper-plane',
+        color: 'linear-gradient(135deg, #3370FF, #2a5fd9)',
+        strength: 'medium'
+    },
+    {
+        id: 24,
+        platform: '网易邮箱',
+        username: 'mail@163.com',
+        password: '********',
+        category: 'work',
+        icon: 'fas fa-envelope',
+        color: 'linear-gradient(135deg, #C20C0C, #a30a0a)',
+        strength: 'strong'
+    },
+    {
+        id: 25,
+        platform: '腾讯会议',
+        username: 'tencent_meeting',
+        password: '********',
+        category: 'work',
+        icon: 'fas fa-video',
+        color: 'linear-gradient(135deg, #00A4FF, #0091e0)',
+        strength: 'medium'
+    },
+    {
+        id: 26,
+        platform: '快手',
+        username: 'kuaishou_user',
+        password: '********',
+        category: 'entertainment',
+        icon: 'fas fa-video-slash',
+        color: 'linear-gradient(135deg, #FF6600, #e65c00)',
+        strength: 'medium'
+    },
+    {
+        id: 27,
+        platform: '小米账号',
+        username: 'mi_user',
+        password: '********',
+        category: 'finance',
+        icon: 'fas fa-mobile-alt',
+        color: 'linear-gradient(135deg, #FF6900, #e65e00)',
+        strength: 'strong'
+    },
+    {
+        id: 28,
+        platform: '华为账号',
+        username: 'huawei_user',
+        password: '********',
+        category: 'work',
+        icon: 'fas fa-mobile',
+        color: 'linear-gradient(135deg, #CF0A2C, #b30826)',
+        strength: 'strong'
+    },
+    {
+        id: 29,
+        platform: 'Steam',
+        username: 'steam_user',
+        password: '********',
+        category: 'entertainment',
+        icon: 'fab fa-steam',
+        color: 'linear-gradient(135deg, #1B2838, #15202b)',
+        strength: 'strong'
+    },
+    {
+        id: 30,
+        platform: 'Apple ID',
+        username: 'apple@icloud.com',
+        password: '********',
+        category: 'work',
+        icon: 'fab fa-apple',
+        color: 'linear-gradient(135deg, #555555, #333333)',
+        strength: 'strong'
     }
 ];
 
@@ -619,7 +799,21 @@ function normalizePasswordRecord(item, index = 0) {
         : checkPasswordStrength(password);
     const visual = getPasswordCategoryVisual(category);
 
-    if (!platform || !username || !password) return null;
+    // 如果数据不完整，尝试使用默认值或生成占位符
+    if (!platform || !username || !password) {
+        console.warn('[App] 发现不完整的密码记录，使用占位符:', item);
+        // 保留记录但填充缺失的字段
+        return {
+            id,
+            platform: platform || `未知平台_${id}`,
+            username: username || '未设置用户名',
+            password: password || '********',
+            category,
+            icon: visual.icon,
+            color: visual.color,
+            strength: strength || 'medium'
+        };
+    }
 
     return {
         id,
