@@ -962,7 +962,6 @@ const pageInitializerMap = {
 };
 const passwordCards = document.getElementById('passwordCards');
 const newsList = document.getElementById('newsList');
-const themeCards = document.querySelectorAll('.theme-card');
 const categoryBtns = document.querySelectorAll('.cat-btn');
 const tabBtns = document.querySelectorAll('.tab-btn');
 const modal = document.getElementById('addPasswordModal');
@@ -2083,6 +2082,7 @@ function openNewsUrl(url) {
 // ========================================
 
 function initThemeSwitcher() {
+    const themeCards = document.querySelectorAll('.theme-card');
     themeCards.forEach(card => {
         card.addEventListener('click', () => {
             const theme = card.dataset.theme;
@@ -2111,7 +2111,10 @@ function initThemeSwitcher() {
 }
 
 function applyTheme(themeName) {
-    document.body.className = themeName;
+    // 移除所有主题类名
+    document.body.classList.remove('theme-dark-blue', 'theme-dark-purple', 'theme-dark-green', 'theme-light');
+    // 添加新主题类名
+    document.body.classList.add(themeName);
 }
 
 // ========================================

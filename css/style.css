@@ -45,6 +45,24 @@
     --color-info: #3b82f6;
 }
 
+/* 深海蓝主题 (默认) */
+.theme-dark-blue {
+    --bg-primary: #0a1628;
+    --bg-secondary: #0d1e36;
+    --bg-gradient-start: #0a1628;
+    --bg-gradient-end: #1a365d;
+    --sidebar-bg: rgba(13, 30, 54, 0.7);
+    --card-bg: rgba(255, 255, 255, 0.08);
+    --card-hover: rgba(255, 255, 255, 0.12);
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --text-muted: rgba(255, 255, 255, 0.5);
+    --border-color: rgba(255, 255, 255, 0.1);
+    --accent-color: #3b82f6;
+    --accent-secondary: #60a5fa;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
 /* 极光紫主题 */
 .theme-dark-purple {
     --bg-primary: #1a0a2e;
