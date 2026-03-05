@@ -19,6 +19,7 @@ from app.api.routes import (
     evaluation,
     metrics,
     config,
+    crews,
 )
 
 main_router = APIRouter()
@@ -40,5 +41,6 @@ main_router.include_router(review.router, prefix="/review", tags=["review"])
 main_router.include_router(evaluation.router, prefix="/eval", tags=["evaluation"])
 main_router.include_router(metrics.router, prefix="/metrics", tags=["metrics"])
 main_router.include_router(config.router, prefix="/config", tags=["config"])
+main_router.include_router(crews.router, prefix="/crews", tags=["crews"])
 
 __all__ = ["main_router"]

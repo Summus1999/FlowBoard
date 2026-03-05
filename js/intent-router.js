@@ -256,6 +256,74 @@ ${dataContext}
 使用中文，Markdown 格式，语气友好专业。`;
 
         return { systemPrompt, context: dataContext, agentMeta: meta };
+    },
+
+    /**
+     * 调用后端 crewAI 接口执行多 Agent 任务
+     * 支持 planning / decompose / review 三类意图
+     * 后端不可用时抛出异常，由调用方决定是否降级
+     * 
+     * @param {string} intent - INTENT_TYPES 之一
+     * @param {string} userMessage - 用户输入
+     * @returns {Promise<{success: boolean, result: string, crew_type: string}>}
+     */
+    async tryCrewExecution(intent, userMessage) {
+        const serviceUrl = (window.aiSettingsState?.serviceUrl || 'http://localhost:8000').replace(/\/+$/, '');
+
+        let endpoint, body;
+
+        switch (intent) {
+            case INTENT_TYPES.PLANNING:
+                endpoint = '/crews/plan';
+                body = {
+                    goal: userMessage,
+                    weekly_hours: 10,
+                };
+                break;
+
+            case INTENT_TYPES.DECOMPOSE:
+                endpoint = '/crews/decompose';
+                body = {
+                    task_title: userMessage.slice(0, 100),
+                    task_description: userMessage,
+                    estimated_hours: 10,
+                };
+                break;
+
+            case INTENT_TYPES.REVIEW: {
+                endpoint = '/crews/review';
+                let tasksData = '[]';
+                try {
+                    const tasks = await flowboardDB.getAll('tasks');
+                    tasksData = JSON.stringify(tasks.slice(0, 50).map(t => ({
+                        title: t.title || t.name || '',
+                        status: t.status || 'pending',
+                        hours: t.estimatedHours || t.hours || 0,
+                    })));
+                } catch (_) {}
+                body = {
+                    period: 'weekly',
+                    tasks_data: tasksData,
+                };
+                break;
+            }
+
+            default:
+                return null;
+        }
+
+        const response = await fetch(`${serviceUrl}${endpoint}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+            signal: AbortSignal.timeout(120000), // crewAI 最多等 2 分钟
+        });
+
+        if (!response.ok) {
+            throw new Error(`crewAI backend ${response.status}`);
+        }
+
+        return await response.json();
     }
 };
 

@@ -529,6 +529,59 @@ const AIChatUI = {
             // Show route indicator
             this._showRouteTag(intent, routeResult.method);
 
+            // Step 2.5: crewAI 多 Agent 优先拦截（planning / decompose / review）
+            const CREW_INTENTS = [INTENT_TYPES.PLANNING, INTENT_TYPES.DECOMPOSE, INTENT_TYPES.REVIEW];
+            if (CREW_INTENTS.includes(intent)) {
+                try {
+                    // 展示等待提示
+                    const waitMsgId = flowboardDB.generateId('msg_');
+                    const waitMsg = {
+                        id: waitMsgId,
+                        sessionId: ChatState.currentSessionId,
+                        role: 'assistant',
+                        content: '🤖 **多 Agent 协作中...** 正在启动 crewAI 工作流，请稍候（预计 30-120 秒）',
+                        timestamp: Date.now(),
+                        isStreaming: true,
+                        intent,
+                    };
+                    await flowboardDB.put('chatMessages', waitMsg);
+                    this.appendMessage(waitMsg);
+
+                    const crewResult = await IntentRouter.tryCrewExecution(intent, lastUserMsg);
+
+                    if (crewResult?.success && crewResult.result) {
+                        const durationNote = crewResult.duration_seconds
+                            ? `\n\n---\n> 🕐 多 Agent 协作耗时 ${crewResult.duration_seconds}s`
+                            : '';
+                        const finalContent = crewResult.result + durationNote;
+
+                        // 更新为最终结果
+                        await flowboardDB.put('chatMessages', {
+                            ...waitMsg,
+                            content: finalContent,
+                            isStreaming: false,
+                            provider: 'crewai',
+                        });
+                        this.finalizeStreamingMessage(waitMsgId, finalContent);
+
+                        const badge = document.getElementById('aiChatModelBadge');
+                        if (badge) badge.textContent = 'crewAI';
+                        return; // 跳过后续 LLM 流式调用
+                    }
+
+                    // crew 返回但无有效结果，移除等待消息，降级到 LLM
+                    await flowboardDB.delete('chatMessages', waitMsgId);
+                    const waitEl = document.getElementById(`msg-${waitMsgId}`);
+                    if (waitEl) waitEl.remove();
+
+                } catch (crewError) {
+                    console.warn('[AIChat] crewAI backend unavailable, falling back to LLM:', crewError.message);
+                    // 清除等待消息（如果存在）
+                    const waitEl = document.querySelector('[data-crew-wait]');
+                    if (waitEl) waitEl.remove();
+                }
+            }
+
             // Step 3: Build final message payload
             const history = [...recentHistory];
             if (agentCtx.systemPrompt) {
