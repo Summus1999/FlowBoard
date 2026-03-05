@@ -3,8 +3,10 @@
 [![Build Status](https://github.com/Summus1999/FlowBoard/actions/workflows/build.yml/badge.svg)](https://github.com/Summus1999/FlowBoard/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Electron](https://img.shields.io/badge/Electron-28.x-blue.svg)](https://electronjs.org/)
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org/)
+[![CrewAI](https://img.shields.io/badge/CrewAI-0.70.0+-green.svg)](https://crewai.com/)
 
-一款跨平台的个人工作台桌面应用，采用现代化的玻璃态 UI 设计，支持多平台账户密码管理、界面UI风格切换、实时资讯整合、LeetCode刷题、GitHub项目追踪等功能。
+一款跨平台的个人工作台桌面应用，采用现代化的玻璃态 UI 设计，支持多平台账户密码管理、界面UI风格切换、实时资讯整合、LeetCode刷题、GitHub项目追踪、AI智能助手等功能。
 
 ![UI预览](./UI风格参考.png)
 
@@ -34,20 +36,29 @@
    - 🔍 热门话题标签和分类筛选
    - 💾 本地缓存，离线可阅读历史内容
 
-4. **Markdown 笔记编辑器**
+4. **AI 智能助手**
+   - 🤖 **多会话对话**：支持创建、切换、删除、重命名会话
+   - 💬 **流式输出**：实时显示模型回复
+   - 🔄 **多模型路由**：通义千问、Kimi、智谱 GLM、硅基流动，自动故障转移
+   - 📝 **CrewAI 智能体**：规划师、任务拆解专家、学习复盘师
+   - 📚 **知识库 RAG**：文档导入、向量检索、智能问答
+   - 🔐 **API Key 加密存储**：使用 Electron safeStorage 保护密钥
+
+5. **Markdown 笔记编辑器**
    - 三种编辑模式：编辑/预览/分屏
    - 完整的 Markdown 语法支持
    - 代码语法高亮（highlight.js）
    - 自动保存功能
    - 笔记分类管理（工作/学习/生活/灵感）
+   - PDF 导入自动转换为 Markdown
 
-5. **日程管理日历**
+6. **日程管理日历**
    - 月历视图，支持月份切换
    - 事件分类（工作/个人/重要/其他）
    - 添加/编辑/删除日程
    - 事件提醒指示
 
-6. **LeetCode 刷题集成**
+7. **LeetCode 刷题集成**
    - 题目列表（支持 API 和本地数据双模式）
    - Monaco Editor 代码编辑器（VS Code 同款）
    - 备用 textarea 编辑器（Monaco 加载失败时自动切换）
@@ -56,13 +67,13 @@
    - 本地模拟运行和提交
    - 提交历史追踪（连续打卡天数统计）
 
-7. **GitHub 项目追踪**
+8. **GitHub 项目追踪**
    - 用户名登录（支持 Token 访问私有仓库）
    - 自动显示最近更新的仓库
    - 仓库统计（Stars/Forks/语言/最后提交时间）
    - 用户统计（公开仓库数/关注者数/总星标数）
 
-8. **应用中心**
+9. **应用中心**
    - 快速启动本地应用（微信/QQ/VS Code/浏览器等）
    - 自定义添加应用
    - 25种预设图标（含 AI 应用专属图标）
@@ -71,49 +82,77 @@
    - 桌面端拖拽排序（排序模式），结果自动持久化
    - 应用可用状态检测
 
-9. **面试追踪**
-   - 录音功能（使用 IndexedDB 存储）
-   - 面试笔记记录
-   - 面试 Checklist
-   - 录音回放和下载
+10. **面试追踪**
+    - 录音功能（使用 IndexedDB 存储）
+    - 面试笔记记录
+    - 面试 Checklist
+    - 录音回放和下载
 
-10. **个人提升**
-    - 学习计划导入（Markdown）
+11. **个人提升**
+    - 学习计划导入（Markdown/PDF）
     - 预设学习模板（前端/算法/系统设计）
+    - **CrewAI 智能规划**：自动生成学习计划和任务拆解
     - 定时提醒设置
     - 学习统计追踪
+    - 学习计时器
 
-11. **系统设置**
+12. **扩展功能模块**
+    - **任务看板**：看板式任务管理，支持列/卡片拖拽
+    - **知识库**：文档 ingestion、RAG 检索、知识问答
+    - **习惯追踪**：习惯打卡、连续天数统计
+    - **代码片段**：代码片段收藏与管理
+    - **书签**：网址收藏与分类管理
+
+13. **系统设置**
     - 开机自动启动（Windows/macOS）
     - 启动时最小化
     - 关闭时最小化到托盘
 
-13. **AI 服务配置**
+14. **AI 服务配置**
     - 多模型提供商（通义千问、Kimi、智谱 GLM、硅基流动）
     - 拖拽排序调用优先级，任一可用即可成功
     - API Key 加密存储、连接测试、热更新
     - 月度预算控制
+    - **CrewAI 多智能体系统**集成
 
 ### 其他特性
 
 - 🎨 玻璃态（Glassmorphism）设计风格
 - 📱 响应式布局，适配各种屏幕
-- 💾 本地数据持久化存储（localStorage + IndexedDB）
+- 💾 本地数据持久化存储（localStorage + IndexedDB + SQLite）
+- 🔒 Electron 安全最佳实践（contextIsolation + preload）
 - 🔔 系统托盘支持
 - ⌨️ 快捷键支持（Ctrl+K 搜索、Ctrl+S 保存等）
-- 🔒 Electron 安全最佳实践（contextIsolation + preload）
+- 🧪 完整的测试套件（71+ 测试用例）
 
 ## 技术栈
 
-- **前端**: HTML5 + CSS3 + JavaScript (ES6+)
+### 前端
+- **框架**: HTML5 + CSS3 + JavaScript (ES6+)
 - **UI框架**: Tailwind CSS (CDN)
 - **图标**: Font Awesome 6
 - **编辑器**: Monaco Editor
 - **Markdown**: marked.js
 - **代码高亮**: highlight.js
-- **桌面端**: Electron 28
-- AI Agent/RAG 框架: LangGraph + LangChain + LangSmith + LlamaIndex（可选，文档 ingestion/index 管线）
-- **打包工具**: electron-builder
+
+### 桌面端
+- **框架**: Electron 28
+- **进程通信**: IPC with contextBridge
+- **安全**: contextIsolation, preload scripts
+
+### AI 服务端
+- **框架**: FastAPI + Uvicorn
+- **Agent 框架**: CrewAI >= 0.70.0
+- **工作流**: LangGraph + LangChain
+- **可观测性**: LangSmith（可选）
+- **向量数据库**: ChromaDB（嵌入式）
+- **数据库**: SQLite + SQLAlchemy + Alembic
+- **文档处理**: PyPDF, python-docx, markdown
+
+### 多智能体系统 (CrewAI)
+- **规划师 (Planner Agent)**: 制定学习计划和里程碑
+- **任务拆解专家 (Decomposer Agent)**: 将复杂任务分解为可执行子任务
+- **学习复盘师 (Reviewer Agent)**: 分析学习进度并生成复盘报告
 
 ## 🚀 GitHub Actions 自动构建（推荐）
 
@@ -155,14 +194,20 @@ npm run test:unit:backend
 
 ### 环境要求
 
-- Node.js >= 20.x
-- npm >= 10.x
+- **Node.js**: >= 20.x
+- **npm**: >= 10.x
+- **Python**: >= 3.8（用于 AI 服务）
 
 ### 安装依赖
 
 ```bash
+# 安装 Node.js 依赖
 npm run bootstrap:deps
-```bash
+
+# 安装 Python 依赖（用于 AI 服务）
+cd ai_service
+pip install -r requirements.txt
+```
 
 ### 开发模式运行
 
@@ -172,7 +217,7 @@ npm run dev
 
 # macOS/Linux
 NODE_ENV=development npm start
-```bash
+```
 
 ### 构建应用
 
@@ -188,7 +233,7 @@ npm run build:mac
 
 # 仅构建 Linux 版本
 npm run build:linux
-```bash
+```
 
 构建后的文件将位于 `dist` 目录中。
 
@@ -196,38 +241,119 @@ npm run build:linux
 
 ```text
 FlowBoard/
-├── assets/              # 应用图标和资源
-├── build/               # 构建配置
-│   └── installer.nsh    # Windows 安装程序脚本
-├── css/                 # 样式文件
-│   ├── style.css        # 全局样式
-│   ├── leetcode.css     # LeetCode 页面
-│   ├── notes.css        # 笔记页面
-│   ├── calendar.css     # 日程管理
-│   ├── github.css       # GitHub 页面
-│   ├── growth.css       # 个人提升
-│   ├── interview.css    # 面试追踪
-│   └── apps.css         # 应用中心
-├── js/                  # JavaScript 逻辑
-│   ├── app.js           # 主应用逻辑
-│   ├── sidebar-registry.js # 侧边栏热插拔注册中心
-│   ├── leetcode.js      # LeetCode 模块
-│   ├── leetcode-api.js  # LeetCode API
-│   ├── code-snippets.js # 代码智能提示
-│   ├── notes.js         # 笔记功能
-│   ├── calendar.js      # 日程管理
-│   ├── github.js        # GitHub 追踪
-│   ├── growth.js        # 个人提升
-│   ├── interview.js     # 面试追踪
-│   └── app-center.js    # 应用中心
-├── electron/            # Electron 主进程
-│   ├── main.js          # 主进程入口
-│   └── preload.js       # 预加载脚本（安全 API 暴露）
-├── index.html           # 主页面
-├── package.json         # 项目配置
-├── README.md            # 项目说明
-└── FlowBoard Docs.md    # 详细产品文档
-```text
+├── assets/                  # 应用图标和资源
+├── build/                   # 构建配置
+│   └── installer.nsh        # Windows 安装程序脚本
+├── css/                     # 样式文件
+│   ├── style.css            # 全局样式
+│   ├── ai-chat.css          # AI 助手样式
+│   ├── leetcode.css         # LeetCode 页面
+│   ├── notes.css            # 笔记页面
+│   ├── calendar.css         # 日程管理
+│   ├── github.css           # GitHub 页面
+│   ├── growth.css           # 个人提升
+│   ├── interview.css        # 面试追踪
+│   ├── apps.css             # 应用中心
+│   ├── dashboard.css        # 仪表盘样式
+│   ├── knowledge-base.css   # 知识库样式
+│   └── task-board.css       # 任务看板样式
+├── js/                      # JavaScript 逻辑
+│   ├── app.js               # 主应用逻辑
+│   ├── sidebar-registry.js  # 侧边栏热插拔注册中心
+│   ├── ai-chat.js           # AI 助手模块
+│   ├── ai-settings.js       # AI 服务配置
+│   ├── llm-client.js        # LLM 客户端
+│   ├── intent-router.js     # Agent 意图路由
+│   ├── dashboard-v2.js      # 仪表盘 V2
+│   ├── leetcode.js          # LeetCode 模块
+│   ├── leetcode-api.js      # LeetCode API
+│   ├── code-snippets.js     # 代码智能提示
+│   ├── notes.js             # 笔记功能
+│   ├── calendar.js          # 日程管理
+│   ├── github.js            # GitHub 追踪
+│   ├── growth.js            # 个人提升
+│   ├── interview.js         # 面试追踪
+│   ├── task-board.js        # 任务看板
+│   ├── knowledge-base.js    # 知识库
+│   ├── habit-tracker.js     # 习惯追踪
+│   └── bookmarks.js         # 书签
+├── electron/                # Electron 主进程
+│   ├── main.js              # 主进程入口
+│   ├── preload.js           # 预加载脚本（安全 API 暴露）
+│   └── ai-service-manager.js # AI 服务管理器
+├── ai_service/              # AI 服务端（Python FastAPI）
+│   ├── app/
+│   │   ├── main.py          # FastAPI 应用入口
+│   │   ├── core/            # 核心模块（配置、数据库、日志）
+│   │   ├── api/             # API 路由
+│   │   │   └── routes/      # 各模块路由
+│   │   ├── services/        # 业务服务
+│   │   ├── crews/           # CrewAI 多智能体系统
+│   │   │   ├── agents/      # 智能体定义
+│   │   │   ├── tasks/       # 任务定义
+│   │   │   ├── tools/       # 工具定义
+│   │   │   ├── learning_crew.py     # Crew 编排
+│   │   │   └── llm_adapter.py       # LLM 适配器
+│   │   ├── models/          # 数据库模型
+│   │   └── graph/           # LangGraph 工作流
+│   ├── requirements.txt     # Python 依赖
+│   └── tests/               # 后端测试
+├── index.html               # 主页面
+├── package.json             # 项目配置
+├── README.md                # 项目说明
+├── FlowBoard Docs.md        # 详细产品文档
+├── AI_IMPLEMENTATION_SUMMARY.md  # AI 功能实现总结
+└── QUICK_START.md           # 快速开始指南
+```
+
+## AI 服务架构
+
+FlowBoard 的 AI 服务采用分层架构设计：
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    FlowBoard Electron App                    │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │   AI Chat    │  │  Learning    │  │  Knowledge   │       │
+│  │   Module     │  │   Planning   │  │    Base      │       │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘       │
+└─────────┼─────────────────┼─────────────────┼───────────────┘
+          │                 │                 │
+          └─────────────────┼─────────────────┘
+                            │ HTTP/WebSocket
+┌───────────────────────────▼───────────────────────────────┐
+│                  AI Service (FastAPI)                      │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
+│  │   Chat API  │  │   Plan API  │  │    RAG API  │        │
+│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘        │
+│         └─────────────────┼─────────────────┘              │
+│                           │                                │
+│  ┌────────────────────────▼────────────────────────┐      │
+│  │              CrewAI Multi-Agent System           │      │
+│  │  ┌────────────┐ ┌────────────┐ ┌────────────┐  │      │
+│  │  │  Planner   │ │ Decomposer │ │  Reviewer  │  │      │
+│  │  │   Agent    │ │   Agent    │ │   Agent    │  │      │
+│  │  └──────┬─────┘ └──────┬─────┘ └──────┬─────┘  │      │
+│  │         └──────────────┼──────────────┘        │      │
+│  │                        │                       │      │
+│  │              ┌─────────▼─────────┐             │      │
+│  │              │   Crew Executor   │             │      │
+│  │              └─────────┬─────────┘             │      │
+│  └────────────────────────┼───────────────────────┘      │
+│                           │                                │
+│  ┌────────────────────────▼────────────────────────┐      │
+│  │               Model Gateway                      │      │
+│  │  (Qwen / Kimi / GLM / SilFlow / Failover)       │      │
+│  └─────────────────────────────────────────────────┘      │
+│                           │                                │
+│  ┌────────────────────────▼────────────────────────┐      │
+│  │         Vector Store (ChromaDB)                  │      │
+│  │         Database (SQLite)                        │      │
+│  └─────────────────────────────────────────────────┘      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+详细架构说明参见 [AI_SERVICE_ARCHITECTURE.md](./AI_SERVICE_ARCHITECTURE.md)
 
 ## 开发说明
 
@@ -237,7 +363,7 @@ FlowBoard/
 2. 在 `css/` 目录下创建或修改样式文件
 3. 在 `js/` 目录下创建或修改逻辑文件
 
-### 侧边栏热插拔（新增）
+### 侧边栏热插拔
 
 侧边栏入口已改为 **注册中心驱动**，支持运行时增删、启停、排序与持久化：
 
@@ -245,88 +371,15 @@ FlowBoard/
 - 全局 API：`window.FlowBoardSidebar`
 - 导航渲染由 `app.js` 自动接管，无需手动写死 `<a class="nav-item">`
 
-可视化操作（无需写代码）：
+### CrewAI 智能体开发
 
-1. 在侧边栏 **工具** 标题右侧点击管理按钮（滑块图标）
-2. 进入编辑模式后，每个栏目右侧会出现：
-   - 👁️/🙈 按钮：显示/隐藏栏目（例如隐藏 GitHub）
-   - 🗑️ 按钮：删除自定义栏目
-3. 点击底部 **新增栏目**，填写名称、页面标识、图标后保存即可
+FlowBoard 集成了 CrewAI 多智能体系统，开发新智能体：
 
-交互逻辑说明：
-
-- **编辑模式入口**
-  - 点击 `工具` 标题右侧管理按钮进入/退出编辑模式。
-  - 当前仅 `tools` 分组支持可视化管理（便于控制权限范围）。
-
-- **栏目显示/隐藏**
-  - 编辑模式下点击 👁️/🙈 切换栏目可见性。
-  - 被隐藏栏目会从正常导航态移除，但配置会保留，可再次恢复显示。
-  - 若隐藏的是当前正在查看的页面，系统会自动回退到 `dashboard`。
-
-- **栏目删除规则**
-  - 内置栏目（`source: builtin`）默认不提供物理删除按钮，只允许隐藏，避免误删核心入口。
-  - 自定义栏目（`source: custom`）可使用 🗑️ 删除，删除后会从配置中移除。
-
-- **新增栏目规则**
-  - 新增时需填写：栏目名称、页面标识（唯一）、图标 class；`onEnter` 函数可选。
-  - 页面标识会规范化（小写、空格转 `-`、仅保留 `a-z0-9_-`）。
-  - 若存在 `#page-<标识>` 页面，点击栏目会执行页面切换。
-  - 若不存在对应页面但填写了 `onEnter`，会执行该函数，支持“动作型入口”。
-
-- **事件与状态同步**
-  - 侧栏布局变更通过 `FlowBoardSidebar.onChange` 广播。
-  - `app.js` 监听该事件并自动重渲染导航与重绑事件，无需手动刷新页面。
-
-- **持久化与恢复**
-  - 配置存储于 `localStorage`：`flowboard_sidebar_layout_v1`。
-  - 重启应用后会自动恢复上次布局。
-  - 可通过 `FlowBoardSidebar.resetLayout()` 一键恢复默认布局。
-
-常用 API：
-
-```javascript
-// 注册（或更新）一个分组
-FlowBoardSidebar.registerSection({
-  id: 'team-tools',
-  title: '团队工具',
-  order: 30
-});
-
-// 注册（或更新）一个侧边栏入口
-FlowBoardSidebar.registerItem({
-  page: 'kanban',
-  title: '团队看板',
-  icon: 'fas fa-columns',
-  sectionId: 'team-tools',
-  order: 10,
-  onEnter: 'initKanban' // 对应 window.initKanban()
-});
-
-// 禁用/启用入口
-FlowBoardSidebar.setItemEnabled('github', false);
-FlowBoardSidebar.setItemEnabled('github', true);
-
-// 删除入口（内置项会标记移除，自定义项会直接删除）
-FlowBoardSidebar.unregisterItem('leetcode');
-
-// 调整位置（分组 + 排序）
-FlowBoardSidebar.moveItem('calendar', { sectionId: 'core', order: 15 });
-
-// 重置为默认布局
-FlowBoardSidebar.resetLayout();
-```
-
-如需监听布局变化（例如做自定义设置面板）：
-
-```javascript
-const dispose = FlowBoardSidebar.onChange((payload) => {
-  console.log(payload.reason, payload.state);
-});
-
-// 取消监听
-dispose();
-```
+1. 在 `ai_service/app/crews/agents/` 创建智能体定义
+2. 在 `ai_service/app/crews/tasks/` 创建任务定义
+3. 在 `ai_service/app/crews/tools/` 创建工具（如需）
+4. 在 `ai_service/app/crews/learning_crew.py` 编排 Crew
+5. 在 `ai_service/app/api/routes/` 添加 API 端点
 
 ### 与 Electron 主进程通信
 
@@ -342,13 +395,14 @@ if (window.electronAPI) {
     // 读取数据
     const result = await window.electronAPI.loadData('data.json');
     
-    // 选择文件
-    const fileResult = await window.electronAPI.selectFile(options);
-    
     // 设置开机启动
     await window.electronAPI.setAutoLaunch(true);
+    
+    // AI 配置
+    await window.electronAPI.saveAiConfig(config);
+    const aiConfig = await window.electronAPI.loadAiConfig();
 }
-```javascript
+```
 
 ### Electron 安全架构
 
@@ -358,6 +412,22 @@ if (window.electronAPI) {
 - ✅ `nodeIntegration: false` - 禁用 Node 集成
 - ✅ `preload` 脚本 - 通过 contextBridge 安全暴露 API
 - ✅ 禁用 `remote` 模块
+
+## API 接口
+
+AI 服务提供以下 API 接口：
+
+| 类别 | 端点 | 说明 |
+|------|------|------|
+| **会话管理** | `POST /api/v1/sessions` | 创建新会话 |
+| **聊天** | `POST /api/v1/chat/stream` | 流式对话 |
+| **知识库** | `POST /api/v1/rag/search` | RAG 检索 |
+| **规划** | `POST /api/v1/planning/generate` | 生成学习计划（CrewAI） |
+| **任务拆解** | `POST /api/v1/decomposer/decompose` | 任务拆解（CrewAI） |
+| **复盘** | `POST /api/v1/review/generate` | 生成复盘报告（CrewAI） |
+| **配置** | `POST /api/v1/config/providers` | 更新模型配置 |
+
+完整 API 文档参见 [API_DOCUMENTATION.md](./API_DOCUMENTATION.md)
 
 ## 快捷键
 
@@ -406,36 +476,10 @@ if (window.electronAPI) {
 | localStorage | `flowboard_apps` | 应用中心数据（v2，含图标元数据与排序） |
 | localStorage | `github_username` | GitHub 登录信息 |
 | localStorage | `leetcode_submissions` | LeetCode 提交历史 |
+| localStorage | `flowboard_sidebar_layout_v1` | 侧边栏布局配置 |
 | IndexedDB | `FlowBoardInterviewDB` | 面试录音文件 |
-
-### 应用中心存储结构（flowboard_apps）
-
-```json
-{
-  "version": 2,
-  "apps": [
-    {
-      "id": "app_1740000000000",
-      "name": "VS Code",
-      "path": "C:/Program Files/Microsoft VS Code/Code.exe",
-      "order": 10,
-      "iconMeta": {
-        "mode": "preset",
-        "presetClass": "fas fa-code",
-        "emoji": "",
-        "imageDataUrl": "",
-        "bgColor": "#22c55e",
-        "fgColor": "#ffffff"
-      },
-      "createdAt": "2026-02-25T10:00:00.000Z",
-      "updatedAt": "2026-02-25T10:00:00.000Z"
-    }
-  ]
-}
-```
-
-- `iconMeta.mode` 取值：`preset` / `emoji` / `image`
-- 旧版数组结构会在加载时自动迁移到 v2 对象结构
+| IndexedDB | `FlowBoardDB` | AI 会话、知识库、任务看板等 |
+| SQLite | `flowboard.db` | AI 服务端持久化数据 |
 
 ## 贡献指南
 
@@ -457,6 +501,20 @@ MIT License - 详见 [LICENSE](LICENSE) 文件
 
 ## 更新日志
 
+### v2.1.0 (2026-03-05)
+
+**新增功能**：
+- ✅ **CrewAI 多智能体系统**：集成 CrewAI >= 0.70.0，支持规划师、任务拆解专家、学习复盘师三个智能体
+- ✅ **智能学习计划**：通过 CrewAI 自动生成个性化学习计划和里程碑
+- ✅ **任务智能拆解**：复杂任务自动分解为可执行的子任务
+- ✅ **学习进度复盘**：自动生成学习进度复盘报告
+- ✅ **API 文档**：新增完整的 API 接口文档
+
+**架构升级**：
+- 新增 `ai_service/app/crews/` 目录，包含完整的 CrewAI 智能体实现
+- 新增 `FlowBoardLLM` 适配器，桥接 CrewAI 与 ModelGateway
+- 支持 Crew 编排和任务链执行
+
 ### v2.0.2 (2026-03-03)
 - 新增硅基流动 (Silicon Flow) 作为第四模型提供商
 - AI 服务配置支持拖拽排序调用优先级，任一可用即可成功
@@ -473,7 +531,6 @@ MIT License - 详见 [LICENSE](LICENSE) 文件
 - `flowboard_apps` 升级为 v2 结构，兼容旧数据自动迁移
 
 ### v1.2 (2026-02-23)
-
 - Electron 安全加固（contextIsolation + preload）
 - 应用中心新增 AI 图标选项（机器人、芯片、代码图标）
 - LeetCode 编辑器优化（AMD loader 检测、备用编辑器）
