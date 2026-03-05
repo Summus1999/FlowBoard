@@ -72,8 +72,13 @@
     --sidebar-bg: rgba(36, 15, 74, 0.7);
     --card-bg: rgba(255, 255, 255, 0.08);
     --card-hover: rgba(255, 255, 255, 0.12);
+    --text-primary: #f3e8ff;
+    --text-secondary: rgba(243, 232, 255, 0.7);
+    --text-muted: rgba(243, 232, 255, 0.5);
+    --border-color: rgba(168, 85, 247, 0.2);
     --accent-color: #a855f7;
     --accent-secondary: #c084fc;
+    --shadow-color: rgba(88, 28, 135, 0.4);
 }
 
 /* 森林绿主题 */
@@ -85,8 +90,13 @@
     --sidebar-bg: rgba(13, 54, 34, 0.7);
     --card-bg: rgba(255, 255, 255, 0.08);
     --card-hover: rgba(255, 255, 255, 0.12);
+    --text-primary: #dcfce7;
+    --text-secondary: rgba(220, 252, 231, 0.7);
+    --text-muted: rgba(220, 252, 231, 0.5);
+    --border-color: rgba(34, 197, 94, 0.2);
     --accent-color: #22c55e;
     --accent-secondary: #4ade80;
+    --shadow-color: rgba(20, 83, 45, 0.4);
 }
 
 /* 简约白主题 */
@@ -105,6 +115,63 @@
     --accent-color: #3b82f6;
     --accent-secondary: #60a5fa;
     --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+/* 简约白主题 - 关键组件适配 */
+.theme-light .sidebar {
+    background: rgba(248, 250, 252, 0.95);
+    border-right: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.theme-light .nav-item,
+.theme-light .nav-item span,
+.theme-light .page-header h2,
+.theme-light .page-header h1,
+.theme-light .stats-card .stat-value,
+.theme-light .stats-card .stat-label,
+.theme-light h1, .theme-light h2, .theme-light h3, .theme-light h4,
+.theme-light p, .theme-light span, .theme-light label,
+.theme-light .sidebar-footer,
+.theme-light .user-name,
+.theme-light .user-role {
+    color: var(--text-primary);
+}
+
+.theme-light .nav-item i {
+    color: var(--text-secondary);
+}
+
+.theme-light .nav-item.active,
+.theme-light .nav-item:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--accent-color);
+}
+
+.theme-light .nav-item.active i,
+.theme-light .nav-item:hover i {
+    color: var(--accent-color);
+}
+
+.theme-light .card,
+.theme-light .stats-card,
+.theme-light .settings-card,
+.theme-light .modal-content {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    color: var(--text-primary);
+}
+
+.theme-light input,
+.theme-light textarea,
+.theme-light select {
+    background: #ffffff;
+    color: var(--text-primary);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+.theme-light input::placeholder,
+.theme-light textarea::placeholder {
+    color: var(--text-muted);
 }
 
 /* 基础样式重置 */

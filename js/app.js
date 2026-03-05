@@ -2097,17 +2097,15 @@ function initThemeSwitcher() {
         });
     });
     
-    // 加载保存的主题
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-        applyTheme(savedTheme);
-        themeCards.forEach(c => {
-            c.classList.remove('active');
-            if (c.dataset.theme === savedTheme) {
-                c.classList.add('active');
-            }
-        });
-    }
+    // 加载保存的主题（默认深海蓝）
+    const savedTheme = localStorage.getItem('theme') || 'theme-dark-blue';
+    applyTheme(savedTheme);
+    themeCards.forEach(c => {
+        c.classList.remove('active');
+        if (c.dataset.theme === savedTheme) {
+            c.classList.add('active');
+        }
+    });
 }
 
 function applyTheme(themeName) {
